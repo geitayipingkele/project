@@ -233,7 +233,7 @@
             <tr>
               <th><input class="check" id="checkAll" type="checkbox" aria-label="全选" /></th>
               <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th>
-              <th>所属项目</th><th>监测对象</th><th>运行状态</th><th>终端业务状态</th><th>终端管理状态</th>
+              <th>所属项目</th><th>监测对象</th><th>业务状态</th><th>业务连接状态</th><th>管理连接状态</th>
               <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th>
             </tr>
           </thead>
@@ -377,7 +377,7 @@
     }
 
     function exportCsv() {
-      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','运行状态','业务状态','管理状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
+      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','业务状态','业务连接状态','管理连接状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
       const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.project,d.target,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
       const csv = '\ufeff' + [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
       const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
