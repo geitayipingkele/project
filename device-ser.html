@@ -90,13 +90,9 @@
     .advanced-item > label { display: block; margin-bottom: 6px; color: #647187; font-size: 13px; }
     .plain-input, .plain-select { width: 100%; border-radius: 5px; }
     .span-2 { grid-column: span 2; }
-    .span-4 { grid-column: 1 / -1; }
     .date-range { display: grid; grid-template-columns: 1fr 20px 1fr; align-items: center; gap: 5px; }
     .date-range span { text-align: center; color: #929daf; }
     .date-range input { width: 100%; }
-    .cascade { display: grid; grid-template-columns: 1fr 1.15fr 1.35fr; gap: 8px; }
-    .model-attribute-grid { display: grid; grid-template-columns: minmax(210px, .9fr) minmax(520px, 2.5fr) minmax(190px, 1fr); gap: 14px; align-items: end; }
-    .model-attribute-grid label { display: block; margin-bottom: 6px; color: #647187; font-size: 13px; }
     .advanced-footer { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: -2px; }
 
     .table-toolbar {
@@ -109,7 +105,7 @@
     .toolbar-tip { margin-left: auto; color: #8b97a9; font-size: 13px; }
 
     .table-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; }
-    table { width: 100%; min-width: 1740px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    table { width: 100%; min-width: 2070px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
     th, td {
       height: 44px; padding: 0 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
       text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -166,7 +162,6 @@
     @media (max-width: 1050px) {
       .field:nth-of-type(3) { display: none; }
       .advanced-panel { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-      .model-attribute-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -180,6 +175,7 @@
           <div class="field"><span class="field-label">物联标识码</span><input id="iotCode" placeholder="请输入标识码" /></div>
           <div class="field"><span class="field-label">终端型号</span><input id="terminalModel" placeholder="请输入终端型号" /></div>
           <div class="field org-field"><span class="field-label">所属单位</span><input id="orgName" placeholder="请输入所属单位" /></div>
+          <div class="field"><span class="field-label">模组软件版本</span><input id="softwareVersion" type="text" value="Sv04.02.15" placeholder="请输入模组软件版本" /></div>
           <div class="actions">
             <button class="btn btn-primary" id="queryBtn">查询</button>
             <button class="btn" id="resetBtn">重置</button>
@@ -194,21 +190,6 @@
           <div class="advanced-item"><label for="monitorTarget">监测对象</label><input class="plain-input" id="monitorTarget" placeholder="请输入监测对象" /></div>
           <div class="advanced-item"><label for="businessStatus">终端业务状态</label><select class="plain-select" id="businessStatus"><option value="">全部状态</option><option>在线</option><option>离线</option></select></div>
           <div class="advanced-item"><label for="manageStatus">终端管理状态</label><select class="plain-select" id="manageStatus"><option value="">全部状态</option><option>在线</option><option>离线</option><option>休眠</option></select></div>
-          <div class="model-attribute-grid span-4">
-            <div>
-              <label for="thingModel">物模型名称</label>
-              <select class="plain-select" id="thingModel"><option value="" selected disabled hidden>请选择物模型</option></select>
-            </div>
-            <div>
-              <label>属性名称</label>
-              <div class="cascade">
-                <select class="plain-select" id="dataCategory" aria-label="参数分类" disabled><option value="" selected disabled hidden>参数分类</option></select>
-                <select class="plain-select" id="serviceName" aria-label="服务名称" disabled><option value="" selected disabled hidden>服务名称</option></select>
-                <select class="plain-select" id="attributeName" aria-label="属性名称" disabled><option value="" selected disabled hidden>属性名称</option></select>
-              </div>
-            </div>
-            <div><label for="attributeValue">属性值</label><div id="attributeValueWrap"><input class="plain-input" id="attributeValue" placeholder="请先选择属性" disabled /></div></div>
-          </div>
           <div class="advanced-item span-2"><label>最近在线时间</label><div class="date-range"><input class="plain-input" id="onlineStart" type="datetime-local" /><span>至</span><input class="plain-input" id="onlineEnd" type="datetime-local" /></div></div>
           <div class="advanced-item span-2"><label>最近离线时间</label><div class="date-range"><input class="plain-input" id="offlineStart" type="datetime-local" /><span>至</span><input class="plain-input" id="offlineEnd" type="datetime-local" /></div></div>
           <div class="advanced-footer"><button class="btn" id="collapseAdvanced">收起⌃</button></div>
@@ -226,14 +207,14 @@
           <colgroup>
             <col style="width:48px"><col style="width:190px"><col style="width:190px"><col style="width:130px">
             <col style="width:100px"><col style="width:180px"><col style="width:150px"><col style="width:145px">
-            <col style="width:105px"><col style="width:120px"><col style="width:120px"><col style="width:165px">
-            <col style="width:165px"><col style="width:165px"><col style="width:165px">
+            <col style="width:105px"><col style="width:120px"><col style="width:120px"><col style="width:190px">
+            <col style="width:140px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:165px">
           </colgroup>
           <thead>
             <tr>
               <th><input class="check" id="checkAll" type="checkbox" aria-label="全选" /></th>
               <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th>
-              <th>所属项目</th><th>监测对象</th><th>业务状态</th><th>业务连接状态</th><th>管理连接状态</th>
+              <th>所属项目</th><th>监测对象</th><th>物模型名称</th><th>模组软件版本</th><th>运行状态</th><th>终端业务状态</th><th>终端管理状态</th>
               <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th>
             </tr>
           </thead>
@@ -253,38 +234,21 @@
   <div class="toast" id="toast"></div>
   <script>
     const devices = [
-      { code:'iot-gd-440106-202608001', name:'花城站主变温度监测终端', model:'BWJC-9000', zone:'生产控制大区', org:'广东电网有限责任公司', project:'广州变电站智能巡检项目', target:'花城站1号主变', run:'投运', business:'在线', manage:'在线', first:'2026-03-12 09:20:16', online:'2026-08-10 10:28:41', offline:'2026-08-09 23:12:06', created:'2026-03-10 14:02:35', category:'变压器监测终端', domain:'变电', thingModel:'主变温度监测物模型', attrs:{'油温':67.3,'设备状态':'正常','通信方式':'5G'}},
-      { code:'iot-js-320115-202608017', name:'龙湖线覆冰在线监测装置', model:'FBJC-V5.2', zone:'管理信息大区', org:'江苏省电力有限公司', project:'输电线路状态感知提升', target:'220kV龙湖线#087杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-01-18 15:11:43', online:'2026-08-10 10:27:08', offline:'2026-08-08 02:31:17', created:'2026-01-12 11:43:28', category:'覆冰在线监测装置', domain:'输电', thingModel:'输电覆冰监测物模型', attrs:{'覆冰厚度':3.2,'设备状态':'正常','通信方式':'北斗'}},
-      { code:'iot-zj-330106-202607203', name:'钱塘线导线温度监测终端', model:'DXWD-300', zone:'管理信息大区', org:'浙江省电力有限公司', project:'杭州输电数字化改造', target:'500kV钱塘线#126杆塔', run:'调试中', business:'离线', manage:'离线', first:'2026-05-26 08:34:12', online:'2026-08-09 18:05:33', offline:'2026-08-09 18:36:52', created:'2026-05-22 16:08:51', category:'导线温度监测', domain:'输电', thingModel:'导线温度监测物模型', attrs:{'导线温度':42.8,'设备状态':'告警','通信方式':'4G'}},
-      { code:'iot-sc-510107-202607128', name:'锦江台区智能融合终端', model:'TTU-8200E', zone:'生产控制大区', org:'四川省电力公司', project:'成都低压台区透明化项目', target:'锦江路公变3号台区', run:'投运', business:'在线', manage:'在线', first:'2026-04-09 13:20:30', online:'2026-08-10 10:25:19', offline:'2026-08-07 01:12:44', created:'2026-04-08 10:18:27', category:'台区智能终端', domain:'配电', thingModel:'台区融合终端物模型', attrs:{'电压':223.6,'开关状态':'合闸','设备状态':'正常'}},
-      { code:'iot-hb-420106-202606099', name:'东湖低压智能开关A17', model:'LTU-S160', zone:'生产控制大区', org:'湖北省电力有限公司', project:'武汉配网自愈能力提升', target:'东湖台区低压分支A17', run:'投运', business:'在线', manage:'休眠', first:'2026-02-15 07:51:22', online:'2026-08-10 10:23:57', offline:'2026-08-06 03:46:10', created:'2026-02-12 09:06:18', category:'低压智能开关', domain:'配电', thingModel:'低压智能开关物模型', attrs:{'电压':187.2,'开关状态':'合闸','设备状态':'告警'}},
-      { code:'iot-fj-350203-202605076', name:'鹭岛光伏逆变器监控单元', model:'PV-INV-X8', zone:'管理信息大区', org:'福建省电力有限公司', project:'厦门分布式光伏可观可测', target:'鹭岛产业园光伏阵列B区', run:'投运', business:'在线', manage:'在线', first:'2026-03-28 10:06:35', online:'2026-08-10 10:20:15', offline:'2026-08-04 20:12:33', created:'2026-03-25 17:22:49', category:'光伏逆变器', domain:'发电', thingModel:'光伏逆变器物模型', attrs:{'有功功率':486.5,'设备状态':'正常','通信方式':'以太网'}},
-      { code:'iot-nm-150102-202604052', name:'风场07号风机监控终端', model:'WT-CMU-6A', zone:'管理信息大区', org:'蒙东电力有限公司', project:'兴安风场智慧运维项目', target:'兴安风场07号风机', run:'投运', business:'在线', manage:'在线', first:'2026-01-08 14:18:20', online:'2026-08-10 10:18:32', offline:'2026-08-03 00:26:17', created:'2026-01-05 09:51:08', category:'风机监控终端', domain:'发电', thingModel:'风机运行监控物模型', attrs:{'有功功率':2180,'设备状态':'正常','通信方式':'光纤'}},
-      { code:'iot-sd-370102-202603041', name:'泉城配变监测终端012', model:'TTU-PM500', zone:'生产控制大区', org:'山东省电力公司', project:'济南配变精益运维项目', target:'泉城花园12号配变', run:'停运', business:'离线', manage:'离线', first:'2025-11-19 11:25:09', online:'2026-07-28 16:44:02', offline:'2026-07-28 17:02:19', created:'2025-11-15 15:37:42', category:'配变监测终端', domain:'配电', thingModel:'配变监测物模型', attrs:{'电压':0,'设备状态':'离线','通信方式':'4G'}},
-      { code:'iot-ah-340104-202602033', name:'皖江线杆塔倾斜监测终端', model:'GTQX-210', zone:'管理信息大区', org:'安徽省电力有限公司', project:'皖江输电线路防灾项目', target:'500kV皖江线#211杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-02-03 09:41:55', online:'2026-08-10 10:16:28', offline:'2026-08-01 22:35:45', created:'2026-01-29 13:12:07', category:'杆塔倾斜监测', domain:'输电', thingModel:'杆塔倾斜监测物模型', attrs:{'倾斜角度':0.7,'设备状态':'正常','通信方式':'北斗'}},
-      { code:'iot-hn-410105-202601025', name:'郑东局放监测终端03', model:'PD-MON-7', zone:'生产控制大区', org:'河南省电力公司', project:'郑州站局放综合在线监测', target:'郑东站GIS间隔03', run:'调试中', business:'离线', manage:'休眠', first:'2026-07-10 08:06:11', online:'2026-08-10 10:15:04', offline:'2026-08-09 20:01:36', created:'2026-07-08 16:28:55', category:'局放监测终端', domain:'变电', thingModel:'局部放电监测物模型', attrs:{'放电量':28.6,'设备状态':'告警','通信方式':'5G'}}
+      { code:'iot-gd-440106-202608001', name:'花城站主变温度监测终端', model:'BWJC-9000', zone:'生产控制大区', org:'广东电网有限责任公司', project:'广州变电站智能巡检项目', target:'花城站1号主变', run:'投运', business:'在线', manage:'在线', first:'2026-03-12 09:20:16', online:'2026-08-10 10:28:41', offline:'2026-08-09 23:12:06', created:'2026-03-10 14:02:35', category:'变压器监测终端', domain:'变电', thingModel:'主变温度监测物模型', softwareVersion:'Sv04.02.15', attrs:{'油温':67.3,'设备状态':'正常','通信方式':'5G'}},
+      { code:'iot-js-320115-202608017', name:'龙湖线覆冰在线监测装置', model:'FBJC-V5.2', zone:'管理信息大区', org:'江苏省电力有限公司', project:'输电线路状态感知提升', target:'220kV龙湖线#087杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-01-18 15:11:43', online:'2026-08-10 10:27:08', offline:'2026-08-08 02:31:17', created:'2026-01-12 11:43:28', category:'覆冰在线监测装置', domain:'输电', thingModel:'输电覆冰监测物模型', softwareVersion:'Sv04.03.08', attrs:{'覆冰厚度':3.2,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-zj-330106-202607203', name:'钱塘线导线温度监测终端', model:'DXWD-300', zone:'管理信息大区', org:'浙江省电力有限公司', project:'杭州输电数字化改造', target:'500kV钱塘线#126杆塔', run:'调试中', business:'离线', manage:'离线', first:'2026-05-26 08:34:12', online:'2026-08-09 18:05:33', offline:'2026-08-09 18:36:52', created:'2026-05-22 16:08:51', category:'导线温度监测', domain:'输电', thingModel:'导线温度监测物模型', softwareVersion:'Sv04.01.26', attrs:{'导线温度':42.8,'设备状态':'告警','通信方式':'4G'}},
+      { code:'iot-sc-510107-202607128', name:'锦江台区智能融合终端', model:'TTU-8200E', zone:'生产控制大区', org:'四川省电力公司', project:'成都低压台区透明化项目', target:'锦江路公变3号台区', run:'投运', business:'在线', manage:'在线', first:'2026-04-09 13:20:30', online:'2026-08-10 10:25:19', offline:'2026-08-07 01:12:44', created:'2026-04-08 10:18:27', category:'台区智能终端', domain:'配电', thingModel:'台区融合终端物模型', softwareVersion:'Sv04.04.09', attrs:{'电压':223.6,'开关状态':'合闸','设备状态':'正常'}},
+      { code:'iot-hb-420106-202606099', name:'东湖低压智能开关A17', model:'LTU-S160', zone:'生产控制大区', org:'湖北省电力有限公司', project:'武汉配网自愈能力提升', target:'东湖台区低压分支A17', run:'投运', business:'在线', manage:'休眠', first:'2026-02-15 07:51:22', online:'2026-08-10 10:23:57', offline:'2026-08-06 03:46:10', created:'2026-02-12 09:06:18', category:'低压智能开关', domain:'配电', thingModel:'低压智能开关物模型', softwareVersion:'Sv04.02.06', attrs:{'电压':187.2,'开关状态':'合闸','设备状态':'告警'}},
+      { code:'iot-fj-350203-202605076', name:'鹭岛光伏逆变器监控单元', model:'PV-INV-X8', zone:'管理信息大区', org:'福建省电力有限公司', project:'厦门分布式光伏可观可测', target:'鹭岛产业园光伏阵列B区', run:'投运', business:'在线', manage:'在线', first:'2026-03-28 10:06:35', online:'2026-08-10 10:20:15', offline:'2026-08-04 20:12:33', created:'2026-03-25 17:22:49', category:'光伏逆变器', domain:'发电', thingModel:'光伏逆变器物模型', softwareVersion:'Sv04.03.25', attrs:{'有功功率':486.5,'设备状态':'正常','通信方式':'以太网'}},
+      { code:'iot-nm-150102-202604052', name:'风场07号风机监控终端', model:'WT-CMU-6A', zone:'管理信息大区', org:'蒙东电力有限公司', project:'兴安风场智慧运维项目', target:'兴安风场07号风机', run:'投运', business:'在线', manage:'在线', first:'2026-01-08 14:18:20', online:'2026-08-10 10:18:32', offline:'2026-08-03 00:26:17', created:'2026-01-05 09:51:08', category:'风机监控终端', domain:'发电', thingModel:'风机运行监控物模型', softwareVersion:'Sv04.01.05', attrs:{'有功功率':2180,'设备状态':'正常','通信方式':'光纤'}},
+      { code:'iot-sd-370102-202603041', name:'泉城配变监测终端012', model:'TTU-PM500', zone:'生产控制大区', org:'山东省电力公司', project:'济南配变精益运维项目', target:'泉城花园12号配变', run:'停运', business:'离线', manage:'离线', first:'2025-11-19 11:25:09', online:'2026-07-28 16:44:02', offline:'2026-07-28 17:02:19', created:'2025-11-15 15:37:42', category:'配变监测终端', domain:'配电', thingModel:'配变监测物模型', softwareVersion:'Sv04.00.19', attrs:{'电压':0,'设备状态':'离线','通信方式':'4G'}},
+      { code:'iot-ah-340104-202602033', name:'皖江线杆塔倾斜监测终端', model:'GTQX-210', zone:'管理信息大区', org:'安徽省电力有限公司', project:'皖江输电线路防灾项目', target:'500kV皖江线#211杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-02-03 09:41:55', online:'2026-08-10 10:16:28', offline:'2026-08-01 22:35:45', created:'2026-01-29 13:12:07', category:'杆塔倾斜监测', domain:'输电', thingModel:'杆塔倾斜监测物模型', softwareVersion:'Sv04.02.03', attrs:{'倾斜角度':0.7,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-hn-410105-202601025', name:'郑东局放监测终端03', model:'PD-MON-7', zone:'生产控制大区', org:'河南省电力公司', project:'郑州站局放综合在线监测', target:'郑东站GIS间隔03', run:'调试中', business:'离线', manage:'休眠', first:'2026-07-10 08:06:11', online:'2026-08-10 10:15:04', offline:'2026-08-09 20:01:36', created:'2026-07-08 16:28:55', category:'局放监测终端', domain:'变电', thingModel:'局部放电监测物模型', softwareVersion:'Sv04.04.10', attrs:{'放电量':28.6,'设备状态':'告警','通信方式':'5G'}}
     ];
 
-    const attributeTree = {
-      '基本信息': {
-        '设备档案': [{name:'设备状态', type:'enum', options:['正常','告警','离线']}, {name:'投运日期', type:'date'}]
-      },
-      '技术参数': {
-        '通信参数': [{name:'通信方式', type:'enum', options:['4G','5G','北斗','光纤','以太网']}],
-        '额定参数': [{name:'额定电压', type:'number'}, {name:'额定电流', type:'number'}]
-      },
-      '量测参数': {
-        '电气量测': [{name:'电压', type:'number'}, {name:'有功功率', type:'number'}, {name:'导线温度', type:'number'}],
-        '状态监测': [{name:'油温', type:'number'}, {name:'覆冰厚度', type:'number'}, {name:'倾斜角度', type:'number'}, {name:'放电量', type:'number'}]
-      },
-      '消息和服务': {
-        '遥控服务': [{name:'开关状态', type:'enum', options:['合闸','分闸']}],
-        '告警服务': [{name:'告警级别', type:'enum', options:['一般','重要','严重']}]
-      }
-    };
-
+    const DEFAULT_SOFTWARE_VERSION = 'Sv04.02.15';
     const $ = id => document.getElementById(id);
-    let filteredDevices = [...devices];
+    let filteredDevices = devices.filter(device => device.softwareVersion === DEFAULT_SOFTWARE_VERSION);
     let toastTimer;
 
     function statusTag(value, type) {
@@ -301,7 +265,7 @@
           <td class="device-name" title="${d.name}">${d.name}</td>
           <td>${d.model}</td><td>${d.zone}</td><td title="${d.org}">${d.org}</td>
           <td title="${d.project}">${d.project}</td><td title="${d.target}">${d.target}</td>
-          <td>${statusTag(d.run, d.run === '投运' ? 'info' : '')}</td><td>${statusTag(d.business)}</td><td>${statusTag(d.manage)}</td>
+          <td title="${d.thingModel}">${d.thingModel}</td><td>${d.softwareVersion}</td><td>${statusTag(d.run, d.run === '投运' ? 'info' : '')}</td><td>${statusTag(d.business)}</td><td>${statusTag(d.manage)}</td>
           <td>${d.first}</td><td>${d.online}</td><td>${d.offline}</td><td>${d.created}</td>
         </tr>`).join('');
       const hasData = filteredDevices.length > 0;
@@ -336,23 +300,19 @@
 
     function runQuery() {
       const val = id => $(id).value.trim().toLowerCase();
-      const attr = $('attributeName').value;
-      const attrValue = $('attributeValue') ? $('attributeValue').value.trim().toLowerCase() : '';
       filteredDevices = devices.filter(d => {
-        const attrMatch = !attr || (Object.prototype.hasOwnProperty.call(d.attrs, attr) && (!attrValue || String(d.attrs[attr]).toLowerCase().includes(attrValue)));
         return (!val('categoryName') || d.category.toLowerCase().includes(val('categoryName')))
           && (!val('terminalName') || d.name.toLowerCase().includes(val('terminalName')))
           && (!val('iotCode') || d.code.toLowerCase().includes(val('iotCode')))
           && (!val('terminalModel') || d.model.toLowerCase().includes(val('terminalModel')))
-          && (!val('thingModel') || d.thingModel.toLowerCase().includes(val('thingModel')))
+          && (!val('softwareVersion') || d.softwareVersion.toLowerCase().includes(val('softwareVersion')))
           && (!val('orgName') || d.org.toLowerCase().includes(val('orgName')))
           && (!val('projectName') || d.project.toLowerCase().includes(val('projectName')))
           && (!val('monitorTarget') || d.target.toLowerCase().includes(val('monitorTarget')))
           && (!$('businessStatus').value || d.business === $('businessStatus').value)
           && (!$('manageStatus').value || d.manage === $('manageStatus').value)
           && inRange(d.online, $('onlineStart').value, $('onlineEnd').value)
-          && inRange(d.offline, $('offlineStart').value, $('offlineEnd').value)
-          && attrMatch;
+          && inRange(d.offline, $('offlineStart').value, $('offlineEnd').value);
       });
       renderRows();
       $('categoryTip').textContent = val('categoryName') ? `所属品类：${$('categoryName').value.trim()}` : '设备数据列表';
@@ -362,65 +322,23 @@
     function clearQueryFields() {
       document.querySelectorAll('.query-area input').forEach(el => { if (el.type !== 'checkbox') el.value = ''; });
       document.querySelectorAll('.query-area select').forEach(el => el.selectedIndex = 0);
-      $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>';
-      $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>';
-      $('dataCategory').disabled = true;
-      $('serviceName').disabled = true;
-      $('attributeName').disabled = true;
-      renderAttributeInput();
     }
 
     function resetQuery() {
       clearQueryFields();
+      $('softwareVersion').value = DEFAULT_SOFTWARE_VERSION;
       $('categoryTip').textContent = '设备数据列表';
-      filteredDevices = [...devices]; renderRows(); showToast('查询条件已重置');
+      filteredDevices = devices.filter(device => device.softwareVersion === DEFAULT_SOFTWARE_VERSION);
+      renderRows(); showToast('查询条件已重置');
     }
 
     function exportCsv() {
-      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','业务状态','业务连接状态','管理连接状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
-      const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.project,d.target,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
+      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','物模型名称','模组软件版本','运行状态','业务状态','管理状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
+      const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.project,d.target,d.thingModel,d.softwareVersion,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
       const csv = '\ufeff' + [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
       const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
       const a = document.createElement('a'); a.href = url; a.download = '设备查询结果.csv'; a.click(); URL.revokeObjectURL(url);
       showToast(`已导出 ${filteredDevices.length} 条设备数据`);
-    }
-
-    function renderAttributeInput(config) {
-      const wrap = $('attributeValueWrap');
-      if (!config) { wrap.innerHTML = '<input class="plain-input" id="attributeValue" placeholder="请先选择属性" disabled />'; return; }
-      if (config.type === 'enum') wrap.innerHTML = `<select class="plain-select" id="attributeValue"><option value="">请选择</option>${config.options.map(v => `<option>${v}</option>`).join('')}</select>`;
-      else if (config.type === 'number') wrap.innerHTML = '<input class="plain-input" id="attributeValue" type="number" step="any" placeholder="请输入数值" />';
-      else if (config.type === 'date') wrap.innerHTML = '<input class="plain-input" id="attributeValue" type="date" />';
-      else wrap.innerHTML = '<input class="plain-input" id="attributeValue" placeholder="请输入属性值" />';
-    }
-
-    function initCascade() {
-      const modelNames = [...new Set(devices.map(device => device.thingModel))];
-      $('thingModel').innerHTML += modelNames.map(name => `<option>${name}</option>`).join('');
-      $('dataCategory').innerHTML += Object.keys(attributeTree).map(k => `<option>${k}</option>`).join('');
-      $('thingModel').addEventListener('change', e => {
-        $('dataCategory').selectedIndex = 0;
-        $('dataCategory').disabled = !e.target.value;
-        $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>';
-        $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>';
-        $('serviceName').disabled = true;
-        $('attributeName').disabled = true;
-        renderAttributeInput();
-      });
-      $('dataCategory').addEventListener('change', e => {
-        const services = attributeTree[e.target.value] || {};
-        $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>' + Object.keys(services).map(k => `<option>${k}</option>`).join('');
-        $('serviceName').disabled = !e.target.value; $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>'; $('attributeName').disabled = true; renderAttributeInput();
-      });
-      $('serviceName').addEventListener('change', e => {
-        const list = attributeTree[$('dataCategory').value]?.[e.target.value] || [];
-        $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>' + list.map(x => `<option value="${x.name}">${x.name}</option>`).join('');
-        $('attributeName').disabled = !e.target.value; renderAttributeInput();
-      });
-      $('attributeName').addEventListener('change', e => {
-        const list = attributeTree[$('dataCategory').value]?.[$('serviceName').value] || [];
-        renderAttributeInput(list.find(x => x.name === e.target.value));
-      });
     }
 
     function toggleAdvanced(open) {
@@ -437,7 +355,6 @@
     $('checkAll').addEventListener('change', e => { document.querySelectorAll('.row-check').forEach(x => x.checked = e.target.checked); updateSelected(); });
     document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.query-area')) runQuery(); });
 
-    initCascade();
     renderRows();
   </script>
 </body>
