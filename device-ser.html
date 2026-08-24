@@ -105,7 +105,7 @@
     .toolbar-tip { margin-left: auto; color: #8b97a9; font-size: 13px; }
 
     .table-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; }
-    table { width: 100%; min-width: 2070px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    table { width: 100%; min-width: 2150px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
     th, td {
       height: 44px; padding: 0 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
       text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -117,6 +117,17 @@
     tbody tr:nth-child(even) td { background: #f8fafc; }
     tbody tr:hover td { background: #edf4ff; }
     th:first-child, td:first-child { width: 48px; text-align: center; padding: 0; }
+    th.operation-column, td.operation-cell {
+      position: sticky; right: 0; text-align: center; box-shadow: -5px 0 10px rgba(48, 69, 102, .08);
+    }
+    th.operation-column { z-index: 5; background: #f7f9fc; }
+    td.operation-cell { z-index: 2; background: #fff; }
+    tbody tr:nth-child(even) td.operation-cell { background: #f8fafc; }
+    tbody tr:hover td.operation-cell { background: #edf4ff; }
+    .view-btn {
+      padding: 4px 10px; border: 0; border-radius: 4px; color: var(--primary); background: transparent;
+    }
+    .view-btn:hover { color: var(--primary-hover); background: #eaf1ff; }
     .check { width: 15px; height: 15px; accent-color: var(--primary); }
     .code-cell { color: #4b617e; font-family: Consolas, "Microsoft YaHei", monospace; font-size: 13px; }
     .device-name { color: #2d5fae; font-weight: 500; }
@@ -209,14 +220,14 @@
             <col style="width:48px"><col style="width:190px"><col style="width:190px"><col style="width:130px">
             <col style="width:100px"><col style="width:180px"><col style="width:150px"><col style="width:145px">
             <col style="width:105px"><col style="width:120px"><col style="width:120px"><col style="width:190px">
-            <col style="width:140px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:165px">
+            <col style="width:140px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:80px">
           </colgroup>
           <thead>
             <tr>
               <th><input class="check" id="checkAll" type="checkbox" aria-label="全选" /></th>
               <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th>
               <th>所属项目</th><th>监测对象</th><th>物模型名称</th><th>模组软件版本</th><th>业务状态</th><th>业务连接状态</th><th>管理连接状态</th>
-              <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th>
+              <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th><th class="operation-column">操作</th>
             </tr>
           </thead>
           <tbody id="deviceBody"></tbody>
@@ -268,6 +279,7 @@
           <td title="${d.project}">${d.project}</td><td title="${d.target}">${d.target}</td>
           <td title="${d.thingModel}">${d.thingModel}</td><td>${d.softwareVersion}</td><td>${statusTag(d.run, d.run === '投运' ? 'info' : '')}</td><td>${statusTag(d.business)}</td><td>${statusTag(d.manage)}</td>
           <td>${d.first}</td><td>${d.online}</td><td>${d.offline}</td><td>${d.created}</td>
+          <td class="operation-cell"><button class="view-btn" type="button" data-index="${i}">查看</button></td>
         </tr>`).join('');
       const hasData = filteredDevices.length > 0;
       document.querySelector('table').style.display = hasData ? 'table' : 'none';
@@ -281,6 +293,10 @@
 
     function bindRowEvents() {
       document.querySelectorAll('.row-check').forEach(el => el.addEventListener('change', updateSelected));
+      document.querySelectorAll('.view-btn').forEach(el => el.addEventListener('click', () => {
+        const device = filteredDevices[Number(el.dataset.index)];
+        if (device) showToast(`查看设备：${device.name}`);
+      }));
     }
 
     function updateSelected() {
