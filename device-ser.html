@@ -105,7 +105,7 @@
     .toolbar-tip { margin-left: auto; color: #8b97a9; font-size: 13px; }
 
     .table-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; }
-    table { width: 100%; min-width: 2150px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    table { width: 100%; min-width: 2320px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
     th, td {
       height: 44px; padding: 0 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
       text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -218,14 +218,14 @@
         <table aria-label="设备查询结果">
           <colgroup>
             <col style="width:48px"><col style="width:190px"><col style="width:190px"><col style="width:130px">
-            <col style="width:100px"><col style="width:180px"><col style="width:150px"><col style="width:145px">
+            <col style="width:100px"><col style="width:180px"><col style="width:170px"><col style="width:150px"><col style="width:145px">
             <col style="width:105px"><col style="width:120px"><col style="width:120px"><col style="width:190px">
             <col style="width:140px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:165px"><col style="width:80px">
           </colgroup>
           <thead>
             <tr>
               <th><input class="check" id="checkAll" type="checkbox" aria-label="全选" /></th>
-              <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th>
+              <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th><th>安装位置</th>
               <th>所属项目</th><th>监测对象</th><th>物模型名称</th><th>模组软件版本</th><th>业务状态</th><th>业务连接状态</th><th>管理连接状态</th>
               <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th><th class="operation-column">操作</th>
             </tr>
@@ -246,16 +246,16 @@
   <div class="toast" id="toast"></div>
   <script>
     const devices = [
-      { code:'iot-gd-440106-202608001', name:'花城站主变温度监测终端', model:'BWJC-9000', zone:'生产控制大区', org:'广东电网有限责任公司', project:'广州变电站智能巡检项目', target:'花城站1号主变', run:'投运', business:'在线', manage:'在线', first:'2026-03-12 09:20:16', online:'2026-08-10 10:28:41', offline:'2026-08-09 23:12:06', created:'2026-03-10 14:02:35', category:'变压器监测终端', domain:'变电', thingModel:'主变温度监测物模型', softwareVersion:'Sv04.02.15', attrs:{'油温':67.3,'设备状态':'正常','通信方式':'5G'}},
-      { code:'iot-js-320115-202608017', name:'龙湖线覆冰在线监测装置', model:'FBJC-V5.2', zone:'管理信息大区', org:'江苏省电力有限公司', project:'输电线路状态感知提升', target:'220kV龙湖线#087杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-01-18 15:11:43', online:'2026-08-10 10:27:08', offline:'2026-08-08 02:31:17', created:'2026-01-12 11:43:28', category:'覆冰在线监测装置', domain:'输电', thingModel:'输电覆冰监测物模型', softwareVersion:'Sv04.03.08', attrs:{'覆冰厚度':3.2,'设备状态':'正常','通信方式':'北斗'}},
-      { code:'iot-zj-330106-202607203', name:'钱塘线导线温度监测终端', model:'DXWD-300', zone:'管理信息大区', org:'浙江省电力有限公司', project:'杭州输电数字化改造', target:'500kV钱塘线#126杆塔', run:'调试中', business:'离线', manage:'离线', first:'2026-05-26 08:34:12', online:'2026-08-09 18:05:33', offline:'2026-08-09 18:36:52', created:'2026-05-22 16:08:51', category:'导线温度监测', domain:'输电', thingModel:'导线温度监测物模型', softwareVersion:'Sv04.01.26', attrs:{'导线温度':42.8,'设备状态':'告警','通信方式':'4G'}},
-      { code:'iot-sc-510107-202607128', name:'锦江台区智能融合终端', model:'TTU-8200E', zone:'生产控制大区', org:'四川省电力公司', project:'成都低压台区透明化项目', target:'锦江路公变3号台区', run:'投运', business:'在线', manage:'在线', first:'2026-04-09 13:20:30', online:'2026-08-10 10:25:19', offline:'2026-08-07 01:12:44', created:'2026-04-08 10:18:27', category:'台区智能终端', domain:'配电', thingModel:'台区融合终端物模型', softwareVersion:'Sv04.04.09', attrs:{'电压':223.6,'开关状态':'合闸','设备状态':'正常'}},
-      { code:'iot-hb-420106-202606099', name:'东湖低压智能开关A17', model:'LTU-S160', zone:'生产控制大区', org:'湖北省电力有限公司', project:'武汉配网自愈能力提升', target:'东湖台区低压分支A17', run:'投运', business:'在线', manage:'休眠', first:'2026-02-15 07:51:22', online:'2026-08-10 10:23:57', offline:'2026-08-06 03:46:10', created:'2026-02-12 09:06:18', category:'低压智能开关', domain:'配电', thingModel:'低压智能开关物模型', softwareVersion:'Sv04.02.06', attrs:{'电压':187.2,'开关状态':'合闸','设备状态':'告警'}},
-      { code:'iot-fj-350203-202605076', name:'鹭岛光伏逆变器监控单元', model:'PV-INV-X8', zone:'管理信息大区', org:'福建省电力有限公司', project:'厦门分布式光伏可观可测', target:'鹭岛产业园光伏阵列B区', run:'投运', business:'在线', manage:'在线', first:'2026-03-28 10:06:35', online:'2026-08-10 10:20:15', offline:'2026-08-04 20:12:33', created:'2026-03-25 17:22:49', category:'光伏逆变器', domain:'发电', thingModel:'光伏逆变器物模型', softwareVersion:'Sv04.03.25', attrs:{'有功功率':486.5,'设备状态':'正常','通信方式':'以太网'}},
-      { code:'iot-nm-150102-202604052', name:'风场07号风机监控终端', model:'WT-CMU-6A', zone:'管理信息大区', org:'蒙东电力有限公司', project:'兴安风场智慧运维项目', target:'兴安风场07号风机', run:'投运', business:'在线', manage:'在线', first:'2026-01-08 14:18:20', online:'2026-08-10 10:18:32', offline:'2026-08-03 00:26:17', created:'2026-01-05 09:51:08', category:'风机监控终端', domain:'发电', thingModel:'风机运行监控物模型', softwareVersion:'Sv04.01.05', attrs:{'有功功率':2180,'设备状态':'正常','通信方式':'光纤'}},
-      { code:'iot-sd-370102-202603041', name:'泉城配变监测终端012', model:'TTU-PM500', zone:'生产控制大区', org:'山东省电力公司', project:'济南配变精益运维项目', target:'泉城花园12号配变', run:'停运', business:'离线', manage:'离线', first:'2025-11-19 11:25:09', online:'2026-07-28 16:44:02', offline:'2026-07-28 17:02:19', created:'2025-11-15 15:37:42', category:'配变监测终端', domain:'配电', thingModel:'配变监测物模型', softwareVersion:'Sv04.00.19', attrs:{'电压':0,'设备状态':'离线','通信方式':'4G'}},
-      { code:'iot-ah-340104-202602033', name:'皖江线杆塔倾斜监测终端', model:'GTQX-210', zone:'管理信息大区', org:'安徽省电力有限公司', project:'皖江输电线路防灾项目', target:'500kV皖江线#211杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-02-03 09:41:55', online:'2026-08-10 10:16:28', offline:'2026-08-01 22:35:45', created:'2026-01-29 13:12:07', category:'杆塔倾斜监测', domain:'输电', thingModel:'杆塔倾斜监测物模型', softwareVersion:'Sv04.02.03', attrs:{'倾斜角度':0.7,'设备状态':'正常','通信方式':'北斗'}},
-      { code:'iot-hn-410105-202601025', name:'郑东局放监测终端03', model:'PD-MON-7', zone:'生产控制大区', org:'河南省电力公司', project:'郑州站局放综合在线监测', target:'郑东站GIS间隔03', run:'调试中', business:'离线', manage:'休眠', first:'2026-07-10 08:06:11', online:'2026-08-10 10:15:04', offline:'2026-08-09 20:01:36', created:'2026-07-08 16:28:55', category:'局放监测终端', domain:'变电', thingModel:'局部放电监测物模型', softwareVersion:'Sv04.04.10', attrs:{'放电量':28.6,'设备状态':'告警','通信方式':'5G'}}
+      { code:'iot-gd-440106-202608001', name:'花城站主变温度监测终端', model:'BWJC-9000', zone:'生产控制大区', org:'广东电网有限责任公司', location:'花城站主变间隔A区', project:'广州变电站智能巡检项目', target:'花城站1号主变', run:'投运', business:'在线', manage:'在线', first:'2026-03-12 09:20:16', online:'2026-08-10 10:28:41', offline:'2026-08-09 23:12:06', created:'2026-03-10 14:02:35', category:'变压器监测终端', domain:'变电', thingModel:'主变温度监测物模型', softwareVersion:'Sv04.02.15', attrs:{'油温':67.3,'设备状态':'正常','通信方式':'5G'}},
+      { code:'iot-js-320115-202608017', name:'龙湖线覆冰在线监测装置', model:'FBJC-V5.2', zone:'管理信息大区', org:'江苏省电力有限公司', location:'龙湖线#087杆塔平台', project:'输电线路状态感知提升', target:'220kV龙湖线#087杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-01-18 15:11:43', online:'2026-08-10 10:27:08', offline:'2026-08-08 02:31:17', created:'2026-01-12 11:43:28', category:'覆冰在线监测装置', domain:'输电', thingModel:'输电覆冰监测物模型', softwareVersion:'Sv04.03.08', attrs:{'覆冰厚度':3.2,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-zj-330106-202607203', name:'钱塘线导线温度监测终端', model:'DXWD-300', zone:'管理信息大区', org:'浙江省电力有限公司', location:'钱塘线#126杆塔塔顶', project:'杭州输电数字化改造', target:'500kV钱塘线#126杆塔', run:'调试中', business:'离线', manage:'离线', first:'2026-05-26 08:34:12', online:'2026-08-09 18:05:33', offline:'2026-08-09 18:36:52', created:'2026-05-22 16:08:51', category:'导线温度监测', domain:'输电', thingModel:'导线温度监测物模型', softwareVersion:'Sv04.01.26', attrs:{'导线温度':42.8,'设备状态':'告警','通信方式':'4G'}},
+      { code:'iot-sc-510107-202607128', name:'锦江台区智能融合终端', model:'TTU-8200E', zone:'生产控制大区', org:'四川省电力公司', location:'锦江路3号台区配电房', project:'成都低压台区透明化项目', target:'锦江路公变3号台区', run:'投运', business:'在线', manage:'在线', first:'2026-04-09 13:20:30', online:'2026-08-10 10:25:19', offline:'2026-08-07 01:12:44', created:'2026-04-08 10:18:27', category:'台区智能终端', domain:'配电', thingModel:'台区融合终端物模型', softwareVersion:'Sv04.04.09', attrs:{'电压':223.6,'开关状态':'合闸','设备状态':'正常'}},
+      { code:'iot-hb-420106-202606099', name:'东湖低压智能开关A17', model:'LTU-S160', zone:'生产控制大区', org:'湖北省电力有限公司', location:'东湖台区低压柜A17', project:'武汉配网自愈能力提升', target:'东湖台区低压分支A17', run:'投运', business:'在线', manage:'休眠', first:'2026-02-15 07:51:22', online:'2026-08-10 10:23:57', offline:'2026-08-06 03:46:10', created:'2026-02-12 09:06:18', category:'低压智能开关', domain:'配电', thingModel:'低压智能开关物模型', softwareVersion:'Sv04.02.06', attrs:{'电压':187.2,'开关状态':'合闸','设备状态':'告警'}},
+      { code:'iot-fj-350203-202605076', name:'鹭岛光伏逆变器监控单元', model:'PV-INV-X8', zone:'管理信息大区', org:'福建省电力有限公司', location:'鹭岛产业园B区逆变器舱', project:'厦门分布式光伏可观可测', target:'鹭岛产业园光伏阵列B区', run:'投运', business:'在线', manage:'在线', first:'2026-03-28 10:06:35', online:'2026-08-10 10:20:15', offline:'2026-08-04 20:12:33', created:'2026-03-25 17:22:49', category:'光伏逆变器', domain:'发电', thingModel:'光伏逆变器物模型', softwareVersion:'Sv04.03.25', attrs:{'有功功率':486.5,'设备状态':'正常','通信方式':'以太网'}},
+      { code:'iot-nm-150102-202604052', name:'风场07号风机监控终端', model:'WT-CMU-6A', zone:'管理信息大区', org:'蒙东电力有限公司', location:'兴安风场07号机舱', project:'兴安风场智慧运维项目', target:'兴安风场07号风机', run:'投运', business:'在线', manage:'在线', first:'2026-01-08 14:18:20', online:'2026-08-10 10:18:32', offline:'2026-08-03 00:26:17', created:'2026-01-05 09:51:08', category:'风机监控终端', domain:'发电', thingModel:'风机运行监控物模型', softwareVersion:'Sv04.01.05', attrs:{'有功功率':2180,'设备状态':'正常','通信方式':'光纤'}},
+      { code:'iot-sd-370102-202603041', name:'泉城配变监测终端012', model:'TTU-PM500', zone:'生产控制大区', org:'山东省电力公司', location:'泉城花园12号配电房', project:'济南配变精益运维项目', target:'泉城花园12号配变', run:'停运', business:'离线', manage:'离线', first:'2025-11-19 11:25:09', online:'2026-07-28 16:44:02', offline:'2026-07-28 17:02:19', created:'2025-11-15 15:37:42', category:'配变监测终端', domain:'配电', thingModel:'配变监测物模型', softwareVersion:'Sv04.00.19', attrs:{'电压':0,'设备状态':'离线','通信方式':'4G'}},
+      { code:'iot-ah-340104-202602033', name:'皖江线杆塔倾斜监测终端', model:'GTQX-210', zone:'管理信息大区', org:'安徽省电力有限公司', location:'皖江线#211杆塔横担', project:'皖江输电线路防灾项目', target:'500kV皖江线#211杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-02-03 09:41:55', online:'2026-08-10 10:16:28', offline:'2026-08-01 22:35:45', created:'2026-01-29 13:12:07', category:'杆塔倾斜监测', domain:'输电', thingModel:'杆塔倾斜监测物模型', softwareVersion:'Sv04.02.03', attrs:{'倾斜角度':0.7,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-hn-410105-202601025', name:'郑东局放监测终端03', model:'PD-MON-7', zone:'生产控制大区', org:'河南省电力公司', location:'郑东站GIS间隔03', project:'郑州站局放综合在线监测', target:'郑东站GIS间隔03', run:'调试中', business:'离线', manage:'休眠', first:'2026-07-10 08:06:11', online:'2026-08-10 10:15:04', offline:'2026-08-09 20:01:36', created:'2026-07-08 16:28:55', category:'局放监测终端', domain:'变电', thingModel:'局部放电监测物模型', softwareVersion:'Sv04.04.10', attrs:{'放电量':28.6,'设备状态':'告警','通信方式':'5G'}}
     ];
 
     const DEFAULT_SOFTWARE_VERSION = 'Sv04.02.15';
@@ -275,7 +275,7 @@
           <td><input class="check row-check" type="checkbox" data-index="${i}" aria-label="选择${d.name}" /></td>
           <td class="code-cell" title="${d.code}">${d.code}</td>
           <td class="device-name" title="${d.name}">${d.name}</td>
-          <td>${d.model}</td><td>${d.zone}</td><td title="${d.org}">${d.org}</td>
+          <td>${d.model}</td><td>${d.zone}</td><td title="${d.org}">${d.org}</td><td title="${d.location}">${d.location}</td>
           <td title="${d.project}">${d.project}</td><td title="${d.target}">${d.target}</td>
           <td title="${d.thingModel}">${d.thingModel}</td><td>${d.softwareVersion}</td><td>${statusTag(d.run, d.run === '投运' ? 'info' : '')}</td><td>${statusTag(d.business)}</td><td>${statusTag(d.manage)}</td>
           <td>${d.first}</td><td>${d.online}</td><td>${d.offline}</td><td>${d.created}</td>
@@ -351,8 +351,8 @@
     }
 
     function exportCsv() {
-      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','物模型名称','模组软件版本','业务状态','业务连接状态','管理连接状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
-      const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.project,d.target,d.thingModel,d.softwareVersion,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
+      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','安装位置','所属项目','监测对象','物模型名称','模组软件版本','业务状态','业务连接状态','管理连接状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
+      const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.location,d.project,d.target,d.thingModel,d.softwareVersion,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
       const csv = '\ufeff' + [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
       const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
       const a = document.createElement('a'); a.href = url; a.download = '设备查询结果.csv'; a.click(); URL.revokeObjectURL(url);
