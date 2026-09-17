@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>链路监控 · 总览</title>
+  <link rel="stylesheet" href="assets/styles.css?v=20260917-20">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#overview" aria-label="链路监控首页"><span class="brand-mark">⌘</span><span>链路监控</span></a>
+    <span class="topnav active">链路监控总览</span>
+    <div class="topbar-end"><span class="live-dot"></span>当前拓扑<span class="top-divider"></span><button id="helpBtn" class="top-help" aria-label="使用帮助">?</button></div>
+  </header>
+
+  <main id="app" class="app-shell">
+    <section class="page-heading">
+      <div><div class="eyebrow">业务观测 / 链路监控</div><h1>链路监控总览</h1><p>从网级到边缘，查看业务在各安全分区之间的流转关系</p></div>
+      <div class="heading-meta"><span id="lastRefresh"></span><button id="refreshBtn" class="button"><span aria-hidden="true">↻</span> 刷新</button></div>
+    </section>
+
+    <section class="filter-card" aria-label="总览查询">
+      <div class="filter-field unit-field">
+        <label id="unitLabel">单位</label>
+        <button id="unitTrigger" class="select-trigger" aria-labelledby="unitLabel unitText" aria-expanded="false" aria-controls="unitPopover"><span id="unitText">选择单位</span><span class="chevron">⌄</span></button>
+        <section id="unitPopover" class="unit-popover" hidden aria-label="单位级联复选">
+          <div class="popover-title"><strong>选择边缘单位</strong><span id="draftCount"></span></div>
+          <div class="unit-search"><span aria-hidden="true">⌕</span><input id="unitSearch" placeholder="搜索省份或地市" aria-label="搜索单位"></div>
+          <div class="unit-cascade">
+            <div class="cascade-col"><div class="column-label">省级节点</div><div id="provinceList"></div></div>
+            <div class="cascade-col cities"><div id="cityTitle" class="column-label">地市节点</div><div id="cityList"></div></div>
+          </div>
+          <div class="popover-note">省级与地市独立勾选，选择省级不会自动选择所属地市。</div>
+          <div class="popover-footer"><button id="clearUnits" class="text-button">清空选择</button><div><button id="cancelUnits" class="button">取消</button><button id="applyUnits" class="button primary">确定</button></div></div>
+        </section>
+      </div>
+      <div class="filter-field"><label for="businessFilter">业务对象</label><select id="businessFilter"><option value="">全部业务对象</option></select></div>
+      <div class="filter-field path-field"><label for="pathFilter">业务链路</label><input id="pathFilter" placeholder="输入 Path 名称 / 标识" autocomplete="off"></div>
+      <div class="filter-field"><label for="typeFilter">链路类型</label><select id="typeFilter"><option value="">全部类型</option></select></div>
+      <div class="filter-actions"><button id="queryBtn" class="button primary">查询</button><button id="resetBtn" class="button">重置</button></div>
+    </section>
+
+    <section class="selection-strip"><span class="strip-label">已选单位</span><div id="selectedUnits" class="selected-chips"></div><span id="selectionTotal" class="selection-total"></span></section>
+    <div id="noticeBar" class="notice-bar" role="status" hidden></div>
+
+    <section class="workspace" id="workspace">
+      <aside id="pathPanel" class="path-panel" hidden>
+        <div class="panel-header"><div><h2>业务链路 <span id="pathCount" class="small-count"></span></h2><p>当前可见单位的完整 Path</p></div><button id="closePaths" class="icon-button" aria-label="收起链路列表">×</button></div>
+        <div id="pathList" class="path-list"></div>
+      </aside>
+
+      <section id="topologyCard" class="topology-card">
+        <div class="canvas-heading">
+          <div class="canvas-title"><span class="section-icon">⌘</span><div><h2>全域链路拓扑</h2><p id="focusHint">网级与所选边缘单位 · 一至四区</p></div></div>
+          <div class="canvas-actions"><button id="pathsBtn" class="button small" aria-expanded="false">链路列表 <span id="visiblePathCount" class="small-count"></span></button><button id="clearFocusBtn" class="text-button">清除聚焦</button><button id="fullscreenBtn" class="button small" aria-label="全屏显示" aria-pressed="false">全屏</button></div>
+        </div>
+        <div class="canvas-info">
+          <div class="legend"><span class="legend-line down">━━▶ 下行业务</span><span class="legend-line up">┅┅▶ 状态上行</span><span class="legend-line abnormal">━━▶ 异常</span><span class="legend-line unknown">┄┄▶ 未知</span><span class="legend-separator"></span><span class="legend-device">◇ 隔离装置 / 防火墙</span></div>
+          <div class="page-control"><span id="pageSummary"></span><button id="prevPage" class="icon-button" aria-label="上一组单位">‹</button><button id="nextPage" class="icon-button" aria-label="下一组单位">›</button></div>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap" tabindex="0" aria-label="拓扑画布，可滚动查看；按方向键平移">
+          <svg id="topologySvg" xmlns="http://www.w3.org/2000/svg" aria-label="网级与边缘节点的有向业务拓扑"></svg>
+          <div class="empty-canvas" id="emptyCanvas" hidden><span class="empty-icon">⌘</span><h3 id="emptyTitle"></h3><p id="emptyText"></p><button id="emptyAction" class="button primary">重置查询</button></div>
+        </div>
+        <div class="canvas-bottom">
+          <span><span class="bottom-dot"></span>箭头表示信息流向 · 颜色区分方向，红色 / 灰色线型提示异常与未知</span>
+          <div class="zoom-tools"><button id="zoomOutBtn" class="icon-button" aria-label="缩小">−</button><span id="zoomLabel">100%</span><button id="zoomInBtn" class="icon-button" aria-label="放大">＋</button><span class="tool-divider"></span><button id="fitBtn" class="text-button">适应宽度</button></div>
+        </div>
+      </section>
+
+      <aside id="detailPanel" class="detail-panel" hidden>
+        <div class="panel-header"><div><h2>对象详情</h2><p id="detailSub">当前生效拓扑</p></div><button id="closeDetail" class="icon-button" aria-label="关闭对象详情">×</button></div>
+        <div id="detailContent" class="detail-content"></div>
+      </aside>
+    </section>
+    <div class="page-footnote"><span id="resultSummary"></span><span>查看范围：已发布且启用的业务链路</span></div>
+  </main>
+
+  <main id="trendView" class="trend-view" hidden>
+    <section class="trend-page-head">
+      <button id="trendBackBtn" class="button">← 返回总览</button>
+      <div class="trend-page-title"><div class="eyebrow">业务链路详情</div><h1 id="trendPathName">—</h1><p id="trendPathMeta">—</p></div>
+      <span id="trendPathStatus"></span>
+    </section>
+    <nav class="detail-tabs" aria-label="链路详情页签">
+      <button id="trendSummaryTab" class="detail-tab">链路总览</button>
+      <button id="trendMetricsTab" class="detail-tab active">指标趋势</button>
+    </nav>
+    <section id="trendSummaryPanel" class="trend-tab-panel" hidden></section>
+    <section id="trendMetricsPanel" class="trend-tab-panel">
+      <div class="trend-toolbar">
+        <div class="range-buttons" id="trendRangeButtons">
+          <button class="button small active" data-range="1h">1小时</button><button class="button small" data-range="6h">6小时</button><button class="button small" data-range="24h">24小时</button><button class="button small" data-range="7d">7天</button><button class="button small" data-range="30d">30天</button><button class="button small" data-range="custom">自定义</button>
+        </div>
+        <div id="trendCustomRange" class="custom-range" hidden><input id="trendStart" type="datetime-local"><span>至</span><input id="trendEnd" type="datetime-local"><button id="applyTrendRange" class="button small primary">应用</button></div>
+        <span id="trendGrain" class="grain-note">实际粒度：1分钟</span>
+      </div>
+      <section id="pathMetricReference" class="path-metric-reference"></section>
+      <section class="object-trend-layout">
+        <aside class="object-selector-card">
+          <h2>对象选择</h2><p>一次查看一个节点或 Edge</p>
+          <label for="trendObjectSelect">当前对象</label><select id="trendObjectSelect"></select>
+          <div id="trendObjectContext" class="object-current"></div>
+          <div id="trendDimensionControls" class="dimension-controls"></div>
+        </aside>
+        <div id="objectTrendContent" class="object-trend-content"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="helpDialog">
+    <div class="dialog-head"><h2>总览使用帮助</h2><button id="closeHelp" class="icon-button" aria-label="关闭帮助">×</button></div>
+    <div class="dialog-body">
+      <p><b>按单位查看</b><br>省级与地市是独立边缘节点。勾选省份只选择省级节点，展开省份后可另外勾选地市。</p>
+      <p><b>按链路定位</b><br>查询业务对象或打开链路列表，选择 Path 可突出完整路径。点击节点、装置或连线查看状态和引用。</p>
+      <p><b>多单位浏览</b><br>已选单位始终保留在顶部；使用“上一组 / 下一组”切换可见单位。网级公共对象在同一图中复用。</p>
+      <p><b>操作画布</b><br>拖动画布空白区域平移，滚动查看纵向拓扑；按住 Ctrl / ⌘ 并滚轮缩放。Esc 清除选择；方向键平移画布。</p>
+    </div>
+  </dialog>
+
+  <script defer src="assets/shared.js?v=20260917-20"></script>
+  <script defer src="assets/data.js?v=20260917-20"></script>
+  <script defer src="assets/metrics-data.js?v=20260917-20"></script>
+  <script defer src="assets/model.js?v=20260917-20"></script>
+  <script defer src="assets/page-registry.js?v=20260917-20"></script>
+  <script defer src="assets/metrics-trend.js?v=20260917-20"></script>
+  <script defer src="assets/overview.js?v=20260917-20"></script>
+</body>
+</html>

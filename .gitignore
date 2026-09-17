@@ -1,0 +1,18 @@
+# Local browser profiles may contain credentials, cookies, and sessions.
+output/edge-profile-dom/
+
+# Temporary document rendering output.
+tmp_docx_review/
+
+# Local editor, agent, and OS artifacts.
+.agents/
+.codex/
+.vscode/
+Thumbs.db
+Desktop.ini
+
+# Dependency and build artifacts.
+node_modules/
+dist/
+coverage/
+*.log
