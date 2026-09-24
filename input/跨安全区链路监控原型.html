@@ -1,0 +1,2418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>跨安全区链路通信监控 · 单位视角大屏原型</title>
+<style>
+/* ==========================================================================
+   1. 设计令牌
+   ========================================================================== */
+:root{
+  --bg:#0a1122;
+  --cyan:#38c6ff; --blue:#5b8cff; --violet:#9d7bff;
+  --green:#2ee6a8; --amber:#ffb648; --red:#ff5f5f;
+  --text:#eaf2ff; --muted:#8ba3c9; --dim:#5d7699;
+  --card:rgba(16,28,52,.78);
+  --card-border:rgba(99,150,255,.14);
+  --card-hi:rgba(56,198,255,.09);
+  /* 业务语义色：与状态一一对应，全站唯一来源 */
+  --st-normal:var(--green);
+  --st-blocked:var(--red);
+  --st-impact:#af6977;
+  --st-metric:var(--amber);
+  --st-unknown:#8492a8;
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow:0 10px 34px rgba(0,0,0,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:13px;line-height:1.45;
+  color:var(--text);background:var(--bg);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.2px;
+  -webkit-font-smoothing:antialiased;
+}
+/* 背景：径向光晕 + 网格 */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(1100px 560px at 12% -12%, rgba(56,198,255,.12), transparent 60%),
+    radial-gradient(900px 480px at 88% 112%, rgba(157,123,255,.10), transparent 60%),
+    radial-gradient(700px 420px at 78% -8%, rgba(91,140,255,.08), transparent 55%),
+    linear-gradient(180deg,#0c1428 0%,#0a1122 45%,#0a0f1e 100%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(120,160,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(120,160,255,.045) 1px,transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(ellipse 90% 80% at 50% 30%,#000 35%,transparent 90%);
+          mask-image:radial-gradient(ellipse 90% 80% at 50% 30%,#000 35%,transparent 90%);
+}
+b,strong{font-weight:700}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,150,255,.25);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(99,150,255,.4)}
+
+/* ==========================================================================
+   2. 顶栏
+   ========================================================================== */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  min-height:66px;padding:10px 20px;
+  background:rgba(9,15,30,.72);
+  border-bottom:1px solid var(--card-border);
+  backdrop-filter:blur(14px);
+}
+.brand{display:flex;align-items:center;gap:12px;flex:none}
+.logo{width:38px;height:44px;filter:drop-shadow(0 0 10px rgba(56,198,255,.45))}
+.brand-txt h1{
+  font-size:19px;font-weight:700;letter-spacing:1.6px;white-space:nowrap;
+  background:linear-gradient(90deg,#bfe6ff,#38c6ff 45%,#9d7bff);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand-txt p{font-size:10px;color:var(--dim);letter-spacing:1.3px;margin-top:2px;white-space:nowrap}
+.tb-center{flex:1 1 auto;display:flex;justify-content:center;min-width:0}
+.filters{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:center}
+.field{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:8px;
+  border:1px solid var(--card-border);background:rgba(20,32,56,.6);
+  color:var(--muted);font-size:12.5px;white-space:nowrap;
+  transition:border-color .2s,background .2s;
+}
+.field:hover{border-color:rgba(56,198,255,.4);background:var(--card-hi)}
+.field select{
+  border:0;outline:0;background:transparent;color:var(--text);
+  font-size:12.5px;max-width:136px;cursor:pointer;
+}
+.field select:disabled{color:var(--dim);cursor:not-allowed}
+.field option{background:#10243d;color:var(--text)}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:8px;font-size:12.5px;
+  color:var(--muted);border:1px solid var(--card-border);
+  background:rgba(20,32,56,.55);
+  transition:all .2s;user-select:none;white-space:nowrap;
+}
+.btn:hover{color:var(--text);border-color:rgba(56,198,255,.45);background:var(--card-hi)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn.primary{
+  color:#04121f;font-weight:700;border-color:transparent;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  box-shadow:0 0 16px rgba(56,198,255,.28);
+}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.on{color:#a9f5d8;border-color:rgba(46,230,168,.45);background:rgba(46,230,168,.08)}
+.tb-right{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
+.clock{text-align:right;line-height:1.15;min-width:86px}
+.clock .ct{font-size:20px;font-weight:700;letter-spacing:1.4px;text-shadow:0 0 14px rgba(56,198,255,.35)}
+.clock .cd{font-size:10px;color:var(--dim);letter-spacing:.8px}
+
+/* ==========================================================================
+   3. 页面骨架
+   ========================================================================== */
+.page{padding:10px 20px 8px;display:flex;flex-direction:column;gap:12px}
+
+/* 单位概况状态卡（原「状态横幅 + 统计口径」已并入 KPI 首卡，此行为唯一口径） */
+.kpi.status{padding-left:19px}
+.kpi.status::after{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;
+  border-radius:var(--radius) 0 0 var(--radius);
+  background:var(--st-unknown);box-shadow:0 0 14px var(--st-unknown);
+}
+.kpi.status.danger::after{background:var(--st-blocked);box-shadow:0 0 14px var(--st-blocked)}
+.kpi.status.warn::after{background:var(--st-metric);box-shadow:0 0 14px var(--st-metric)}
+.kpi.status.ok::after{background:var(--st-normal);box-shadow:0 0 14px var(--st-normal)}
+
+/* KPI 条（4 卡：当前单位概况 + 平均时延 + 链路吞吐量 + 今日告警） */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{
+  position:relative;overflow:hidden;
+  min-height:72px;padding:12px 17px 11px;border-radius:var(--radius);
+  border:1px solid var(--card-border);
+  background:linear-gradient(160deg,rgba(19,32,58,.85),rgba(10,18,34,.85));
+  box-shadow:0 8px 28px rgba(0,0,0,.3);
+  /* 标签与数值同行（原为上下三行），整卡压矮约 33px */
+  display:flex;flex-direction:column;justify-content:center;
+}
+.kpi::before{
+  content:"";position:absolute;top:0;left:16px;right:16px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(56,198,255,.55),transparent);
+}
+.kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+/* 首卡状态胶囊：与「异常对象清单」的状态 chip 同族，承载「状态」而非「计数」 */
+.kpi-chip{
+  font-size:14px;font-weight:700;letter-spacing:.4px;white-space:nowrap;
+  padding:3px 11px;border-radius:999px;
+  color:#a9b6c8;background:rgba(132,146,168,.12);border:1px solid rgba(132,146,168,.4);
+}
+.kpi-chip.danger{color:#ffb3b3;background:rgba(255,95,95,.12);border-color:rgba(255,95,95,.4)}
+.kpi-chip.warn{color:#ffd9a0;background:rgba(255,182,72,.12);border-color:rgba(255,182,72,.4)}
+.kpi-chip.ok{color:#a8f0d4;background:rgba(46,230,168,.12);border-color:rgba(46,230,168,.4)}
+.kpi-label{font-size:13.5px;color:#9fb0c8;letter-spacing:.5px;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.kpi-label i{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dim)}
+.kpi-value{margin-top:0;font-size:25px;font-weight:750;letter-spacing:.4px;line-height:1.2;white-space:nowrap}
+.kpi-value .unit{font-size:13px;color:#91a4c0;margin-left:4px;font-weight:500;letter-spacing:0}
+.kpi-sub{font-size:12.5px;color:#8296b4;margin-top:6px;line-height:1.4}
+.kpi.danger .kpi-label i{background:var(--st-blocked);box-shadow:0 0 8px var(--st-blocked)}
+.kpi.danger .kpi-value{color:#ffc9c9}
+.kpi.warn .kpi-label i{background:var(--st-metric);box-shadow:0 0 8px var(--st-metric)}
+.kpi.warn .kpi-value{color:#ffe0b3}
+.kpi.unknown .kpi-label i{background:var(--st-unknown)}
+.kpi.ok .kpi-label i{background:var(--st-normal);box-shadow:0 0 8px var(--st-normal)}
+
+/* ==========================================================================
+   4. 卡片通用
+   ========================================================================== */
+.card{
+  position:relative;border-radius:var(--radius);
+  border:1px solid var(--card-border);
+  background:linear-gradient(165deg,rgba(18,31,58,.85),rgba(9,17,33,.9));
+  box-shadow:var(--shadow);backdrop-filter:blur(10px);
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;border-radius:var(--radius) var(--radius) 0 0;
+  background:linear-gradient(90deg,rgba(56,198,255,.02),rgba(56,198,255,.5),rgba(157,123,255,.28),rgba(56,198,255,.02));
+}
+.card-head{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 17px 10px;border-bottom:1px solid rgba(99,150,255,.09);
+}
+.card-head h2,.card-head h3{
+  font-size:14px;font-weight:700;letter-spacing:.9px;
+  display:flex;align-items:center;gap:9px;flex:none;
+}
+.card-head h2::before,.card-head h3::before{
+  content:"";width:4px;height:14px;border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--blue));
+  box-shadow:0 0 8px rgba(56,198,255,.5);
+}
+.card-head .right{margin-left:auto;font-size:11px;color:var(--dim);white-space:nowrap}
+
+/* 图例（含悬浮说明） */
+.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-left:auto}
+.legend .lg{display:flex;align-items:center;gap:6px;cursor:help;border-radius:5px;padding:2px 4px;transition:background .18s}
+.legend .lg:hover{background:rgba(56,198,255,.1);color:var(--text)}
+.legend .lg:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+.legend .sw{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+
+/* 状态胶囊 */
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10.5px;font-weight:600;letter-spacing:.3px;
+  padding:1.5px 9px;border-radius:999px;white-space:nowrap;
+  border:1px solid transparent;
+}
+.chip.normal{color:var(--st-normal);background:rgba(46,230,168,.12);border-color:rgba(46,230,168,.4)}
+.chip.abnormal{color:#ffb3b3;background:rgba(255,95,95,.12);border-color:rgba(255,95,95,.42)}
+.chip.unknown{color:#c3cddd;background:rgba(132,146,168,.14);border-color:rgba(132,146,168,.42)}
+.chip.partialAbnormal{color:#ffd0a0;background:rgba(255,182,72,.12);border-color:rgba(255,182,72,.42)}
+.chip.partialUnknown{color:#bcd4ff;background:rgba(91,140,255,.12);border-color:rgba(91,140,255,.4)}
+[data-tip]{cursor:help}
+
+/* ==========================================================================
+   5. 主体两栏 / 底栏
+   ========================================================================== */
+/* 主栏行高由拓扑卡决定；侧栏 contain:size 使其不参与行高计算，避免左栏底部留出空洞 */
+/* 外层网格：左列 = 拓扑卡（行 1）+ 底栏（行 2）；右列 = 侧栏（跨两行）。
+   侧栏跨两行的目的：实时告警可向下延伸（613px → 约 967px），
+   而指标趋势只让出宽度（1048 → 约 680px）、高度不变，页面总高不增。 */
+.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 356px;grid-template-rows:auto auto;
+  gap:12px;align-items:stretch}
+.topology-card{grid-column:1;grid-row:1}
+.bottom-grid{grid-column:1;grid-row:2}
+.side{grid-column:2;grid-row:1 / span 2}
+.side{
+  display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;
+  min-width:0;min-height:0;contain:size;
+}
+.bottom-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;align-items:stretch}
+/* 底栏两卡等高：列表卡随行高伸展，避免卡内留白 */
+.bottom-grid>.card{display:flex;flex-direction:column;min-height:0}
+
+/* ==========================================================================
+   6. 拓扑
+   ========================================================================== */
+.topology-card{overflow:hidden}
+.topo{overflow-x:auto;overflow-y:hidden;padding:16px 18px 14px;scroll-behavior:smooth;scrollbar-gutter:stable;overscroll-behavior-inline:contain}
+.topo::-webkit-scrollbar{height:9px}
+.topo::-webkit-scrollbar-track{background:rgba(56,198,255,.05);border-radius:999px}
+.topo::-webkit-scrollbar-thumb{background:linear-gradient(90deg,rgba(56,198,255,.42),rgba(91,140,255,.55));border-radius:999px;border:2px solid rgba(10,17,34,.7)}
+.topo-scroll-note{position:absolute;z-index:8;right:18px;top:60px;padding:4px 10px;border-radius:999px;font-size:10.5px;color:#a9d8ff;background:rgba(8,18,36,.9);border:1px solid rgba(56,198,255,.28);pointer-events:none;opacity:.9}
+.topo-canvas{position:relative;min-width:1462px}
+.edges{position:absolute;inset:0;pointer-events:none;overflow:visible}
+
+/* 链路选择条 */
+.lanes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+/* 链路方向线型图例：实线 = 下行，点线 = 上行；颜色复用 --st-* 语义色，不新增颜色 */
+/* 链路条内的方向标签组：线型说明（dir:rule）挂在这一组的悬浮提示上，不再常显 */
+.lane-dirs{display:inline-flex;align-items:center;gap:9px}
+.lane{
+  position:relative;overflow:hidden;text-align:left;
+  /* 单行紧凑形态（原为上下两行、85.7px 高） */
+  display:inline-flex;align-items:center;gap:9px;
+  padding:5px 11px;border-radius:var(--radius-sm);
+  border:1px solid rgba(99,150,255,.12);background:rgba(20,34,62,.5);
+  transition:all .2s;
+}
+.lane:hover{border-color:rgba(56,198,255,.42);background:rgba(24,40,72,.62)}
+.lane.selected{
+  border-color:rgba(56,198,255,.6);
+  background:linear-gradient(90deg,rgba(56,198,255,.13),rgba(56,198,255,.02));
+  box-shadow:inset 3px 0 0 var(--cyan),0 0 18px rgba(56,198,255,.12);
+}
+.lane.muted{opacity:.45}
+.lane-top{display:inline-flex;align-items:center;gap:8px}
+.lane-name{font-size:12.5px;font-weight:700;letter-spacing:.3px}
+.lane-name em{font-style:normal;color:var(--dim);font-size:10.5px;margin-left:5px;font-weight:400}
+.lane-meta{display:inline-flex;align-items:center;gap:9px;margin-top:0;font-size:10.5px;color:var(--dim);flex-wrap:nowrap}
+.lane-meta .blk{color:#ffb3b3}
+
+/* 深圳链路行 × 分区列矩阵：
+   行 1 列标题 / 行 2 间隔 18px / 行 3 链路 1 / 行 4 间隔 28px / 行 5 链路 2。
+   已去除网级层；两条深圳模拟链路各自占一行，节点与装置不共用。
+   列 1 层标签 / 2,4,6,8,10 分区 / 3,5,7,9 装置列（本轮仅使用 3/5/7）。
+   分区列固定 **232px**、装置列固定 **68px**（装置不再用负边距溢出到分区列里）：
+   原先是 1fr 分区列（1920 视口下 264.8px，每列空 50.4px）+ 48px 装置列 + 装置左右各溢出 10px。
+   现改为「分区列 232 + 装置列 68」——装置仍**居中于分区列分界线上**（观感不变），
+   但占的是自己的列宽，于是画布下限从 1570 降到 1462，1920 视口下不再横向滚动。
+   分区列 232 = 卡片 164 + 两侧各 34px，这 34px 正是「卡片 ⇄ 装置」跳线所需长度（D6 阈值 30px）。
+
+   行间距继续用「间隔行」而非统一 row-gap，以保证两条链路的竖向位置稳定。 */
+.topo-grid{
+  display:grid;
+  width:max-content;margin:0 auto;
+  grid-template-columns:30px repeat(4, 232px 68px) 232px;
+  grid-template-rows:auto 18px 92px 28px 92px;
+  /* 列间距为 0，装置由独立列承载；行 3 / 5 分别承载两条独立链路 */
+  gap:0;
+  align-items:stretch;
+}
+/* 分区列底板：纯装饰，铺在节点之下，让「一列＝一个分区」显式可见 */
+.zone-bg{
+  /* 只画竖向分隔线：简图中分区由顶部列标题整体标识，
+     整列填色会在网级/跨层等空行留下大片空框 */
+  border-left:1px solid rgba(99,150,255,.10);
+  border-right:1px solid rgba(99,150,255,.10);
+  background:rgba(16,30,54,.22);
+}
+/* 顶部列标题：分区名整体标识该列，卡片内不再重复分区说明 */
+.zone-head{display:flex;align-items:center;gap:7px;padding:0 2px 8px;border-bottom:1px dashed rgba(99,150,255,.16)}
+.zone-head b{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:700;letter-spacing:.6px;color:#dbe9ff;white-space:nowrap;
+}
+.zone-head b::before{
+  content:"";width:3px;height:12px;border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--blue));
+  box-shadow:0 0 8px rgba(56,198,255,.45);
+}
+/* （保留样式）网级与深圳之间的横向分割线：置于网级行的行间距中，横跨全宽 */
+/* 分割线与跨层装置横条都落在「间隔行 4」（104px）内：
+   分割线在间隔行起点下移 68px；横条顶边下移 35px（高 34px）→ 横条底边压过分割线 1px，
+   视觉上「压在线上」。上下跳线各 35px（阈值 30px）。
+   两者用 align-self:start（原先靠 end + 58px 偏移，那是统一 row-gap 时代的写法）。 */
+.layer-divider{
+  align-self:start;height:1px;transform:translateY(68px);
+  background:linear-gradient(90deg,rgba(99,150,255,0) 0%,rgba(120,170,255,.72) 8%,
+    rgba(120,170,255,.72) 92%,rgba(99,150,255,0) 100%);
+}
+/* 左侧链路标签：纵排居中，与通信/文件链路行分别对齐 */
+.boundary-line{justify-self:center;align-self:stretch;width:1px;background:rgba(99,150,255,.22)}
+.band{
+  align-self:start;transform:translateY(35px);margin:0 14px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  height:34px;border-radius:6px;
+  border:1px solid rgba(91,140,255,.34);
+  background:linear-gradient(90deg,rgba(28,44,80,.96),rgba(14,24,44,.96));
+  transition:all .2s;
+}
+.band:hover{border-color:var(--blue);box-shadow:0 0 18px rgba(91,140,255,.3)}
+.band:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.band .band-name{font-size:10.5px;font-weight:700;color:#cfe0ff;white-space:nowrap}
+.band .band-metrics{display:flex;gap:9px}
+.band .band-metrics em{font-style:normal;font-size:9px;color:var(--dim);white-space:nowrap}
+.band .band-metrics b{font-weight:700;color:var(--text)}
+.band.is-abnormal{border-color:rgba(255,95,95,.55);animation:blinkBorder .95s infinite}
+.band.is-abnormal .band-name{color:#ffb3b3}
+/* 上游中断：跨层装置横条同样适用 */
+.band.is-impact{border-color:rgba(175,105,119,.5)}
+.band.is-impact .band-name{color:#e2b0bd}
+.node.dim,.bar.dim,.band.dim{opacity:.4}
+.layer-label{
+  /* 两条链路分别标注；横排居中，与对应链路行对齐。 */
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--radius-sm);
+  border:1px solid rgba(99,150,255,.13);background:rgba(20,34,62,.5);
+}
+.layer-label span{writing-mode:vertical-rl;white-space:nowrap;letter-spacing:2px;font-size:11.5px;font-weight:700;color:#8fb2e0}
+/* 单元格：同格多节点纵向堆叠、顶部对齐，使「第 N 张卡」在相邻列横向对齐 */
+.cell{display:flex;flex-direction:column;justify-content:flex-start;align-items:center;gap:9px;min-width:0}
+.cell .node{max-width:164px}
+.cell .node .node-metrics span{white-space:nowrap}
+.cell .node .node-metrics b{font-size:9px}
+.cell .empty{font-size:10.5px;color:var(--dim);text-align:center;padding:14px 0}
+/* 装置竖条：跨在相邻两列之间；同格多装置纵向堆叠，与同行的卡片一一对齐。
+   装置列本身已是 68px（装置宽度），故横向不再需要负边距——负边距会把装置
+   挤进分区列、把「卡片 ⇄ 装置」跳线压到 2px。
+   上下各 -12px：竖条 116px 比卡片 92px 高 24px，上下各让出 12px 后
+   该行轨道高度就等于卡片高度（网级行 104 → 92px），而竖条视觉位置不变。 */
+.bar-cell{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:9px;
+  min-width:0;margin:-12px 0 -12px}
+.bar{
+  position:relative;height:116px;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:6px 4px;border-radius:6px;
+  border:1px solid rgba(91,140,255,.34);
+  background:linear-gradient(180deg,rgba(28,44,80,.92),rgba(14,24,44,.92));
+  transition:all .2s;
+}
+.bar:hover{border-color:var(--blue);box-shadow:0 0 18px rgba(91,140,255,.3)}
+.bar:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.bar .bar-name{writing-mode:vertical-rl;letter-spacing:1.2px;font-size:10.5px;font-weight:700;color:#cfe0ff}
+.bar .bar-metrics{display:flex;gap:5px}
+.bar .bar-metrics em{
+  font-style:normal;writing-mode:vertical-rl;letter-spacing:.3px;
+  font-size:9px;color:var(--dim);white-space:nowrap;
+}
+.bar .bar-metrics b{font-weight:700;color:var(--text)}
+.bar.is-abnormal{border-color:rgba(255,95,95,.55);animation:blinkBorder .95s infinite}
+.bar.is-abnormal .bar-name{color:#ffb3b3}
+/* 上游中断：装置竖条同样适用（原先只有 .node.is-impact，装置即使带上该类也没有样式） */
+.bar.is-impact{border-color:rgba(175,105,119,.5)}
+.bar.is-impact .bar-name{color:#e2b0bd}
+/* 聚焦环：装置竖条与横条同样需要（原先只有 .node.focus，装置带上 focus 类也看不见）。
+   用 outline 而非 box-shadow —— 异常态用 blinkBorder 动画驱动 box-shadow，用 outline 才不会互相覆盖。 */
+.bar.focus,.band.focus{border-color:var(--cyan);outline:2px solid rgba(56,198,255,.55);outline-offset:1px}
+.bar.is-unknown{border-color:rgba(132,146,168,.5)}
+.bar.is-unknown .bar-name{color:#c3cddd}
+.node.device .node-name{font-size:10.5px;padding-right:6px;letter-spacing:.2px}
+.node.device{padding-left:8px;padding-right:8px}
+
+/* 原「分区列」（安全一区至四区四列）已由上方「层级行 × 分区列」矩阵取代 */
+
+/* 节点 / 装置卡片
+   统一卡片高度：多链路时同一单元格会堆叠多张卡，若服务卡与装置卡高度不同，
+   顶部对齐后「第 N 张卡」的中心仍会错位，连线在装置处产生台阶（实测 6px）。
+   统一高度 + 顶部对齐后，同一序号的卡片在相邻单元格完全横向对齐。 */
+.node{
+  position:relative;width:100%;text-align:left;
+  height:92px;display:flex;flex-direction:column;justify-content:center;
+  padding:7px 8px 6px;border-radius:var(--radius-sm);
+  border:1px solid rgba(46,230,168,.3);
+  background:linear-gradient(175deg,rgba(24,42,78,.9),rgba(12,22,42,.9));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 18px rgba(0,0,0,.3);
+  transition:transform .2s,box-shadow .25s,border-color .25s;
+}
+.node:hover{transform:translateY(-3px);border-color:var(--st-normal);box-shadow:0 0 20px rgba(46,230,168,.28)}
+.node:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.node .statusdot{
+  position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;
+  background:var(--st-normal);box-shadow:0 0 8px rgba(46,230,168,.8);animation:pulse 2.2s infinite;
+}
+.node-top{display:flex;align-items:center;gap:9px}
+.node-ic{width:26px;height:29px;flex:none;color:#7fe8c4;filter:drop-shadow(0 0 7px rgba(46,230,168,.3))}
+.node-ic svg{width:100%;height:100%;display:block}
+.node-name{font-size:12.5px;font-weight:700;letter-spacing:.3px;line-height:1.25;padding-right:12px}
+.node-sub{font-size:9.5px;color:var(--dim);margin-top:2px;letter-spacing:.2px}
+.node-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;margin-top:5px}
+.node-metrics span{
+  display:flex;align-items:baseline;justify-content:space-between;gap:5px;
+  font-size:9.5px;color:var(--dim);min-width:0;
+  padding:1px 5px;border-radius:5px;background:rgba(56,198,255,.05);
+}
+/* 指标数为奇数时，末项跨满整行，避免半行留白 */
+.node-metrics span:last-child:nth-child(odd){grid-column:1 / -1}
+.node-metrics b{color:var(--text);font-size:10px;font-weight:700;white-space:nowrap}
+/* 节点状态变体 */
+.node.is-abnormal{border-color:rgba(255,95,95,.55);animation:blinkBorder .95s infinite}
+.node.is-abnormal .statusdot{background:var(--st-blocked);box-shadow:0 0 10px var(--st-blocked);animation:blink .7s infinite}
+.node.is-abnormal .node-ic{color:#ffb3b3;filter:drop-shadow(0 0 8px rgba(255,95,95,.45))}
+.node.is-abnormal:hover{border-color:var(--st-blocked);box-shadow:0 0 22px rgba(255,95,95,.3)}
+.node.is-impact{border-color:rgba(175,105,119,.5)}
+.node.is-impact .statusdot{background:var(--st-impact);box-shadow:0 0 8px var(--st-impact);animation:none}
+.node.is-impact .node-ic{color:#e2b0bd}
+.node.is-metric{border-color:rgba(255,182,72,.45)}
+.node.is-metric .statusdot{background:var(--st-metric);box-shadow:0 0 8px var(--st-metric);animation:none}
+.node.is-metric .node-ic{color:#ffd9a0}
+.node.is-unknown{border-color:rgba(132,146,168,.45)}
+.node.is-unknown .statusdot{background:var(--st-unknown);box-shadow:none;animation:none}
+.node.is-unknown .node-ic{color:#c3cddd}
+.node.focus{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(56,198,255,.5),0 0 24px rgba(56,198,255,.22)}
+
+/* ==========================================================================
+   7. 连接线
+   ========================================================================== */
+.edge-path{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:opacity .2s}
+.edge-path.normal{stroke:url(#g-normal);stroke-width:2.2}
+.edge-path.abnormal{stroke:url(#g-abnormal);stroke-width:2.2}
+.edge-path.interrupted{stroke:url(#g-fault);stroke-width:2.4;
+  animation:dashMove 1s linear infinite, svgBlink .9s infinite}
+/* 「受阻」= 该方向自身未故障，但因上游阻断收不到数据（沿用 --st-impact 上游中断语义色）。
+   与 interrupted 的区别：不闪烁（不是本段故障），只换色 */
+.edge-path.impact{stroke:url(#g-impact);stroke-width:2.1}
+.edge-path.unknown{stroke:url(#g-unknown);stroke-width:2}
+/* 线型即方向：实线 = 下行，点线 = 上行（与源图图例一致） */
+.edge-path.up{stroke-dasharray:5 6}
+.edge-path.interrupted.up{stroke-dasharray:9 6}
+/* 未选中链路：每跳只画 1 条居中细线；方向信息由链路选择条与分段条目承载 */
+.edge-path.solo{stroke-width:1.4;stroke-dasharray:none;opacity:.42}
+.edge-path.dim{opacity:.34}
+.edge-path.hi{filter:drop-shadow(0 0 7px rgba(56,198,255,.6))}
+/* 方向线型图例 / 链路选择条内的线型图元 */
+.ll-line{display:inline-block;width:22px;height:0;border-top:2px solid currentColor;flex:none}
+.ll-line.up{border-top-style:dotted;border-top-width:3px}
+.lane-meta .dirs{display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.flow-dot{fill:var(--cyan);filter:drop-shadow(0 0 4px var(--cyan))}
+/* 不通徽标：压在斜纹隔离带上，须用实底保证可读（半透明底会被斜纹干扰） */
+.edge-badge{fill:rgba(46,10,14,.94);stroke:rgba(255,95,95,.72);stroke-width:1}
+.edge-badge-txt{font-size:9px;letter-spacing:.6px;fill:#ffc9c9}
+
+/* ==========================================================================
+   8. 侧栏：异常清单 / 实时告警
+   ========================================================================== */
+.list{padding:9px 11px 11px;display:flex;flex-direction:column;gap:7px}
+/* 链路全部通畅时异常清单为空，需给出明确空态而非留白 */
+.list-empty{font-size:11px;color:var(--dim);text-align:center;padding:18px 0}
+.exception{
+  position:relative;width:100%;text-align:left;
+  padding:8px 11px;border-radius:var(--radius-sm);
+  border:1px solid rgba(99,150,255,.1);background:rgba(20,34,62,.5);
+  border-left:3px solid var(--dim);
+  transition:all .18s;
+}
+.exception:hover{border-color:rgba(56,198,255,.4);background:rgba(24,40,72,.62)}
+.exception.active{border-color:rgba(56,198,255,.55);background:linear-gradient(90deg,rgba(56,198,255,.1),rgba(56,198,255,.02))}
+.exception.critical{border-left-color:var(--st-blocked)}
+.exception.warn{border-left-color:var(--st-metric)}
+.exception.unknown{border-left-color:var(--st-unknown)}
+/* 归属高亮/降噪：清单与告警均为**全量**，不随选中链路过滤（基线 §16.8）。
+   属于当前选中链路的条目高亮，其余降噪；但**严重条目始终全亮**，避免降噪掩盖故障。 */
+.exception.is-sel{border-color:rgba(56,198,255,.34);
+  background:linear-gradient(90deg,rgba(56,198,255,.10),rgba(56,198,255,.02))}
+.exception.dim{opacity:.5}
+.exception-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.exception-top b{font-size:12px;letter-spacing:.2px}
+.exception-top span{font-size:10px;color:var(--dim);white-space:nowrap}
+.exception small{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
+.exception .imp{display:block;font-size:10px;color:var(--dim);margin-top:3px}
+
+.alarm-card{display:flex;flex-direction:column;min-height:0}
+.live{
+  display:inline-flex;align-items:center;gap:6px;margin-left:auto;
+  font-size:10.5px;color:var(--st-normal);letter-spacing:.6px;
+  padding:2px 9px;border-radius:999px;
+  border:1px solid rgba(46,230,168,.36);background:rgba(46,230,168,.08);
+}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--st-normal);box-shadow:0 0 8px var(--st-normal);animation:pulse 1.6s infinite}
+.live.off{color:var(--dim);border-color:rgba(132,146,168,.3);background:rgba(132,146,168,.08)}
+.live.off i{background:var(--dim);box-shadow:none;animation:none}
+.afilter{display:flex;gap:6px;flex-wrap:wrap;padding:9px 12px 0}
+.fchip{
+  font-size:11px;color:var(--muted);
+  padding:3px 11px;border-radius:999px;
+  border:1px solid rgba(99,150,255,.18);background:rgba(20,34,62,.5);
+  transition:all .18s;white-space:nowrap;
+}
+.fchip:hover{color:var(--text);border-color:rgba(56,198,255,.4)}
+.fchip.on{color:#04121f;font-weight:700;border-color:transparent;background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.fchip i{font-style:normal;margin-left:4px;opacity:.8}
+.alarm-list{
+  padding:9px 11px 11px;display:flex;flex-direction:column;gap:7px;
+  flex:1 1 auto;min-height:0;overflow-y:auto;
+}
+.alarm-item{
+  border-radius:var(--radius-sm);padding:7px 10px;
+  border:1px solid rgba(99,150,255,.1);background:rgba(20,34,62,.5);
+  border-left:3px solid var(--dim);
+  animation:slideIn .35s ease;
+}
+.alarm-item.sev-critical{border-left-color:var(--st-blocked)}
+.alarm-item.sev-warn{border-left-color:var(--st-metric)}
+.alarm-item.sev-info{border-left-color:var(--blue)}
+/* 与异常清单同一套归属高亮/降噪规则（严重条目始终全亮） */
+.alarm-item.is-sel{border-color:rgba(56,198,255,.34);background:rgba(24,40,72,.66)}
+.alarm-item.dim{opacity:.5}
+.alarm-top{display:flex;align-items:center;gap:7px}
+.sev-chip{font-size:9.5px;padding:1px 8px;border-radius:999px;letter-spacing:.4px;white-space:nowrap}
+.sev-chip.critical{color:#ffb3b3;background:rgba(255,95,95,.12);border:1px solid rgba(255,95,95,.4)}
+.sev-chip.warn{color:#ffd9a0;background:rgba(255,182,72,.12);border:1px solid rgba(255,182,72,.4)}
+.sev-chip.info{color:#a9d8ff;background:rgba(91,140,255,.12);border:1px solid rgba(91,140,255,.4)}
+.alarm-time{font-size:10px;color:var(--dim);white-space:nowrap}
+.alarm-state{margin-left:auto;font-size:9.5px;color:var(--muted);white-space:nowrap}
+.alarm-state.open{color:#ffb3b3}
+.alarm-src{font-size:10.5px;color:var(--muted);margin-top:4px}
+.alarm-msg{font-size:11.5px;color:var(--text);margin-top:2px;line-height:1.45}
+.alarm-empty{font-size:11px;color:var(--dim);text-align:center;padding:18px 0}
+
+/* ==========================================================================
+   9. 底栏：业务链路 / 指标趋势
+   ========================================================================== */
+.path-list{padding:9px 11px 11px;display:flex;flex-direction:column;gap:7px;flex:1 1 auto;min-height:0;overflow-y:auto;scroll-behavior:smooth;scrollbar-gutter:stable;
+  /* 必须给上限：卡片高度由内容驱动时，overflow 不会滚动，反而会把底栏顶高
+     （多链路后 2 组 + 7 条目曾把底栏从 342px 顶到 911px）。取趋势卡自然高度减去头部 */
+  max-height:310px}
+.path-item{
+  position:relative;width:100%;text-align:left;
+  padding:9px 11px;border-radius:var(--radius-sm);
+  border:1px solid rgba(99,150,255,.1);background:rgba(20,34,62,.5);
+  transition:all .18s;
+  /* 条目按内容高度排布；列表整体可滚动，不逐条拉伸 */
+  display:flex;flex-direction:column;justify-content:center;flex:0 0 auto;
+}
+/* 链路分组头：多条链路时按链路分组，组头可点击选中 */
+.path-group{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+  padding:7px 10px;border-radius:var(--radius-sm);
+  border:1px solid rgba(99,150,255,.18);background:rgba(20,34,62,.55);
+  transition:all .18s;
+}
+.path-group:hover{border-color:rgba(56,198,255,.42);background:rgba(24,40,72,.62)}
+.path-group.on{border-color:rgba(56,198,255,.6);box-shadow:inset 3px 0 0 var(--cyan)}
+.path-group .pg-name{font-size:12px;font-weight:700}
+.path-group .pg-meta{margin-left:auto;font-size:10px;color:var(--dim)}
+/* 分段条目缩进挂在所属链路下 */
+.path-item.is-seg{margin-left:14px;border-left:2px solid rgba(56,198,255,.22)}
+.path-item:hover{border-color:rgba(56,198,255,.4);background:rgba(24,40,72,.62)}
+.path-item.active{
+  border-color:rgba(56,198,255,.55);
+  background:linear-gradient(90deg,rgba(56,198,255,.1),rgba(56,198,255,.02));
+  box-shadow:inset 3px 0 0 var(--cyan);
+}
+.path-item .pi-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.path-item .pi-name{font-size:12.5px;font-weight:700}
+.path-item small{display:flex;gap:10px;font-size:10.5px;color:var(--dim);margin-top:4px;flex-wrap:wrap}
+.pi-route{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:7px}
+.pi-route b{
+  font-size:9.5px;font-weight:600;color:#a9d8ff;letter-spacing:.3px;
+  padding:1.5px 8px;border-radius:999px;
+  border:1px solid rgba(91,140,255,.3);background:rgba(91,140,255,.09);
+}
+.pi-route i{font-style:normal;color:var(--dim);font-size:10px}
+
+.chart-card{display:flex;flex-direction:column}
+.chart-wrap{position:relative;flex:1;padding:10px 14px 12px;display:flex;flex-direction:column}
+.chart-now{font-size:12px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chart-now b{color:var(--text);font-size:13px}
+/* SVG 绝对定位：其内在宽高比不得反向决定容器高度，否则会形成"越量越高"的回环 */
+.chart-box{position:relative;flex:1;min-height:250px}
+.chart-box svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+/* 趋势图：按容器真实像素绘制，双轴刻度 + 平滑曲线 + 未知区间底纹 */
+.chart-grid{stroke:rgba(120,160,255,.1);stroke-width:1}
+.chart-base{stroke:rgba(120,160,255,.24);stroke-width:1}
+.chart-ylab{font-size:9.5px;fill:#5d7699;text-anchor:end}
+.chart-ylab.r{text-anchor:start;fill:#8f7fd8}
+.chart-xlab{font-size:9.5px;fill:#5d7699;text-anchor:middle}
+.chart-axlab{font-size:9.5px;letter-spacing:.6px}
+.chart-tick{stroke:rgba(120,160,255,.24);stroke-width:1}
+.chart-pt{fill:#0a1122;stroke:#38c6ff;stroke-width:1.6}
+.chart-pt-lat{fill:#0a1122;stroke:#9d7bff;stroke-width:1.6}
+/* 悬停命中环：独立类名，避免与数据点标记混淆（数据点计数必须可判定） */
+.chart-hit{fill:rgba(10,17,34,.55);stroke-width:2.2}
+.chart-hit.l{stroke:#38c6ff}
+.chart-hit.r{stroke:#9d7bff}
+.chart-callout{font-size:10px;font-weight:700;letter-spacing:.3px;paint-order:stroke;stroke:rgba(10,17,34,.92);stroke-width:3px;stroke-linejoin:round}
+.chart-unk{fill:url(#hUnk)}
+.chart-unk-edge{stroke:rgba(132,146,168,.45);stroke-width:1;stroke-dasharray:3 3}
+.chart-unk-label{font-size:9.5px;fill:#8492a8;letter-spacing:.6px;text-anchor:middle}
+.chart-legend{display:flex;align-items:center;gap:13px;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.chart-legend i{width:15px;height:0;display:inline-block;border-top-width:2px;border-top-style:solid}
+.chart-tip{
+  display:none;position:absolute;z-index:6;pointer-events:none;
+  font-size:10.5px;line-height:1.6;color:var(--text);
+  background:rgba(8,14,28,.95);border:1px solid rgba(56,198,255,.35);
+  border-radius:8px;padding:6px 10px;box-shadow:0 6px 18px rgba(0,0,0,.5);
+  white-space:nowrap;
+}
+.chart-tip b{color:var(--cyan)}
+.crosshair{stroke:rgba(56,198,255,.45);stroke-width:1;stroke-dasharray:3 3}
+
+/* ==========================================================================
+   10. 抽屉
+   ========================================================================== */
+.overlay{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(4,8,18,.55);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.overlay.show{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:396px;max-width:92vw;z-index:70;
+  background:linear-gradient(180deg,#0e1830,#0a1122);
+  border-left:1px solid rgba(99,150,255,.22);
+  box-shadow:-18px 0 50px rgba(0,0,0,.55);
+  transform:translateX(105%);
+  transition:transform .32s cubic-bezier(.22,.8,.3,1);
+  overflow-y:auto;padding-bottom:20px;
+}
+.drawer.show{transform:translateX(0)}
+.dw-bar{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 11px;border-bottom:1px solid rgba(99,150,255,.12)}
+.dw-bar span{font-size:11.5px;color:var(--dim);letter-spacing:1.4px}
+.dw-close{font-size:22px;line-height:1;color:var(--muted);padding:0 6px;transition:color .2s}
+.dw-close:hover{color:var(--text)}
+.dw-head{display:flex;align-items:center;gap:12px;padding:16px 18px 13px}
+.dw-ic{
+  width:50px;height:52px;flex:none;display:grid;place-items:center;border-radius:12px;
+  background:rgba(56,198,255,.08);border:1px solid rgba(56,198,255,.3);color:#7fe8c4;
+}
+.dw-ic svg{width:32px;height:36px}
+.dw-title{font-size:16px;font-weight:700;letter-spacing:.4px}
+.dw-sub{font-size:11px;color:var(--dim);margin-top:3px}
+.dw-flow{
+  margin:0 18px 4px;padding:8px 12px;border-radius:var(--radius-sm);
+  font-size:12px;border:1px solid var(--card-border);background:rgba(20,34,62,.5);
+}
+.dw-flow.source{border-color:rgba(255,95,95,.42);background:rgba(255,95,95,.08);color:#ffc9c9}
+.dw-flow.impact{border-color:rgba(175,105,119,.45);background:rgba(175,105,119,.12);color:#e2b0bd}
+.dw-flow.metric{border-color:rgba(255,182,72,.4);background:rgba(255,182,72,.08);color:#ffe0b3}
+.dw-flow.unknown{border-color:rgba(132,146,168,.42);background:rgba(132,146,168,.1);color:#c3cddd}
+.dw-flow.ok{border-color:rgba(46,230,168,.4);background:rgba(46,230,168,.08);color:#a9f5d8}
+.dw-sec{font-size:11.5px;font-weight:700;color:var(--cyan);letter-spacing:.9px;padding:13px 18px 7px}
+.dw-sec::before{content:"— ";color:var(--dim)}
+.dw-tbl{width:calc(100% - 36px);margin:0 18px;border-collapse:collapse;font-size:12px}
+.dw-tbl td{padding:6px 0;border-bottom:1px dashed rgba(99,150,255,.12);vertical-align:top}
+.dw-tbl td:first-child{color:var(--dim);width:86px}
+.dw-tbl td:last-child{text-align:right}
+.dw-kv{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px}
+.dw-kv div{
+  flex:1 1 44%;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:6px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--card-border);background:rgba(20,34,62,.45);font-size:11.5px;
+}
+.dw-kv span{color:var(--dim);font-size:10.5px}
+.dw-kv b{font-size:12.5px}
+.dw-rel{display:flex;flex-direction:column;gap:6px;padding:0 18px}
+.dw-rel div{
+  display:flex;align-items:center;gap:8px;justify-content:space-between;
+  padding:7px 10px;border-radius:var(--radius-sm);font-size:11.5px;
+  border:1px solid var(--card-border);background:rgba(20,34,62,.45);
+}
+.dw-rel .dw-dirs{display:inline-flex;gap:10px;flex:none}
+.dw-rel .dw-dirs em{font-style:normal;font-weight:700;font-size:11px}
+.dw-note{
+  margin:14px 18px 0;padding:9px 12px;border-radius:var(--radius-sm);
+  font-size:10.5px;color:var(--dim);line-height:1.55;
+  border:1px dashed rgba(99,150,255,.2);background:rgba(20,34,62,.35);
+}
+
+/* ==========================================================================
+   11. 悬浮说明 / Toast / 页脚
+   ========================================================================== */
+.tooltip{
+  position:fixed;z-index:90;max-width:290px;pointer-events:none;
+  font-size:11.5px;line-height:1.6;color:var(--text);
+  padding:8px 12px;border-radius:9px;
+  border:1px solid rgba(56,198,255,.4);
+  background:rgba(8,14,28,.97);
+  box-shadow:0 12px 32px rgba(0,0,0,.6);
+  opacity:0;transform:translateY(4px);transition:opacity .16s,transform .16s;
+}
+.tooltip.show{opacity:1;transform:none}
+.tooltip b{display:block;color:var(--cyan);font-size:11px;letter-spacing:.6px;margin-bottom:3px}
+.toast{
+  position:fixed;left:50%;bottom:30px;z-index:95;
+  transform:translate(-50%,20px);
+  font-size:12.5px;padding:9px 20px;border-radius:999px;
+  border:1px solid rgba(56,198,255,.4);background:rgba(10,18,36,.96);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+footer{
+  padding:2px 20px 8px;font-size:10.5px;color:var(--dim);
+  letter-spacing:.6px;text-align:center;
+}
+
+/* ==========================================================================
+   12. 动画
+   ========================================================================== */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+/* 中断方向线闪烁：原始版 .edge.interrupted 用 svgBlink，重构为 .edge-path 时丢失，2026-09-22 补回
+   （TIPS legend:blocked 一直写着「红色闪烁定位」，此前实现与文案脱节） */
+@keyframes svgBlink{0%,100%{opacity:1}50%{opacity:.28}}
+@keyframes blinkBorder{0%,100%{box-shadow:0 0 6px rgba(255,95,95,.22)}50%{box-shadow:0 0 20px rgba(255,95,95,.55)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes dashMove{to{stroke-dashoffset:-30}}
+body.paused *{animation-play-state:paused !important}
+
+/* ==========================================================================
+   13. 响应式
+   ========================================================================== */
+@media (max-width:1360px){
+  .main-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  /* 单栏堆叠时取消显式网格定位，否则侧栏会占满两行 */
+  .topology-card,.bottom-grid,.side{grid-column:1;grid-row:auto}
+  /* 单栏堆叠时侧栏不再需要跟随主栏高度，恢复内容自适应 */
+  .side{display:flex;flex-direction:row;flex-wrap:wrap;contain:none;grid-template-rows:none}
+  .side>.card{flex:1 1 320px}
+  .alarm-list{max-height:352px}
+}
+@media (max-width:1180px){
+  /* KPI 4 卡：窄屏降为 2 列（2+2 均衡）。若降 3 列会排成 3+1，第 4 张成孤卡 */
+  .kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bottom-grid{grid-template-columns:minmax(0,1fr)}
+  .tb-center{order:3;flex-basis:100%}
+  .filters{justify-content:flex-start}
+}
+@media (max-width:860px){
+  .page{padding:12px 12px 8px}
+  .topbar{padding:10px 12px}
+  /* 原此处还有三条规则已失效，2026-09-22 清理：
+     · .kpi-strip 降 2 列 —— 与 ≤1180 断点重复，已上移
+     · .regions 的 grid-template-columns —— .regions 类在「层级行 × 分区列」矩阵改造后已不存在（grep 0 处）
+     · .lanes 的 grid-template-columns —— .lanes 已改为 display:flex（第 252 行），网格属性对它无效 */
+  .brand-txt h1{font-size:16px}
+  .clock .ct{font-size:17px}
+}
+
+/* 大屏展示：减少常态装饰，把空间与对比度留给拓扑、状态和指标。 */
+body::after{display:none}
+.card{background:#111e34;box-shadow:0 6px 20px rgba(0,0,0,.16);backdrop-filter:none}
+.card::before,.kpi::before{display:none}
+.kpi{background:#152239;box-shadow:none}
+.node{background:#17283e;box-shadow:none}
+.node .statusdot{animation:none;box-shadow:none}
+.node.focus{box-shadow:0 0 0 2px rgba(56,198,255,.45)}
+.edge-path.hi,.flow-dot{filter:none}
+.edge-path.interrupted.hi{filter:drop-shadow(0 0 4px rgba(255,95,95,.55))}
+.zone-bg{background:rgba(20,34,54,.14)}
+.topo-nav{display:flex;gap:6px;margin-left:6px}
+.topo-nav[hidden]{display:none}
+.topo-nav button{min-width:32px;height:28px;padding:0 8px;border:1px solid rgba(120,165,220,.38);border-radius:7px;background:#1b3049;color:#eaf2ff;font-size:15px}
+.topo-nav button:disabled{opacity:.35;cursor:default}
+.topo-nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.topo-scroll-note{font-size:12px;color:#d2e9ff;background:#102238;border-color:rgba(120,165,220,.45)}
+.alarm-time,.alarm-state,.alarm-src,.exception-top span,.exception .imp{color:#9db0ca}
+.alarm-msg,.exception small{line-height:1.55}
+
+@media (min-width:1600px){
+  .page{height:calc(100vh - 66px);min-height:0}
+  .main-grid{flex:1;min-height:0;overflow:hidden;grid-template-rows:minmax(335px,.95fr) minmax(320px,1.05fr)}
+  .topology-card,.bottom-grid,.chart-card{min-height:0}
+  .topology-card{display:flex;flex-direction:column}
+  .topo{flex:1;min-height:0;display:flex;align-items:center}
+  .topo-canvas{flex:none;width:100%}
+  .path-list{max-height:100%}
+  .card-head h2,.card-head h3{font-size:16px}
+  .legend{font-size:12.5px}
+  .zone-head b{font-size:18px}
+  .node-name{font-size:15px;letter-spacing:0}
+  .node-ic{width:22px;height:25px}
+  .node-top{gap:6px}
+  .node-sub{display:none}
+  .node-metrics{grid-template-columns:1fr;gap:0;margin-top:3px}
+  .node-metrics span{background:none;padding:0 2px;font-size:12px;line-height:16px;color:#afc1d9}
+  .node-metrics b,.cell .node .node-metrics b{font-size:12px}
+  .bar{background:#1c2c43;flex-direction:column;gap:3px;padding:5px 3px}
+  .bar .bar-name{writing-mode:horizontal-tb;max-width:60px;text-align:center;line-height:1.15;letter-spacing:0;font-size:12px}
+  .bar .bar-metrics{display:flex;flex-direction:column;gap:1px;width:100%}
+  .bar .bar-metrics em{display:flex;justify-content:space-between;gap:2px;writing-mode:horizontal-tb;letter-spacing:0;font-size:10.5px;line-height:15px;color:#afc1d9}
+  .bar .bar-metrics b{font-size:10.5px}
+  .exception-top b,.alarm-msg{font-size:14.5px}
+  .exception small,.alarm-src{font-size:13px}
+  .alarm-time,.alarm-state,.exception-top span{font-size:12px}
+  .path-group .pg-name,.path-item .pi-name{font-size:13.5px}
+  .path-item small{font-size:12px}
+  .chart-ylab,.chart-ylab.r,.chart-xlab,.chart-axlab{font-size:12px}
+}
+@media (min-width:2560px){
+  body{zoom:1.25}
+  .page{height:calc(80vh - 66px)}
+}
+@media (min-width:3500px){
+  body{zoom:1.6}
+  .page{height:calc(62.5vh - 66px)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= 顶栏 ======================= -->
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 48 54" fill="none" aria-hidden="true">
+      <defs><linearGradient id="lgLogo" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#38c6ff"/><stop offset="1" stop-color="#9d7bff"/>
+      </linearGradient></defs>
+      <path d="M24 3 L43 14 V40 L24 51 L5 40 V14 Z" stroke="url(#lgLogo)" stroke-width="2.4"/>
+      <path d="M24 15 v10 l6 4 -6 9" stroke="#38c6ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <div class="brand-txt">
+      <h1>跨安全区链路通信监控</h1>
+      <p>UNIT-CENTRIC LINK OBSERVABILITY · 单位视角大屏原型</p>
+    </div>
+  </div>
+
+  <div class="tb-center">
+    <div class="filters">
+      <label class="field">单位 <select id="unit"></select></label>
+      <label class="field">业务链路 <select id="path"></select></label>
+      <label class="field">运行状态 <select id="status"></select></label>
+      <button class="btn primary" id="query">查询</button>
+      <button class="btn" id="reset">重置</button>
+    </div>
+  </div>
+
+  <div class="tb-right">
+    <button class="btn" id="refresh" title="立即刷新当前拓扑、指标与告警视图">↻ 立即刷新</button>
+    <button class="btn" id="full" title="全屏 / 退出全屏">⛶ 全屏</button>
+    <div class="clock">
+      <div class="ct" id="clock">--:--:--</div>
+      <div class="cd" id="date">--</div>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <!-- ======================= KPI（含单位概况状态卡，口径唯一） ======================= -->
+  <section class="kpi-strip" id="kpis"></section>
+
+  <!-- ======================= 拓扑 + 侧栏 ======================= -->
+  <section class="main-grid">
+    <section class="card topology-card">
+      <!-- 卡头收纳「链路选择条 + 状态图例」：省掉卡内独立的 86px 选择条与 15px 图例行。
+           线型说明（实线=下行 / 点线=上行）按 2026-09-22 要求移除常显，
+           改为挂在链路条方向标签组上，悬浮/聚焦即可查看（见 laneHtml 的 data-tip="dir:rule"）。 -->
+      <div class="card-head">
+        <h2>当前单位链路拓扑</h2>
+        <div class="topo-nav" id="topoNav" hidden aria-label="拓扑横向导航">
+          <button id="topoPrev" type="button" aria-label="向左查看拓扑">‹</button>
+          <button id="topoNext" type="button" aria-label="向右查看拓扑">›</button>
+        </div>
+        <!-- 链路选择暂时停用：拓扑默认同时展开全部链路。保留容器便于后续恢复。 -->
+        <div class="lanes" id="lanes" hidden></div>
+        <div class="legend">
+          <span class="lg" tabindex="0" data-tip="legend:blocked"><i class="sw" style="background:var(--st-blocked)"></i>阻断源</span>
+          <span class="lg" tabindex="0" data-tip="legend:impact"><i class="sw" style="background:var(--st-impact)"></i>上游中断</span>
+          <span class="lg" tabindex="0" data-tip="legend:metric"><i class="sw" style="background:var(--st-metric)"></i>指标异常</span>
+          <span class="lg" tabindex="0" data-tip="legend:unknown"><i class="sw" style="background:var(--st-unknown)"></i>未知</span>
+        </div>
+      </div>
+      <div class="topo-scroll-note" id="topoScrollNote">横向滑动查看完整拓扑</div>
+      <div class="topo" id="topo">
+        <div class="topo-canvas" id="topoCanvas">
+          <!-- 深圳双链路行 × 分区列矩阵：层标签列 + 分区列 + 两组独立装置竖条 -->
+          <div class="topo-grid" id="topoGrid"></div>
+          <!-- 连线置于最末：须压在分区底色之上才可见 -->
+          <svg class="edges" id="edges" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"></svg>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <!-- 异常对象清单：全量口径，不随选中链路过滤；选中链路的条目高亮（见 .exception.is-sel） -->
+      <section class="card">
+        <div class="card-head">
+          <h3 data-tip="exc:scope">异常对象清单</h3>
+          <!-- 计数徽标：颜色由计数驱动（在 renderSide 中设置），不硬编码为告警色 -->
+          <span class="chip" id="exceptionCount"></span>
+        </div>
+        <div class="list" id="exceptions"></div>
+      </section>
+
+      <!-- 实时告警：全量消息流，不随选中链路过滤；选中链路的条目高亮 -->
+      <section class="card alarm-card">
+        <div class="card-head">
+          <h3 data-tip="alarm:scope">实时告警</h3>
+          <span class="live" id="liveFlag"><i></i>实时</span>
+        </div>
+        <div class="afilter" id="afilter"></div>
+        <div class="alarm-list" id="alarmList"></div>
+      </section>
+    </aside>
+
+    <!-- ======================= 底栏（与拓扑卡同列；右侧栏跨两行） ======================= -->
+    <section class="bottom-grid">
+      <section class="card">
+        <div class="card-head">
+          <h3>业务链路</h3>
+          <span class="right" data-tip="pathlist:scope">全部链路分组展示</span>
+        </div>
+        <div class="path-list" id="pathList"></div>
+      </section>
+
+      <section class="card chart-card">
+        <div class="card-head">
+          <h3>指标趋势</h3>
+          <span class="right" id="chartTitle">—</span>
+          <span class="chart-legend" id="chartLegend"></span>
+          <span class="chip" id="chartStatus">—</span>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-now" id="chartNow"></div>
+          <div class="chart-box" id="chartBox">
+            <svg id="chart" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="吞吐与时延趋势"></svg>
+            <div class="chart-tip" id="chartTip"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </section>
+
+  <footer>跨安全区链路通信监控原型 · 页面指标与告警均为本地模拟仿真（非真实生产数据），用于交互与视觉演示 · 不构成正式阈值或告警政策</footer>
+</main>
+
+<!-- ======================= 抽屉 / 浮层 ======================= -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="对象详情">
+  <div class="dw-bar"><span>对象详情</span><button class="dw-close" id="close" aria-label="关闭">×</button></div>
+  <div id="drawerBody"></div>
+</aside>
+
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ==========================================================================
+   工具
+   ========================================================================== */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const pad = n => String(n).padStart(2, '0');
+const STATUS = {normal:'正常', abnormal:'异常', unknown:'未知', partialAbnormal:'部分异常', partialUnknown:'部分未知'};
+
+/* ==========================================================================
+   数据模型
+   当前承载两条完全独立的深圳模拟链路：
+      p-full 深圳Ⅳ区 ⇄ 安全接入区（c9 至 c4）
+      p-file 深圳Ⅳ区 ⇄ 安全接入区（文件，c10 至 c5）
+   两条链路各有 4 个业务节点、3 个隔离装置和 3 个分段，不复用 Node / Edge / 装置。
+   拓扑为「深圳链路行 × 分区列」矩阵（5 行 × 10 列）：
+     · 行 = 列标题 / 间隔 / 链路 1 / 间隔 / 链路 2；
+    · 列 = 5 个分区列（安全接入区 / Ⅰ区 / Ⅱ区 / Ⅲ区 / Ⅳ区）
+       + 4 个装置列（当前使用前 3 列）；
+     · 两组隔离装置分行落在分区列的分界线上；
+    · 两条独立链路均延伸至Ⅳ区，各自拥有独立节点与装置。
+   交付件样例含一条异常链路：sg1 上行不通（仅 p-full 使用），
+     故 p-full 异常、p-file 正常，用于演示红色断线、不通徽标与告警。
+   指标与状态仍为本地固定样例，不构成正式阈值或告警政策。
+   ========================================================================== */
+const D = {
+  units:[{id:'sz',name:'深圳',readonly:true}],
+  objects:[{id:'comm',name:'跨区通信服务'},{id:'file',name:'跨区文件传输服务'}],
+
+  /* 链路名称各自对齐对应行，取代原来的合并「深圳」层标签。 */
+  layers:[
+    {id:'comm', name:'通信链路', row:3},
+    {id:'file', name:'文件链路', row:5}
+  ],
+  /* 列 = 分区（顶部列标题）。col 为网格列号：
+     1 层标签 · 2/4/6/8/10 分区（安全接入区 / Ⅰ区 / Ⅱ区 / Ⅲ区 / Ⅳ区）；
+     3/5/7/9 为装置列，两条链路均完整使用。 */
+  zones:[
+    {id:'z1a', name:'安全接入区', col:2},
+    {id:'z1b', name:'Ⅰ区',       col:4},
+    {id:'z2',  name:'Ⅱ区',       col:6},
+    {id:'z3',  name:'Ⅲ区',       col:8},
+    {id:'z4',  name:'Ⅳ区',       col:10}
+  ],
+  /* 两条链路各自拥有 4 个隔离装置，分别落在 row 3 / 5，不复用。 */
+  bars:[
+    {id:'isoA',   col:3, row:3}, {id:'iso12',  col:5, row:3}, {id:'iso23',  col:7, row:3}, {id:'iso34', col:9, row:3},
+    {id:'isoB',   col:3, row:5}, {id:'isoB12', col:5, row:5}, {id:'isoB23', col:7, row:5}, {id:'isoB34', col:9, row:5}
+  ],
+  bands:[],
+
+  /* 节点不再硬编码 flow：由 deriveFlows() 从分段方向状态派生
+     （故障源 = 不通方向所经的装置；上游中断 = 断点上游侧收不到数据的端点与装置）。
+     status 仍为样例数据；本链路的异常由 segments 里的 sg1.up='interrupted' 承载。 */
+  nodes:[
+    /* ── 深圳链路 1（row 3） ── */
+    {id:'c4',name:'跨区通信服务',kind:'service',zone:'z1a',layer:'edge',loc:'安全接入区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{吞吐:'64 Mbps',时延:'0.9 ms'},note:'安全接入区侧跨区通信服务；至Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
+    {id:'c1',name:'跨区通信服务',kind:'service',zone:'z1b',layer:'edge',loc:'Ⅰ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{吞吐:'128 Mbps',时延:'1.4 ms'},note:'Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
+    {id:'c2',name:'跨区通信服务',kind:'service',zone:'z2',layer:'edge',loc:'Ⅱ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{吞吐:'124 Mbps',时延:'1.7 ms'},note:'Ⅱ区侧跨区通信服务，上下行均通畅。'},
+    {id:'c3',name:'跨区通信服务',kind:'service',zone:'z3',layer:'edge',loc:'Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{吞吐:'118 Mbps',时延:'1.9 ms'},note:'Ⅲ区侧跨区通信服务，上下行均通畅。'},
+    {id:'c9',name:'跨区通信服务',kind:'service',zone:'z4',layer:'edge',loc:'Ⅳ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{吞吐:'116 Mbps',时延:'2.2 ms'},note:'深圳Ⅳ区侧跨区通信服务，与通信链路前三段连续。'},
+    /* ── 深圳链路 2（row 5） ── */
+    {id:'c5',name:'跨区文件服务',kind:'service',zone:'z1a',layer:'edge',row:5,loc:'安全接入区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',
+     m:{吞吐:'96 Mbps',时延:'1.1 ms'},note:'深圳文件链路的安全接入区节点，与通信链路节点独立。'},
+    {id:'c6',name:'跨区文件服务',kind:'service',zone:'z1b',layer:'edge',row:5,loc:'Ⅰ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'101 Mbps',时延:'1.3 ms'},note:'深圳文件链路的Ⅰ区节点。'},
+    {id:'c7',name:'跨区文件服务',kind:'service',zone:'z2',layer:'edge',row:5,loc:'Ⅱ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'99 Mbps',时延:'1.6 ms'},note:'深圳文件链路的Ⅱ区节点。'},
+    {id:'c8',name:'跨区文件服务',kind:'service',zone:'z3',layer:'edge',row:5,loc:'Ⅲ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'96 Mbps',时延:'2.1 ms'},note:'深圳文件链路的Ⅲ区节点。'},
+    {id:'c10',name:'跨区文件服务',kind:'service',zone:'z4',layer:'edge',row:5,loc:'Ⅳ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'94 Mbps',时延:'2.3 ms'},note:'深圳文件链路的Ⅳ区节点，与通信链路节点独立。'},
+    /* ── 两条链路的独立装置（位置由 D.bars 决定） ── */
+    {id:'isoA',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/Ⅰ区之间',status:'normal',updated:'10:24:36',
+     m:{正向:'64 Mbps',反向:'58 Mbps',时延:'0.6 ms'},note:'安全接入区与Ⅰ区之间的正反向隔离装置。'},
+    {id:'iso12',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅰ区/Ⅱ区之间',status:'normal',updated:'10:24:36',
+     m:{正向:'128 Mbps',反向:'121 Mbps',时延:'1.2 ms'},note:'Ⅰ区与Ⅱ区之间的正反向隔离装置。'},
+    {id:'iso23',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅱ区/Ⅲ区之间',status:'normal',updated:'10:24:36',
+     m:{正向:'118 Mbps',反向:'112 Mbps',时延:'1.5 ms'},note:'Ⅱ区与Ⅲ区之间的正反向隔离装置。'},
+    {id:'iso34',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅲ区/Ⅳ区之间',status:'normal',updated:'10:24:36',
+     m:{正向:'116 Mbps',反向:'110 Mbps',时延:'1.6 ms'},note:'Ⅲ区与Ⅳ区之间的正反向隔离装置。'},
+    {id:'isoB',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/Ⅰ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'96 Mbps',反向:'92 Mbps',时延:'0.7 ms'},note:'文件链路独立隔离装置。'},
+    {id:'isoB12',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅰ区/Ⅱ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'101 Mbps',反向:'98 Mbps',时延:'1.1 ms'},note:'文件链路独立隔离装置。'},
+    {id:'isoB23',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅱ区/Ⅲ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'99 Mbps',反向:'95 Mbps',时延:'1.4 ms'},note:'文件链路独立隔离装置。'},
+    {id:'isoB34',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅲ区/Ⅳ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'94 Mbps',反向:'91 Mbps',时延:'1.6 ms'},note:'文件链路Ⅲ区与Ⅳ区之间的独立隔离装置。'}
+  ],
+
+  /* 链路分段：每段经一处装置转发。
+     统一约定：a = 下游端（靠近安全接入区），b = 上游端（靠近Ⅳ区），
+     故「下行」箭头一律指向 a，「上行」沿同一条深圳区内路径返回。
+     axis 为走向；方向状态取值：normal 通畅 / abnormal 异常 / interrupted 不通。
+     paths 为该段的归属链路：公共段列多条（只画一次，由多条链路复用），独有段列一条。 */
+  segments:[
+    /* 异常链路演示：sg1 上行不通（仅 p-full 使用），使页面同时存在「异常链路」与「正常链路」 */
+    {id:'sg1', a:'c4',  via:'isoA',  b:'c1',  axis:'h',downInto:'a',down:'normal',up:'interrupted',paths:['p-full']},
+    {id:'sg2', a:'c1',  via:'iso12',  b:'c2', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-full']},
+    {id:'sg3', a:'c2',  via:'iso23',  b:'c3', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-full']},
+    {id:'sg7', a:'c3',  via:'iso34',  b:'c9', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-full']},
+    {id:'sg4', a:'c5',  via:'isoB',   b:'c6', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
+    {id:'sg5', a:'c6',  via:'isoB12', b:'c7', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
+    {id:'sg6', a:'c7',  via:'isoB23', b:'c8', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
+    {id:'sg8', a:'c8',  via:'isoB34', b:'c10', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']}
+  ],
+
+  /* 完整链路：深圳Ⅳ区下行至安全接入区，再原路返回 */
+  paths:[
+    {id:'p-full',unit:'sz',object:'comm',name:'深圳Ⅳ区 ⇄ 安全接入区',type:'深圳跨区通信链路 · 往返',
+     status:'normal',updated:'10:24:36',
+     route:['c9','iso34','c3','iso23','c2','iso12','c1','isoA','c4'],
+     metrics:{bps:118,lat:1.9},
+     history:[['09:50',116,2.0],['09:56',119,1.9],['10:02',117,1.9],['10:08',120,1.8],['10:14',118,1.9],['10:20',118,1.9],['10:24',118,1.9]]},
+    /* 第二条链路为独立文件链路，不复用第一条的节点、分段或装置。样例数据不构成业务规则。 */
+    {id:'p-file',unit:'sz',object:'file',name:'深圳Ⅳ区 ⇄ 安全接入区（文件）',type:'深圳跨区文件链路 · 往返',
+     status:'normal',updated:'10:24:34',
+     route:['c10','isoB34','c8','isoB23','c7','isoB12','c6','isoB','c5'],
+     metrics:{bps:96,lat:2.1},
+     history:[['09:50',94,2.2],['09:56',97,2.1],['10:02',95,2.1],['10:08',98,2.0],['10:14',96,2.1],['10:20',96,2.1],['10:24',96,2.1]]}
+  ],
+  /* 显式事件样例源。交付件的异常对象清单已由分段方向状态（sg1 上行不通）派生，
+     故此处留空；如需演示事件类条目，按
+     {id,sev,title,time,detail,impact,node,path} 追加即可。 */
+  events:[]
+};
+
+/* ==========================================================================
+   状态说明文案 —— 原「状态说明」卡片内容改为悬浮提示（需求 2）
+   ========================================================================== */
+const TIPS = {
+  'legend:blocked' : '阻断源：故障源导致数据无法向下游流转；红色闪烁定位。',
+  'legend:impact'  : '上游中断：对象自身未必故障，但因上游阻断而不可达。',
+  'legend:metric'  : '指标异常：指标越界提示，不必然中断数据流转。',
+  'legend:unknown' : '未知：不以 0 替代未知；探针数据过期或缺失时显示未知。',
+  'flow:blocked'   : '故障源 · 阻断流转：本对象自身异常，导致数据无法向下游流转。',
+  'flow:impacted'  : '上游中断：本对象自身未必故障，因上游阻断而不可达。',
+  'flow:metric'    : '指标异常 · 不影响流转：仅指标越界，数据仍正常流转。',
+  'flow:unknown'   : '状态未知：探针数据已过期或缺失，不以 0 替代。',
+  'flow:normal'    : '流转正常：本对象状态正常，数据正常流转。',
+  'path:normal'          : '正常：该 Path 全部对象状态正常。',
+  'path:partialAbnormal' : '部分异常：存在异常对象但并非全部异常；异常优先于未知。',
+  'path:abnormal'        : '异常：该 Path 全部对象异常。',
+  'path:partialUnknown'  : '部分未知：无异常对象且存在未知对象。',
+  'path:unknown'         : '未知：该 Path 全部对象状态未知。',
+  /* 原独立「统计口径」行已删除，口径文案改为首卡悬浮说明，避免与 KPI 重复占位 */
+  'scope:unit'           : '统计口径：当前单位全部已发布且启用 Path；查询仅聚焦视图，不隐藏当前单位其他异常。',
+  /* KPI 口径说明（2026-09-22 新增三张指标卡：口径都非显然，必须写明） */
+  'kpi:lat'              : '平均时延：当前单位各业务链路整链时延的均值（端到端探测值）。按基线要求，整链时延与分段时延分别采集、不相加、不互相推算，故此处不含任何分段时延。',
+  'kpi:bps'              : '链路吞吐量：当前单位各业务链路当前吞吐之和（各链路流量相加，非瓶颈值）；副文案为各链路历史峰值之和。',
+  'kpi:alarm'            : '今日告警：自本次打开页面以来推送的告警累计条数（每 7 秒一条，不受列表 40 条上限影响）；副文案「未处置」为当前列表中状态仍为未处置的条数，会随处置与列表滚动而变化。',
+  /* 链路方向状态说明（源图图例：实线 = 下行、点线 = 上行；绿 = 通畅、红 = 异常、灰 = 不通） */
+  'dir:rule'             : '线型即方向：实线 = 下行，点线 = 上行。每段链路同时呈现两个方向，箭头指向该方向的接收端。',
+  'dir:normal'           : '通畅：该方向数据正常转发。',
+  'dir:abnormal'         : '异常：该方向指标越界，但数据仍在转发，尚未中断。',
+  'dir:interrupted'      : '不通：该方向数据无法转发，链路该方向已中断。',
+  'dir:impact'           : '受阻：该方向自身未故障，但因上游已阻断而收不到数据（即图例中的「上游中断」语义）。',
+  'dir:unknown'          : '未知：该方向探针数据过期或缺失；未知不以 0 替代。',
+  'iso:forward'          : '正向隔离装置：跨区数据必须经该装置转发。装置是区域边界，不参与节点与链路计数。',
+  /* 三处「范围口径」说明（2026-09-22）：业务链路跟随选中收窄，清单与告警保持全量 */
+  'pathlist:scope'       : '业务链路卡按 Path 分组展示当前单位的全部分段；拓扑也默认同时展开全部链路。',
+  'exc:scope'            : '异常对象清单按当前单位全部已发布且启用 Path 统计，不随选中链路过滤（避免把可见子集当成全集）。属于当前选中链路的条目高亮，其余降噪显示；严重条目始终全亮。',
+  'alarm:scope'          : '实时告警是全量消息流，不随选中链路过滤——隐藏未选中链路的告警会掩盖故障。属于当前选中链路的条目高亮，其余降噪显示；严重条目始终全亮。'
+};
+
+/* ==========================================================================
+   状态
+   ========================================================================== */
+const S = {unit:'sz', path:'all', status:'all', selected:'p-full', focus:null, focusSeg:null};
+const node = id => D.nodes.find(x => x.id === id);
+const path = id => D.paths.find(x => x.id === id);
+const segment = id => D.segments.find(x => x.id === id);
+/* 一条完整链路的状态由其全部分段的方向状态聚合：任一方向不通即为异常 */
+/* 该链路拥有的分段：按段的 paths 归属直取。
+   公共段列多条链路，故同一段会同时出现在多个 segsOf 结果里 —— 拓扑上仍只画一次。 */
+const segsOf = p => D.segments.filter(s => (s.paths || []).includes(p.id));
+/* 链路方向状态：实线 = 下行，点线 = 上行；颜色只从 --st-* 语义色取，不新增颜色 */
+const DIR_STATE = {
+  normal:      {cn:'通畅', css:'var(--st-normal)'},
+  abnormal:    {cn:'异常', css:'var(--st-metric)'},
+  interrupted: {cn:'不通', css:'var(--st-blocked)'},
+  /* 受阻：该方向自身未故障，但因上游阻断收不到数据 —— 即图例中的「上游中断」语义 */
+  impact:      {cn:'受阻', css:'var(--st-impact)'},
+  unknown:     {cn:'未知', css:'var(--st-unknown)'}
+};
+/* 节点所属分区简称：网级层统一为「网级」，其余取分区列名 */
+const zoneOf = id => {
+  const n = node(id);
+  if (!n) return id;
+  if (n.layer === 'net') return '网级';
+  return zoneName(n.zone) || ((n.loc || '').split('·')[0].trim()) || id;
+};
+/* 单个分段的状态：由其两个方向聚合（异常优先于未知） */
+const segStatus = s => (s.down === 'interrupted' || s.up === 'interrupted') ? 'abnormal'
+  : (s.down === 'abnormal' || s.up === 'abnormal') ? 'partialAbnormal'
+  : (s.down === 'unknown' && s.up === 'unknown') ? 'unknown'
+  : (s.down === 'unknown' || s.up === 'unknown') ? 'partialUnknown'
+  : 'normal';
+const DIR_CN = k => (DIR_STATE[k] || DIR_STATE.unknown).cn;
+const DIR_CSS = k => (DIR_STATE[k] || DIR_STATE.unknown).css;
+/* 分段的分区对标签：同区为「X 内」，跨区为「X ⇄ Y」。
+   异常对象清单与业务链路卡共用本函数，避免两处各写一份。 */
+const segPair = sg => {
+  const za = zoneOf(sg.a), zb = zoneOf(sg.b);
+  return za === zb ? za + ' 内' : za + ' ⇄ ' + zb;
+};
+/* 归属高亮/降噪（异常清单与实时告警共用）：
+   条目属于当前选中链路 → is-sel；否则降噪 dim。
+   **严重条目始终全亮**——降噪可以，但不能把故障淡到看不见。 */
+/* 链路选择暂停期间不降噪其他 Path 的清单/告警；仅为当前趋势上下文保留轻量归属高亮。 */
+const ownCls = e => (e.paths || []).includes(S.selected) ? ' is-sel' : '';
+
+/* 分段聚焦（2026-09-22）：点「业务链路」里的分段条目时，把该段作为一个整体高亮——
+   两端节点 + 经过的装置 + 该段连线，其余节点与连线降噪。
+   与 S.focus（单节点聚焦，抽屉用）互不干扰：进入分段聚焦时清空 S.focus。 */
+const focusSegOf = () => (S.focusSeg ? segment(S.focusSeg) : null);
+const inFocusSeg = id => {
+  const s = focusSegOf();
+  return !!s && (s.a === id || s.via === id || s.b === id);
+};
+/* 默认同时展示全部链路：只在分段聚焦时降噪，不再因「未选中链路」降低透明度。 */
+const ownDim = id => focusSegOf() ? !inFocusSeg(id) : false;
+
+/* 完整链路状态由其全部分段的方向状态聚合得到（异常优先于未知），
+   避免「方向状态」与「链路状态」两处各写一份而互相矛盾 */
+function derivePathStatus() {
+  D.paths.forEach(p => {
+    const ds = [];
+    segsOf(p).forEach(s => { ds.push(s.down, s.up); });
+    if (!ds.length) return;
+    p.blocked = ds.some(s => s === 'interrupted');
+    p.status = p.blocked ? 'abnormal'
+      : ds.some(s => s === 'abnormal') ? 'partialAbnormal'
+      : ds.every(s => s === 'unknown') ? 'unknown'
+      : ds.some(s => s === 'unknown') ? 'partialUnknown'
+      : 'normal';
+  });
+}
+derivePathStatus();
+
+/* 某条链路上「因上游阻断而受阻」的方向集合。
+   分段按 route 排出下行序（网级 → 安全接入区）；下行链正序走一遍、
+   上行链反序走一遍，某方向一旦出现 interrupted，其后的同方向段全部受阻。
+   受阻 ≠ 不通：那几段自身并未故障，只是收不到数据（对应图例的「上游中断」）。 */
+function starvedDirs(p) {
+  if (!p) return {down: new Set(), up: new Set()};
+  const segs = segsOf(p).slice().sort((x, y) => p.route.indexOf(x.b) - p.route.indexOf(y.b));
+  const out = {down: new Set(), up: new Set()};
+  ['down','up'].forEach(kind => {
+    const order = kind === 'down' ? segs : segs.slice().reverse();
+    let broken = false;
+    order.forEach(sg => {
+      if (broken) out[kind].add(sg.id);
+      if (sg[kind] === 'interrupted') broken = true;
+    });
+  });
+  return out;
+}
+
+/* 由分段方向状态**派生**节点 flow，避免 flow 与 segments 成为两个事实源
+   （原先把 12 个节点全部硬编码为 flow:'normal'，于是「阻断链路=1」而
+   「自身异常节点=0」，页面自相矛盾；.node.is-impact 样式与「上游中断」图例项
+   也因样例从未触发而形同虚设）。
+   规则：只有故障源装置标记 blocked（无装置时取故障分段端点）；
+        后续链路的受阻状态只画在线上，不把沿途业务节点或装置标为异常。 */
+function deriveFlows() {
+  D.nodes.forEach(n => { n.flow = 'normal'; });
+  const blocked = new Set();
+  D.paths.forEach(p => {
+    segsOf(p).forEach(sg => {
+      if (sg.down === 'interrupted' || sg.up === 'interrupted') blocked.add(sg.via || sg.a);
+    });
+  });
+  blocked.forEach(id => { const n = node(id); if (n) n.flow = 'blocked'; });
+}
+deriveFlows();
+
+const chip = (s, tipKey) =>
+  '<span class="chip ' + s + '" data-tip="' + (tipKey || ('path:' + s)) + '">' + STATUS[s] + '</span>';
+
+/* ==========================================================================
+   悬浮说明（需求 2）
+   ========================================================================== */
+const tipEl = $('#tooltip');
+function showTip(key, anchor) {
+  const txt = TIPS[key];
+  if (!txt) return;
+  const i = txt.indexOf('：');
+  tipEl.innerHTML = (i > 0 ? '<b>' + txt.slice(0, i) + '</b>' : '') + (i > 0 ? txt.slice(i + 1) : txt);
+  tipEl.classList.add('show');
+  const r = anchor.getBoundingClientRect(), t = tipEl.getBoundingClientRect();
+  let left = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), window.innerWidth - t.width - 8);
+  let top = r.top - t.height - 9;
+  if (top < 8) top = r.bottom + 9;
+  tipEl.style.left = left + 'px';
+  tipEl.style.top = top + 'px';
+}
+const hideTip = () => tipEl.classList.remove('show');
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (el) showTip(el.dataset.tip, el); else hideTip();
+});
+document.addEventListener('focusin', e => {
+  const el = e.target.closest('[data-tip]');
+  if (el) showTip(el.dataset.tip, el);
+});
+document.addEventListener('focusout', hideTip);
+window.addEventListener('scroll', hideTip, true);
+
+/* ==========================================================================
+   概览与筛选
+   ========================================================================== */
+function overview() {
+  const ps = D.paths.filter(p => p.unit === S.unit);
+  const blocked = ps.filter(p => p.blocked).length;
+  const bad = ps.filter(p => ['abnormal','partialAbnormal'].includes(p.status)).length;
+  const unk = ps.filter(p => ['unknown','partialUnknown'].includes(p.status)).length;
+  if (!ps.length) return {label:'暂无运行链路', cls:'unknown', detail:'当前单位没有已发布且启用 Path。', ps, blocked, bad, unk};
+  if (blocked)    return {label:'存在中断', cls:'abnormal', detail:blocked + ' 条 Path 存在数据流转阻断。', ps, blocked, bad, unk};
+  if (bad)        return {label:'存在异常', cls:'abnormal', detail:bad + ' 条 Path 存在异常或部分异常。', ps, blocked, bad, unk};
+  if (unk)        return {label:'存在未知', cls:'unknown',  detail:unk + ' 条 Path 存在未知或部分未知对象。', ps, blocked, bad, unk};
+  return {label:'运行正常', cls:'normal', detail:'全部 Path 状态正常。', ps, blocked, bad, unk};
+}
+function match(p) {
+  return p.unit === S.unit
+    && (S.path === 'all' || p.id === S.path)
+    && (S.status === 'all'
+      || (S.status === 'abnormal' && ['abnormal','partialAbnormal'].includes(p.status))
+      || (S.status === 'unknown'  && ['unknown','partialUnknown'].includes(p.status))
+      || (S.status === 'normal'   && p.status === 'normal'));
+}
+function selectOptions(el, list, all) {
+  el.innerHTML = '<option value="all">' + all + '</option>' +
+    list.map(x => '<option value="' + x.id + '">' + x.name + '</option>').join('');
+}
+function initFilters() {
+  selectOptions($('#unit'), D.units, '全部单位');
+  selectOptions($('#path'), D.paths, '全部业务链路');
+  $('#status').innerHTML =
+    '<option value="all">全部运行状态</option>' +
+    '<option value="abnormal">异常 / 部分异常</option>' +
+    '<option value="unknown">未知 / 部分未知</option>' +
+    '<option value="normal">正常</option>';
+  $('#unit').value = 'sz';
+  $('#unit').disabled = true;
+}
+
+/* ==========================================================================
+   渲染：状态横幅 + KPI
+   ========================================================================== */
+function renderTop() {
+  const o = overview();
+  /* 首卡「当前单位概况」保留原样；其余三张为指标卡（2026-09-22 改版）：
+     平均时延 / 链路吞吐量 / 今日告警。原「业务链路 / 阻断链路 / 自身异常节点 /
+     受上游影响节点」四卡已移除——其中「业务链路」「阻断」两个数仍在首卡副文案里，
+     故口径未丢；节点级状态口径（故障源 / 上游中断）改由拓扑与异常清单承载。 */
+  /* 统一按 o.ps（当前单位的已发布启用 Path）取值，与首卡副文案同口径，
+     避免将来放开单位查询后同行各卡口径不一致 */
+  const lats = o.ps.map(p => Number(p.metrics && p.metrics.lat)).filter(Number.isFinite);
+  const latAvg = lats.length ? lats.reduce((a, b) => a + b, 0) / lats.length : null;
+  const latMax = lats.length ? Math.max.apply(null, lats) : null;
+  const bps = o.ps.map(p => Number(p.metrics && p.metrics.bps)).filter(Number.isFinite);
+  const bpsSum = bps.length ? bps.reduce((a, b) => a + b, 0) : null;
+  /* 峰值 = 各链路历史吞吐峰值之和；无 history 的链路以当前值兜底 */
+  const peaks = o.ps.map(p => {
+    const hs = (p.history || []).map(h => Number(h[1])).filter(Number.isFinite);
+    return hs.length ? Math.max.apply(null, hs) : Number(p.metrics && p.metrics.bps);
+  }).filter(Number.isFinite);
+  const bpsPeak = peaks.length ? peaks.reduce((a, b) => a + b, 0) : null;
+  const unhandled = alarms.filter(a => a.state === '未处置').length;
+  /* 原「状态横幅 + 统计口径」整行已删除，其内容并入首卡，单位口径只在此处出现一次 */
+  const sub = o.ps.length
+    ? '深圳 · ' + o.ps.length + ' 业务链路 · ' + o.blocked + ' 阻断 · ' + o.bad + ' 异常 · ' + o.unk + ' 未知'
+    : '深圳 · 当前单位没有已发布且启用 Path';
+  $('#kpis').innerHTML =
+    kpi('当前单位概况', o.label, sub, o.cls === 'abnormal' ? 'danger' : o.cls === 'unknown' ? 'unknown' : 'ok', 'status', 'scope:unit') +
+    /* 未知一律用 —，不以 0 替代（与图例「未知」项一致） */
+    kpi('平均时延', latAvg == null ? '—' : latAvg.toFixed(1) + '<span class="unit"> ms</span>',
+      latAvg == null ? '暂无数据' : '最高 ' + latMax.toFixed(1) + ' ms', '', '', 'kpi:lat') +
+    kpi('链路吞吐量', bpsSum == null ? '—' : bpsSum + '<span class="unit"> Mbps</span>',
+      bpsSum == null ? '暂无数据' : '峰值 ' + bpsPeak + ' Mbps', '', '', 'kpi:bps') +
+    kpi('今日告警', alarmTodayTotal, '未处置 ' + unhandled + ' 条',
+      unhandled ? 'danger' : '', '', 'kpi:alarm');
+}
+function kpi(label, value, sub, cls, extra, tip) {
+  /* 首卡的值是「状态」而非「计数」：用状态胶囊承载，与其余卡 19px 数值在形态上区分开
+     （原先把「存在中断」按 19px 粗体渲染，与数字混在一起显得过大、不协调）。
+     tip 为悬浮口径说明的注册键；extra 只负责「是不是状态卡」，两者解耦。 */
+  const val = extra === 'status'
+    ? '<span class="kpi-chip ' + (cls || '') + '">' + value + '</span>'
+    : '<span class="kpi-value">' + value + '</span>';
+  return '<div class="kpi ' + (cls || '') + (extra ? ' ' + extra : '') + '"' +
+    (tip ? ' data-tip="' + tip + '"' : '') + '>' +
+    '<div class="kpi-row"><span class="kpi-label"><i></i>' + label + '</span>' + val + '</div>' +
+    '<div class="kpi-sub">' + sub + '</div></div>';
+}
+
+/* ==========================================================================
+   渲染：拓扑（层级行 × 分区列矩阵 + 装置竖条/横条 + 方向连线）
+   ========================================================================== */
+/* 网格定位：节点所在列（zone 或显式 col）+ 所在行（默认链路 1 为 row3，链路 2 显式指定 row5）。 */
+const LAYER_ROW = {edge:3};
+const zoneCol = id => ((D.zones.find(z => z.id === id) || {}).col) || 1;
+const zoneName = id => ((D.zones.find(z => z.id === id) || {}).name) || '';
+const colOf = n => n.col || zoneCol(n.zone);
+const rowOf = n => n.row || LAYER_ROW[n.layer] || 5;
+
+/* 左侧链路标签：纵排居中，分别与通信/文件链路行对齐 */
+function layerLabelHtml(l) {
+  return '<div class="layer-label" data-layer="' + l.id + '"' +
+    ' style="grid-column:1;grid-row:' + l.row + '" aria-label="' + l.name + '">' +
+    '<span>' + l.name + '</span></div>';
+}
+/* 顶部列标题：分区名整体标识该列，卡片内不再重复分区说明 */
+function zoneHeadHtml(z) {
+  return '<div class="zone-head" data-zone="' + z.id + '"' +
+    ' style="grid-column:' + z.col + ';grid-row:1"><b>' + z.name + '</b></div>';
+}
+/* 竖条窄，指标值取单位简写（Mbps→M）；完整值在悬浮提示与抽屉里 */
+const barVal = v => String(v).replace(' Mbps','M').replace(' ms','ms').replace(' 条','').replace(' %','%');
+/* 装置竖条：竖排装置名 + 竖排指标常显，边框色承载状态 */
+function barHtml(n) {
+  if (!n) return '';
+  const kind = n.name.includes('防火墙') ? 'fw' : 'iso';
+  const onSel = (path(S.selected) || {route: []}).route.includes(n.id);
+  return '<button class="bar ' + stateClass(n) + (S.focus === n.id || inFocusSeg(n.id) ? ' focus' : '') +
+    (ownDim(n.id, onSel) ? ' dim' : '') + '"' +
+    ' id="n-' + n.id + '" data-node="' + n.id + '" data-tip="dev:' + kind + '"' +
+    ' aria-label="' + n.name + '，' + (n.loc || '') + '">' +
+    '<span class="bar-name">' + n.name + '</span>' +
+    '<span class="bar-metrics">' +
+      Object.entries(n.m).slice(0, 3).map(([k, v]) => '<em>' + k + '<b>' + barVal(v) + '</b></em>').join('') +
+    '</span></button>';
+}
+/* 横向装置条：置于网级行与深圳行之间的分割线上（align-self:end + 半个行间距） */
+function bandHtml(b) {
+  const n = node(b.id);
+  if (!n) return '';
+  const onSel = (path(S.selected) || {route: []}).route.includes(n.id);
+  return '<button type="button" class="band ' + stateClass(n) +
+    (S.focus === n.id || inFocusSeg(n.id) ? ' focus' : '') +
+    (ownDim(n.id, onSel) ? ' dim' : '') + '"' +
+    ' id="n-' + n.id + '" data-node="' + n.id + '" data-kind="' + n.kind + '"' +
+    ' data-tip="dev:fw"' +
+    ' style="grid-column:' + b.col + ';grid-row:4"' +
+    ' aria-label="' + n.name + '，' + (n.loc || '') + '，' + STATUS[n.status] + '">' +
+    '<span class="band-name">' + n.name + '</span>' +
+    '<span class="band-metrics">' +
+      Object.entries(n.m).slice(0, 3).map(([k, v]) => '<em>' + k + '<b>' + v + '</b></em>').join('') +
+    '</span></button>';
+}
+/* 单元格：按 (列, 行) 聚合节点，多条链路在同一格纵向堆叠（顶部对齐） */
+function cellHtml(col, row, ns) {
+  return '<div class="cell" style="grid-column:' + col + ';grid-row:' + row + '">' +
+    ns.map(nodeHtml).join('') + '</div>';
+}
+/* 方向线图元：实线 = 下行，点线 = 上行，颜色随状态 */
+function dirLine(k, w) {
+  return '<i class="ll-line' + (k === 'up' ? ' up' : '') + '"' +
+    (w ? ' style="width:' + w + 'px"' : '') + '></i>';
+}
+function stateClass(n) {
+  if (n.flow === 'blocked' || n.status === 'abnormal') return 'is-abnormal';
+  if (n.flow === 'impacted') return 'is-impact';
+  if (n.status === 'unknown') return 'is-unknown';
+  if (n.metric) return 'is-metric';
+  return '';
+}
+const ICON_SERVICE =
+  '<svg viewBox="0 0 48 54" aria-hidden="true">' +
+  '<path d="M24 3 L43 14 V40 L24 51 L5 40 V14 Z" fill="rgba(46,230,168,.10)" stroke="currentColor" stroke-width="2"/>' +
+  '<circle cx="24" cy="24" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+  '<path d="M24 29 v9 M19 33 h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const ICON_ISO =
+  '<svg viewBox="0 0 52 36" aria-hidden="true">' +
+  '<rect x="1" y="8" width="20" height="20" rx="3" fill="rgba(56,198,255,.10)" stroke="currentColor" stroke-width="1.5"/>' +
+  '<rect x="31" y="8" width="20" height="20" rx="3" fill="rgba(157,123,255,.10)" stroke="currentColor" stroke-width="1.5"/>' +
+  '<path d="M21 13 H31 M21 23 H31" stroke="currentColor" stroke-width="1.3" stroke-dasharray="2.5 2.5"/>' +
+  '<path d="M12 3 l5 4 l-5 4" fill="none" stroke="#38c6ff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '<path d="M17 7 H2" stroke="#38c6ff" stroke-width="1.7" stroke-linecap="round"/>' +
+  '<path d="M40 25 l-5 4 l5 4" fill="none" stroke="#9d7bff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '<path d="M35 29 H50" stroke="#9d7bff" stroke-width="1.7" stroke-linecap="round"/></svg>';
+const ICON_FW =
+  '<svg viewBox="0 0 40 48" aria-hidden="true">' +
+  '<path d="M20 3 L36 11 V23 C36 33 29 41 20 45 C11 41 4 33 4 23 V11 Z" fill="rgba(91,140,255,.10)" stroke="currentColor" stroke-width="1.8"/>' +
+  '<path d="M13 23 l5 5 l10 -11" fill="none" stroke="#2ee6a8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function iconFor(n) {
+  if (n.kind !== 'device') return ICON_SERVICE;   /* 业务节点与网级平台同用服务图标 */
+  return n.name.includes('防火墙') ? ICON_FW : ICON_ISO;
+}
+function nodeHtml(n) {
+  const metrics = Object.entries(n.m).slice(0, 3)
+    .map(([k, v]) => '<span>' + k + '<b>' + v + '</b></span>').join('');
+  const kindTxt = n.kind === 'device' ? '安全装置' : (n.kind === 'net' ? '网级节点' : '业务节点');
+  /* 分区由列标题整体标识、状态由右上角状态点表示，卡片内不再重复说明 */
+  /* 非选中链路的对象卡片降噪而不是隐藏：隐藏会使画布变成"可见子集"，
+     与基线「不得把视觉可见子集当作状态聚合全集」相冲突，也会触发重排 */
+  const onSel = (path(S.selected) || {route: []}).route.includes(n.id);
+  return '<button class="node ' + (n.kind === 'device' ? 'device ' : 'service ') + stateClass(n) +
+    (S.focus === n.id || inFocusSeg(n.id) ? ' focus' : '') + (ownDim(n.id, onSel) ? ' dim' : '') + '"' +
+    ' id="n-' + n.id + '" data-node="' + n.id + '" data-kind="' + n.kind + '"' +
+    ' aria-label="' + n.name + '，' + kindTxt + '，' + (n.loc || '') + '，' + STATUS[n.status] + '">' +
+    '<span class="statusdot"></span>' +
+    '<div class="node-top">' +
+      '<span class="node-ic">' + iconFor(n) + '</span>' +
+      '<div style="min-width:0">' +
+        '<div class="node-name">' + n.name + '</div>' +
+        '<div class="node-sub">' + kindTxt + ' · ' + n.updated + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="node-metrics">' + metrics + '</div>' +
+    '</button>';
+}
+/* 全链方向状态：把各分段的方向状态聚合为一档（任一不通即不通，任一异常即异常） */
+function aggDir(p, k) {
+  const ds = segsOf(p).map(s => s[k]);
+  if (!ds.length) return 'unknown';
+  if (ds.some(s => s === 'interrupted')) return 'interrupted';
+  if (ds.some(s => s === 'abnormal')) return 'abnormal';
+  if (ds.every(s => s === 'unknown')) return 'unknown';
+  return 'normal';
+}
+function laneHtml(p) {
+  const cls = 'lane' + (p.id === S.selected ? ' selected' : '') + (match(p) ? '' : ' muted');
+  const segs = segsOf(p);
+  const n = segs.length, devN = segs.filter(x => x.via).length;
+  const dirs = ['down','up'].map(k => {
+    const st = aggDir(p, k);
+    return '<span class="dirs" data-tip="dir:' + st + '" style="color:' + DIR_CSS(st) + '">' + dirLine(k, 18) +
+      (k === 'down' ? '下行' : '上行') + DIR_CN(st) + '</span>';
+  }).join('');
+  /* 线型说明（实线=下行 / 点线=上行）改挂在这一组方向标签上：常显图例已按 2026-09-22 要求移除 */
+  return '<button class="' + cls + '" data-path="' + p.id + '">' +
+    '<div class="lane-top"><span class="lane-name">' + p.name + '</span>' + chip(p.status) + '</div>' +
+    '<div class="lane-meta"><span class="lane-kind">' + p.type + '</span>' +
+    '<span>' + n + ' 段 · ' + devN + ' 处装置</span>' +
+    '<span class="lane-dirs" tabindex="0" data-tip="dir:rule">' + dirs + '</span></div></button>';
+}
+function renderTopology() {
+  /* 链路选择暂时停用；拓扑同时展开 D.paths 全部链路。 */
+  // $('#lanes').innerHTML = D.paths.map(laneHtml).join('');
+  $('#lanes').innerHTML = '';
+
+  /* 分区列底板：纯装饰，铺在节点之下，让「一列＝一个分区」显式可见 */
+  const bg = D.zones.map(z =>
+    '<div class="zone-bg" style="grid-column:' + z.col + ';grid-row:1 / -1"></div>').join('');
+  const heads = D.zones.map(zoneHeadHtml).join('');
+  const labels = D.layers.map(layerLabelHtml).join('');
+  /* 深圳单位下的通信/文件两条链路不再需要网级/深圳横向分割线 */
+  const divider = '';
+  /* 分区边界竖线按列去重；两条链路的装置分行压在同一组分区边界上 */
+  const bounds = [...new Set(D.bars.map(b => b.col))].map(col =>
+    '<div class="boundary-line" style="grid-column:' + col + ';grid-row:1 / -1" aria-hidden="true"></div>').join('');
+  /* 横向装置条：沿安全接入区/Ⅰ区分割线布置 */
+  const bands = (D.bands || []).map(bandHtml).join('');
+
+  /* 装置竖条：跨在相邻两列之间；同一位置的多个装置合并到一个单元格里纵向排列，
+     使「第 N 根竖条」与相邻列的「第 N 张卡」横向对齐 */
+  const barGroups = {};
+  D.bars.forEach(x => {
+    const k = x.col + '@' + x.row;
+    (barGroups[k] = barGroups[k] || {col: x.col, row: x.row, ids: []}).ids.push(x.id);
+  });
+  const bars = Object.keys(barGroups).map(k => {
+    const g = barGroups[k];
+    return '<div class="bar-cell" style="grid-column:' + g.col + ';grid-row:' + g.row + '">' +
+      g.ids.map(id => barHtml(node(id))).join('') + '</div>';
+  }).join('');
+
+  /* 节点单元格：按 (列, 行) 聚合；装置竖条已单独渲染，此处跳过 */
+  const barIds = D.bars.map(b => b.id).concat((D.bands || []).map(b => b.id));
+  const groups = {};
+  D.nodes.forEach(n => {
+    if (barIds.includes(n.id)) return;
+    const k = colOf(n) + '@' + rowOf(n);
+    (groups[k] = groups[k] || {col: colOf(n), row: rowOf(n), ns: []}).ns.push(n);
+  });
+  const cells = Object.keys(groups).map(k => groups[k])
+    .sort((a, b) => a.row - b.row || a.col - b.col)
+    .map(g => cellHtml(g.col, g.row, g.ns)).join('');
+
+  $('#topoGrid').innerHTML = bg + heads + labels + divider + bounds + bars + bands + cells;
+  drawEdges();
+  requestAnimationFrame(() => {
+    updateTopoNav();
+  });
+}
+function updateTopoNav() {
+  const topo = $('#topo'), overflow = topo.scrollWidth > topo.clientWidth + 2;
+  $('#topoNav').hidden = !overflow;
+  $('#topoScrollNote').style.display = overflow ? '' : 'none';
+  $('#topoPrev').disabled = !overflow || topo.scrollLeft < 2;
+  $('#topoNext').disabled = !overflow || topo.scrollLeft >= topo.scrollWidth - topo.clientWidth - 8;
+}
+
+/* --------------------------------------------------------------------------
+   连接线：正交折线 + 圆角 + 渐变描边 + 流动粒子
+   -------------------------------------------------------------------------- */
+function polyPath(pts, r) {
+  if (pts.length < 2) return '';
+  let d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+    const d1 = Math.hypot(x1 - x0, y1 - y0) || 1, d2 = Math.hypot(x2 - x1, y2 - y1) || 1;
+    const rr = Math.min(r, d1 / 2, d2 / 2);
+    const ax = x1 - (x1 - x0) / d1 * rr, ay = y1 - (y1 - y0) / d1 * rr;
+    const bx = x1 + (x2 - x1) / d2 * rr, by = y1 + (y2 - y1) / d2 * rr;
+    d += ' L' + ax.toFixed(1) + ' ' + ay.toFixed(1) +
+         ' Q' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1);
+  }
+  const last = pts[pts.length - 1];
+  return d + ' L' + last[0].toFixed(1) + ' ' + last[1].toFixed(1);
+}
+const EDGE_MARKERS = {
+  normal:'#ar-normal', abnormal:'#ar-abnormal', interrupted:'#ar-fault',
+  impact:'#ar-impact', unknown:'#ar-unknown'
+};
+const EDGE_STROKE = {
+  normal:'#2ee6a8', abnormal:'#ffb648', interrupted:'#ff5f5f',
+  impact:'#af6977', unknown:'#8492a8'
+};
+function drawEdges() {
+  const canvas = $('#topoCanvas'), svg = $('#edges');
+  const cr = canvas.getBoundingClientRect();
+  /* 先把 SVG 收为零尺寸再量取内容宽高：SVG 是绝对定位子元素，
+     若直接读 scrollWidth 会把上一轮按旧尺寸设置的 SVG 宽度算进去，
+     形成"容器越量越宽、SVG 永不收缩"的回环。 */
+  svg.style.width = '0px';
+  svg.style.height = '0px';
+  const W = Math.max(canvas.clientWidth, canvas.scrollWidth);
+  const H = Math.max(canvas.clientHeight, canvas.scrollHeight);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.style.width = W + 'px';
+  svg.style.height = H + 'px';
+
+  const box = id => {
+    const el = $('#n-' + id);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      l: r.left - cr.left, t: r.top - cr.top, w: r.width, h: r.height,
+      r: r.right - cr.left, b: r.bottom - cr.top,
+      cx: r.left - cr.left + r.width / 2, cy: r.top - cr.top + r.height / 2
+    };
+  };
+
+  let defs = '<defs>';
+  /* 关键：折线多为纯水平/垂直段，包围盒宽度或高度为 0；
+     若用默认的 objectBoundingBox 渐变单位，Chrome 不会描边。
+     因此统一使用 userSpaceOnUse，以画布尺寸定义渐变。 */
+  const grad = (id, c1, c2, c3) =>
+    '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '">' +
+    '<stop offset="0" stop-color="' + c1 + '" stop-opacity=".4"/>' +
+    '<stop offset=".5" stop-color="' + c2 + '"/>' +
+    '<stop offset="1" stop-color="' + c3 + '" stop-opacity=".6"/></linearGradient>';
+  defs += grad('g-normal', '#2ee6a8', '#2ee6a8', '#38c6ff');
+  defs += grad('g-abnormal', '#ffb648', '#ffd08a', '#ffb648');
+  defs += grad('g-unknown', '#8492a8', '#8492a8', '#8492a8');
+  defs += grad('g-fault', '#ff5f5f', '#ff5f5f', '#ff9a9a');
+  defs += grad('g-impact', '#af6977', '#c98b98', '#af6977');
+  Object.keys(EDGE_MARKERS).forEach(k => {
+    defs += '<marker id="' + EDGE_MARKERS[k].slice(1) + '" viewBox="0 0 8 8" refX="6.6" refY="4" ' +
+      'markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse">' +
+      '<path d="M0,0 L8,4 L0,8 Z" fill="' + EDGE_STROKE[k] + '"/></marker>';
+  });
+  defs += '</defs>';
+
+  let out = defs;
+  /* 每段链路画两条平行方向线：实线 = 下行，点线 = 上行；
+     每段经一处装置转发，故拆成「上游端 ⇄ 装置」「装置 ⇄ 下游端」两跳，
+     两跳共用同一对平行偏移，视觉上形成一条穿过装置的双线。 */
+  const OFF = 6;
+  /* 分段聚焦：该段连线保持高亮，同链路其余段降噪 */
+  const fSeg = focusSegOf();
+
+  /* 一跳的连线点位：up = 上游端（靠网级），down = 下游端（靠安全接入区）；
+     kind 决定平行偏移（下行偏上/偏左，上行偏下/偏右） */
+  const hopPts = (down, up, kind, axis, off) => {
+    const s = off == null ? (kind === 'down' ? -OFF : OFF) : off;
+    if (axis === 'v') {
+      const p0 = {x: up.cx + s, y: up.b}, p1 = {x: down.cx + s, y: down.t};
+      if (Math.abs(p0.x - p1.x) < 6) return [[p0.x, p0.y], [p1.x, p1.y]];
+      const my = (p0.y + p1.y) / 2;
+      return [[p0.x, p0.y], [p0.x, my], [p1.x, my], [p1.x, p1.y]];
+    }
+    const p0 = {x: up.l, y: up.cy + s}, p1 = {x: down.r, y: down.cy + s};
+    if (Math.abs(p0.y - p1.y) < 6) return [[p0.x, p0.y], [p1.x, p1.y]];
+    const mx = (p0.x + p1.x) / 2;
+    return [[p0.x, p0.y], [mx, p0.y], [mx, p1.y], [p1.x, p1.y]];
+  };
+
+  /* 未选中链路每跳只画 1 条细线，状态取分段聚合值；
+     partialX 不在 EDGE_MARKERS 里，须映射到 X，否则 marker-end 会取到 undefined */
+  const soloState = st => st === 'partialAbnormal' ? 'abnormal' : st === 'partialUnknown' ? 'unknown' : st;
+
+  D.segments.forEach((sg, i) => {
+    const A = box(sg.a), B = box(sg.b);
+    if (!A || !B) return;
+    /* via 为 null 表示两端直连（三区内上行/下行之间），此时只有一跳 */
+    const V = sg.via ? box(sg.via) : null;
+    if (sg.via && !V) return;
+    const owner = path((sg.paths || [])[0]);
+    const starved = starvedDirs(owner);
+
+    /* 经装置时拆两跳：上游端 ⇄ 装置、装置 ⇄ 下游端（a 为下游端，下行箭头指向它）；
+       直连段只有一跳 */
+    (V ? [[A, V], [V, B]] : [[A, B]]).forEach(([down, up], hi) => {
+      const kinds = ['down','up'];
+      kinds.forEach(kind => {
+        /* 受阻优先于自身状态：该方向自身通畅，只是上游断了（用「上游中断」色，不闪烁） */
+        const st = starved[kind].has(sg.id) ? 'impact' : sg[kind];
+        const pts = hopPts(down, up, kind, sg.axis, null);
+        /* 下行由上游指向下游，上行方向相反 */
+        const seq = kind === 'down' ? pts : pts.slice().reverse();
+        const id = 'ep' + i + '-' + hi + '-' + kind;
+        const cls = 'edge-path ' + st + (kind === 'up' ? ' up' : '') +
+          (fSeg ? (fSeg.id === sg.id ? ' hi' : ' dim') : ' hi');
+        out += '<path id="' + id + '" class="' + cls + '" d="' + polyPath(seq, 8) +
+          '" marker-end="url(' + EDGE_MARKERS[st] + ')"/>';
+
+        /* 流动粒子：全部链路同时展示；该方向未中断且未受阻时绘制，
+           且处于分段聚焦时只给被聚焦的那一段 */
+        if (st !== 'interrupted' && st !== 'impact' && (!fSeg || fSeg.id === sg.id)) {
+          const dur = st === 'abnormal' ? 3.4 : 2.4;
+          for (let k = 0; k < 2; k++) {
+            out += '<circle class="flow-dot" r="2.6">' +
+              '<animateMotion dur="' + dur + 's" repeatCount="indefinite" begin="' + (k * dur / 2) + 's">' +
+              '<mpath xlink:href="#' + id + '" href="#' + id + '"/></animateMotion></circle>';
+          }
+        }
+      });
+    });
+
+    /* 不通：在装置处（直连段则在本段中点）标注「方向不通」，避免只看颜色判断 */
+    ['down','up'].forEach(kind => {
+      if (sg[kind] !== 'interrupted') return;
+      const anchor = V ? {x: V.cx, y: V.t - 12}
+                       : {x: (A.cx + B.cx) / 2, y: Math.min(A.t, B.t) - 12};
+      out += '<g transform="translate(' + anchor.x.toFixed(1) + ',' + anchor.y.toFixed(1) + ')"' +
+        ' opacity="1">' +
+        '<rect class="edge-badge" x="-32" y="-9" width="64" height="18" rx="9"/>' +
+        '<text class="edge-badge-txt" x="0" y="3.5" text-anchor="middle">' +
+        (kind === 'down' ? '下行' : '上行') + '不通</text></g>';
+    });
+  });
+  svg.innerHTML = out;
+
+  /* 窄屏时拓扑需横向滚动，给出可发现的提示 */
+  const topo = $('#topo');
+}
+
+/* ==========================================================================
+   渲染：异常清单 + 实时告警（需求 3）
+   ========================================================================== */
+let alarmSeq = 0;
+let alarms = [];
+/* 「今日告警」KPI 用：自本次打开页面以来的累计推送条数。
+   必须独立于 alarms.length —— 队列有 40 条上限（见 pushAlarm），直接数队列会在 40 条后冻结。
+   只在 pushAlarm 内自增；seedAlarms 末尾按其产出条数赋值。页面刷新即从 0 重新累计
+   （原型不建模日期翻转，「今日」是名义口径）。 */
+let alarmTodayTotal = 0;
+let sevFilter = 'all';
+/* 异常对象清单的当前渲染集：条目以 data-exc="<索引>" 回查本数组，
+   避免依赖「重算一次必然同序」这一隐含假设 */
+let excPool = [];
+const SEV_CN = {critical:'严重', warn:'警告', info:'提示'};
+
+function srcOf(e) {
+  const n = node(e.node), p = path(e.path);
+  return (n ? n.name : '—') + (p ? ' · ' + p.name : '');
+}
+function seedAlarms() {
+  alarms = D.events.map(e => ({
+    id: ++alarmSeq,
+    /* 事件严重度 unknown 归入告警「提示」档，保证筛选计数自洽 */
+    sev: e.sev === 'unknown' ? 'info' : e.sev,
+    time: e.time,
+    ts: null,
+    src: srcOf(e),
+    msg: e.detail,
+    state: e.sev === 'critical' ? '未处置' : e.sev === 'warn' ? '处理中' : '已恢复',
+    node: e.node,
+    path: e.path,
+    paths: e.path ? [e.path] : []
+  }));
+  /* 首屏补种的告警也要计入「今日累计」（当前 D.events 为空 → 0，属正确的真值） */
+  alarmTodayTotal = alarms.length;
+}
+/* 由既有对象状态派生「异常对象池」，不新增业务规则。
+   口径（2026-09-22 裁决）：Edge（分段方向）与 Node 同样是「对象」——
+   基线 §9.2「Path 当前状态聚合该 Path 所包含的全部 Node 和 Edge 状态」，
+   故链路方向异常/不通一并进入「异常对象清单」。
+   分工：异常对象清单 = 对象汇总；实时告警 = 消息流。两者同源于本函数，不两处各写一份。 */
+const SEV_RANK = {critical:3, warn:2, unknown:1};
+function abnormalObjects() {
+  const out = [];
+  /* ① 分段方向（Edge）：一个方向一条 */
+  D.segments.forEach(sg => {
+    const ps = (sg.paths || []).map(path).filter(Boolean);
+    const dev = node(sg.via);
+    const names = ps.map(p => p.name).join(' / ');
+    ['down','up'].forEach(k => {
+      const st = sg[k];
+      if (st === 'normal') return;
+      const cn = k === 'down' ? '下行' : '上行';
+      const hop = dev ? '（经 ' + dev.name + '）' : '';
+      out.push({
+        kind:'edge',
+        sev: st === 'interrupted' ? 'critical' : st === 'abnormal' ? 'warn' : 'unknown',
+        title: segPair(sg) + ' · ' + cn + '方向',
+        time: (ps[0] && ps[0].updated) || '',
+        detail: cn + '方向' + (st === 'interrupted' ? '不通，数据无法转发'
+              : st === 'abnormal' ? '指标越界，当前未中断' : '状态未知') + hop + '。',
+        impact: names ? '归属：' + names : '归属：—',
+        src: (names || sg.id) + ' · ' + cn + '方向' + hop,
+        tip: 'dir:' + st, node: sg.a, path: ps[0] && ps[0].id,
+        paths: ps.map(p => p.id)
+      });
+    });
+  });
+  /* ② 业务/装置/网级节点：主状态非正常，或带「指标异常」角标 */
+  D.nodes.forEach(n => {
+    /* 一个节点可能同属多条链路（公共节点），文案须列出全部，只报首条会误导 */
+    const ps = D.paths.filter(x => x.route.includes(n.id));
+    const names = ps.map(p => p.name).join(' / ');
+    const many = ps.length > 1 ? '（' + ps.length + ' 条链路）' : '';
+    let sev = null, detail = '', tip = '';
+    if (n.status === 'abnormal') {
+      sev = 'critical'; tip = 'flow:blocked';
+      detail = n.name + ' 服务进程异常，数据流转受阻。';
+    } else if (n.metric) {
+      sev = 'warn'; tip = 'flow:metric';
+      detail = n.name + ' 指标越界：' + Object.entries(n.m).map(([k, v]) => k + ' ' + v).join('、') + '。';
+    } else if (n.status === 'unknown') {
+      sev = 'unknown'; tip = 'flow:unknown';
+      detail = n.name + ' 探针数据已过期，当前状态未知。';
+    }
+    if (!sev) return;
+    out.push({
+      kind:'node', sev, title:n.name, time:n.updated || '', detail,
+      impact: names ? '归属：' + names + many : '归属：—',
+      src: n.name + (names ? ' · ' + names : '') + many,
+      tip, node:n.id, path: ps[0] && ps[0].id, paths: ps.map(p => p.id)
+    });
+  });
+  /* ③ 显式事件样例（D.events）：保留为可人工注入的事件源 */
+  D.events.forEach(e => out.push({
+    kind:'event', sev: e.sev === 'unknown' ? 'unknown' : e.sev,
+    title:e.title, time:e.time, detail:e.detail, impact:e.impact,
+    src: srcOf(e), tip:null, node:e.node, path:e.path,
+    paths: e.path ? [e.path] : []
+  }));
+  return out.sort((a, b) => (SEV_RANK[b.sev] || 0) - (SEV_RANK[a.sev] || 0));
+}
+
+/* 实时告警的候选池：异常对象 + 正常对象的「周期上报正常」填充项（后者不进入异常清单） */
+function deriveAlarm() {
+  const pool = abnormalObjects().map(e => ({
+    /* 事件严重度 unknown 归入告警「提示」档，保证筛选计数自洽 */
+    sev: e.sev === 'unknown' ? 'info' : e.sev,
+    src: e.src,
+    msg: e.detail,
+    state: e.sev === 'critical' ? '未处置' : e.sev === 'warn' ? '处理中' : '待确认',
+    node: e.node, path: e.path, paths: e.paths || (e.path ? [e.path] : [])
+  }));
+  D.nodes.forEach(n => {
+    if (n.status !== 'normal' || n.metric) return;
+    const ps = D.paths.filter(x => x.route.includes(n.id));
+    const names = ps.map(p => p.name).join(' / ');
+    const tag = ps.length > 1 ? '（' + ps.length + ' 条链路）' : '';
+    pool.push({sev:'info', src:n.name + (names ? ' · ' + names : ''),
+      msg:n.name + ' 周期上报正常。' + tag, state:'已恢复', node:n.id, path:ps[0] && ps[0].id,
+      paths: ps.map(p => p.id)});
+  });
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+function pushAlarm(a) {
+  const d = new Date();
+  a.id = ++alarmSeq;
+  a.ts = d.getTime();
+  a.time = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  alarms.unshift(a);
+  if (alarms.length > 40) alarms.pop();
+  /* 累计计数在 pop 之外自增：队列截断不回退计数，「今日告警」不会在 40 条后冻结 */
+  alarmTodayTotal++;
+  renderAlarms();
+  renderTop();   /* 让「今日告警」卡即时刷新，不必等下一次 render() */
+}
+function renderAlarms() {
+  /* 实时告警是全量消息流，不随选中链路过滤；属于当前选中链路的条目高亮，其余降噪 */
+  const list = alarms.filter(a => sevFilter === 'all' || a.sev === sevFilter);
+  $('#alarmList').innerHTML = list.length ? list.map(a =>
+    '<div class="alarm-item sev-' + a.sev + ownCls(a) + '" data-own="' + (a.paths || []).join(',') + '">' +
+      '<div class="alarm-top">' +
+        '<span class="sev-chip ' + a.sev + '">' + SEV_CN[a.sev] + '</span>' +
+        '<span class="alarm-time">' + a.time + '</span>' +
+        '<span class="alarm-state' + (a.state === '未处置' ? ' open' : '') + '">' + a.state + '</span>' +
+      '</div>' +
+      '<div class="alarm-src">' + a.src + '</div>' +
+      '<div class="alarm-msg">' + a.msg + '</div>' +
+    '</div>').join('') : '<div class="alarm-empty">当前筛选下暂无告警</div>';
+
+  const cnt = k => k === 'all' ? alarms.length : alarms.filter(a => a.sev === k).length;
+  $('#afilter').innerHTML = ['all','critical','warn','info'].map(k =>
+    '<button class="fchip' + (sevFilter === k ? ' on' : '') + '" data-sev="' + k + '">' +
+    (k === 'all' ? '全部' : SEV_CN[k]) + '<i>' + cnt(k) + '</i></button>').join('');
+}
+function setLive(on) {
+  const el = $('#liveFlag');
+  el.className = 'live' + (on ? '' : ' off');
+  el.innerHTML = '<i></i>' + (on ? '实时' : '已暂停');
+}
+
+/* 由既有 route 派生分区序列条。 */
+function routeStrip(p) {
+  const rs = [];
+  p.route.forEach(id => {
+    if (id === 'net') { if (rs[rs.length - 1] !== '网级') rs.push('网级'); return; }
+    const n = node(id);
+    if (!n || n.kind === 'device') return;      /* 装置不参与分区序列 */
+    const r = (n.loc || '').split('·')[0].trim();
+    if (!r) return;
+    if (rs[rs.length - 1] !== r) rs.push(r);
+  });
+  return '<span class="pi-route">' +
+    rs.map((z, i) => (i ? '<i>›</i>' : '') + '<b>' + z + '</b>').join('') + '</span>';
+}
+
+function renderSide() {
+  /* 异常对象清单：数据源为 abnormalObjects()（Node 与 Edge 同源），按严重度降序。
+     **全量口径，不随选中链路过滤**（基线 §16.8：不得把可见子集当成状态聚合全集）；
+     属于当前选中链路的条目高亮，其余降噪。
+     计数徽标随计数变色：0 项时不得显示告警色，否则会被读成"存在告警"。 */
+  excPool = abnormalObjects();
+  $('#exceptionCount').className = 'chip' + (excPool.length ? ' abnormal' : '');
+  $('#exceptionCount').textContent = excPool.length + ' 项';
+  /* 清单为空才给空态；否则逐条列出。条目挂 data-exc 索引回查 excPool，
+     方向条目另挂 data-tip（dir:*）以维持「有状态必有说明」的闭合性。 */
+  $('#exceptions').innerHTML = excPool.length ? excPool.map((e, i) =>
+    '<button class="exception ' + e.sev + ownCls(e) + (S.focus === e.node ? ' active' : '') + '"' +
+      ' data-exc="' + i + '"' +
+      ' data-own="' + (e.paths || []).join(',') + '"' +
+      (e.tip ? ' data-tip="' + e.tip + '"' : '') + '>' +
+      '<div class="exception-top"><b>' + e.title + '</b><span>' + e.time + '</span></div>' +
+      '<small>' + e.detail + '</small>' +
+      '<span class="imp">' + e.impact + '</span>' +
+    '</button>').join('')
+    : '<div class="list-empty">当前无异常对象</div>';
+
+  /* 链路选择暂时停用：业务链路卡同步展示全部 Path 及其分段。 */
+  if (!D.paths.length) {
+    $('#pathList').innerHTML = '<div class="list-empty">当前单位没有已发布且启用 Path</div>';
+  } else {
+    $('#pathList').innerHTML = D.paths.map(p => {
+      const segs = segsOf(p), starved = starvedDirs(p);
+      const head = '<div class="path-group on"><span class="pg-name">' + p.name + '</span>' + chip(p.status) +
+        '<small class="pg-meta">' + p.type + ' · ' + segs.length + ' 段</small></div>';
+      const items = segs.map(sg => {
+        const pair = segPair(sg), st = segStatus(sg);
+        const dirs = ['down','up'].map(k => {
+          const ds = starved[k].has(sg.id) ? 'impact' : sg[k];
+          return '<span class="dirs" data-tip="dir:' + ds + '" style="color:' + DIR_CSS(ds) + '">' + dirLine(k, 14) +
+            (k === 'down' ? '下行' : '上行') + DIR_CN(ds) + '</span>';
+        }).join('');
+        const strip = [sg.a, sg.via, sg.b].filter(Boolean).map(id => {
+          const nd = node(id); return !nd ? id : nd.kind === 'device' ? nd.name : zoneOf(id);
+        }).filter((v, i2, arr) => arr.indexOf(v) === i2);
+        return '<button class="path-item is-seg' + (S.focusSeg === sg.id ? ' active' : '') + '"' +
+          ' data-seg="' + sg.id + '" data-path="' + p.id + '">' +
+          '<div class="pi-top"><span class="pi-name">' + pair + '</span>' + chip(st) + '</div>' +
+          '<small><span>分段链路</span>' + dirs + '<span>更新 ' + p.updated + '</span></small>' +
+          '<span class="pi-route">' + strip.map((z, i2) => (i2 ? '<i>›</i>' : '') + '<b>' + z + '</b>').join('') + '</span>' +
+        '</button>';
+      }).join('');
+      return head + items;
+    }).join('');
+  }
+}
+
+/* ==========================================================================
+   渲染：趋势图
+   重做要点：按容器真实像素绘制（不再把 600×150 拉伸填满）、左右双轴各自成刻度、
+   单调三次平滑（不过冲、不美化读数）、数据点标记、未知区间底纹、末值标注、随窗重绘
+   ========================================================================== */
+/* 取整刻度上界，避免 94 / 63 / 31 这类无法口算的坐标值 */
+function niceScale(maxV, n) {
+  if (!(maxV > 0)) return {top: n, ticks: Array.from({length: n + 1}, (_, i) => i)};
+  const raw = maxV / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), nz = raw / mag;
+  const mult = nz <= 1 ? 1 : nz <= 2 ? 2 : nz <= 2.5 ? 2.5 : nz <= 3 ? 3 : nz <= 4 ? 4 : nz <= 5 ? 5 : 10;
+  const step = mult * mag;
+  return {top: step * n, ticks: Array.from({length: n + 1}, (_, i) => +(i * step).toFixed(6))};
+}
+const tickTxt = v => Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(1);
+
+/* 单调三次插值：普通样条会在数据点附近过冲，读数会被曲线"美化"，此处刻意避免 */
+function smoothPath(pts) {
+  if (!pts.length) return '';
+  if (pts.length === 1) return 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+  const n = pts.length, dx = [], sl = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = pts[i + 1][0] - pts[i][0];
+    sl[i] = dx[i] ? (pts[i + 1][1] - pts[i][1]) / dx[i] : 0;
+  }
+  const tg = [sl[0]];
+  for (let i = 1; i < n - 1; i++) {
+    if (sl[i - 1] * sl[i] <= 0) { tg[i] = 0; continue; }
+    const w1 = 2 * dx[i] + dx[i - 1], w2 = dx[i] + 2 * dx[i - 1];
+    tg[i] = (w1 + w2) / (w1 / sl[i - 1] + w2 / sl[i]);
+  }
+  tg[n - 1] = sl[n - 2];
+  let d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+  for (let i = 0; i < n - 1; i++) {
+    const x0 = pts[i][0], y0 = pts[i][1], x1 = pts[i + 1][0], y1 = pts[i + 1][1];
+    d += ' C' + (x0 + dx[i] / 3).toFixed(1) + ' ' + (y0 + tg[i] * dx[i] / 3).toFixed(1) +
+         ' ' + (x1 - dx[i] / 3).toFixed(1) + ' ' + (y1 - tg[i + 1] * dx[i] / 3).toFixed(1) +
+         ' ' + x1.toFixed(1) + ' ' + y1.toFixed(1);
+  }
+  return d;
+}
+
+function renderChart() {
+  const p = path(S.selected);
+  const d = p.history;
+  const box = $('#chartBox');
+  /* 每次重绘先收起浮层：否则窗口变化后旧的绝对定位会残留在视口之外，撑大文档宽度 */
+  const tip = $('#chartTip');
+  tip.style.display = 'none';
+  /* 关键：viewBox 与容器等尺寸，杜绝用 preserveAspectRatio="none" 把 600×150 拉满造成的填充放大 */
+  const W = Math.max(320, Math.round(box.clientWidth));
+  const H = Math.max(170, Math.round(box.clientHeight));
+  const pl = 44, pr = 44, pt = 30, pb = 24;
+  const iw = Math.max(40, W - pl - pr), ih = Math.max(40, H - pt - pb);
+  const N = d.length;
+  const X = i => pl + (N > 1 ? i / (N - 1) : 0) * iw;
+
+  /* 两条序列分属不同量纲，必须各自成轴，不能共用一条纵轴 */
+  const SER = [
+    {k: 1, ax: 'l', color: '#38c6ff', name: '吞吐', unit: 'Mbps', dash: ''},
+    {k: 2, ax: 'r', color: '#9d7bff', name: '时延', unit: 'ms', dash: 'dashed'}
+  ];
+  const sc = {};
+  SER.forEach(s => { sc[s.ax] = niceScale(Math.max(0, ...d.map(q => q[s.k] == null ? 0 : q[s.k])), 4); });
+  const Y = (ax, v) => pt + ih - Math.max(0, Math.min(1, v / sc[ax].top)) * ih;
+  /* 序列在未知处断开，不连线、不以 0 替代 */
+  const seg = (s, yf) => {
+    let out = '', run = [];
+    d.forEach((q, i) => {
+      if (q[s.k] == null) { if (run.length) { out += smoothPath(run); run = []; } return; }
+      run.push([X(i), yf(q[s.k])]);
+    });
+    return out + (run.length ? smoothPath(run) : '');
+  };
+  const ptOf = (s, yf) => d.map((q, i) => q[s.k] == null ? null : [X(i), yf(q[s.k])]).filter(Boolean);
+
+  /* 纵轴：左吞吐 / 右时延，共用同一组水平网格线 */
+  let grid = '';
+  sc.l.ticks.forEach((v, i) => {
+    const y = pt + ih - (v / sc.l.top) * ih;
+    grid += '<line class="' + (i === 0 ? 'chart-base' : 'chart-grid') + '" x1="' + pl + '" y1="' + y.toFixed(1) +
+      '" x2="' + (W - pr) + '" y2="' + y.toFixed(1) + '"/>';
+    grid += '<text class="chart-ylab" x="' + (pl - 7) + '" y="' + (y + 3.2).toFixed(1) + '">' + tickTxt(v) + '</text>';
+    grid += '<text class="chart-ylab r" x="' + (W - pr + 7) + '" y="' + (y + 3.2).toFixed(1) + '">' + tickTxt(sc.r.ticks[i]) + '</text>';
+  });
+
+  /* 横轴：按可用宽度决定标签密度，并保证末点始终有标签 */
+  const labMax = Math.max(2, Math.floor(iw / 64));
+  const step = Math.max(1, Math.ceil((N - 1) / labMax));
+  let xlab = '';
+  d.forEach((q, i) => {
+    if (i % step !== 0 && i !== N - 1) return;
+    xlab += '<line class="chart-tick" x1="' + X(i).toFixed(1) + '" y1="' + (pt + ih) + '" x2="' + X(i).toFixed(1) +
+      '" y2="' + (pt + ih + 4) + '"/>' +
+      '<text class="chart-xlab" x="' + X(i).toFixed(1) + '" y="' + (pt + ih + 15) + '">' + q[0] + '</text>';
+  });
+
+  /* 未知区间：底纹 + 边界虚线，明确"没有数据"而非"数据为 0" */
+  const runs = [];
+  let open = -1;
+  d.forEach((q, i) => {
+    const unk = q[1] == null && q[2] == null;
+    if (unk && open < 0) open = i;
+    if (!unk && open >= 0) { runs.push([open, i - 1]); open = -1; }
+  });
+  if (open >= 0) runs.push([open, N - 1]);
+  let unk = '';
+  runs.forEach(([a, b]) => {
+    const x0 = a > 0 ? (X(a - 1) + X(a)) / 2 : X(a);
+    const x1 = b < N - 1 ? (X(b) + X(b + 1)) / 2 : X(b);
+    unk += '<rect class="chart-unk" x="' + x0.toFixed(1) + '" y="' + pt + '" width="' + Math.max(1, x1 - x0).toFixed(1) +
+      '" height="' + ih + '"/>' +
+      '<line class="chart-unk-edge" x1="' + x0.toFixed(1) + '" y1="' + pt + '" x2="' + x0.toFixed(1) + '" y2="' + (pt + ih) + '"/>' +
+      '<line class="chart-unk-edge" x1="' + x1.toFixed(1) + '" y1="' + pt + '" x2="' + x1.toFixed(1) + '" y2="' + (pt + ih) + '"/>';
+    if (x1 - x0 > 36) unk += '<text class="chart-unk-label" x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (pt + 12) + '">未知</text>';
+  });
+
+  /* 吞吐面积（同样在未知处断开） */
+  let area = '';
+  { let run = [];
+    d.forEach((q, i) => {
+      if (q[1] == null) { if (run.length > 1) area += areaPath(run, pt + ih); run = []; return; }
+      run.push([X(i), Y('l', q[1])]);
+    });
+    if (run.length > 1) area += areaPath(run, pt + ih);
+  }
+
+  /* 数据点标记：吞吐实心圆、时延菱形 */
+  let marks = '';
+  ptOf(SER[0], v => Y('l', v)).forEach(([x, y]) => {
+    marks += '<circle class="chart-pt" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.7"/>';
+  });
+  ptOf(SER[1], v => Y('r', v)).forEach(([x, y]) => {
+    marks += '<rect class="chart-pt-lat" x="' + (x - 2.2).toFixed(1) + '" y="' + (y - 2.2).toFixed(1) +
+      '" width="4.4" height="4.4" transform="rotate(45 ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"/>';
+  });
+
+  /* 末值标注：一律置于数据点上方；两点纵向过近时错开，且始终留在绘图区内，
+     避免落进横轴标签行或超出卡片 */
+  const lastIdx = SER.map(s => {
+    for (let i = N - 1; i >= 0; i--) if (d[i][s.k] != null) return i;
+    return -1;
+  });
+  const lastY = SER.map((s, si) => lastIdx[si] < 0 ? null : Y(s.ax, d[lastIdx[si]][s.k]));
+  let callout = '';
+  if (lastIdx[0] >= 0 || lastIdx[1] >= 0) {
+    /* 关键：不能逐条钳制。两条序列末值靠得很近时，逐条 Math.max/Math.min
+       会把错开量整段压掉（实测两条都落到 pt+10 / pt+12，文字叠成乱码）。
+       改为先保证最小间距，再把两条标注作为整体平移到绘图区内。 */
+    const GAP = 14, TOP = pt + 10, BOT = pt + ih - 6;
+    const ys = [0, 1].map(si => lastY[si] == null ? null : lastY[si] - 8);
+    if (ys[0] != null && ys[1] != null) {
+      const up = ys[0] <= ys[1] ? 0 : 1, dn = 1 - up;   /* 点位靠上的那条排在上面 */
+      if (ys[dn] - ys[up] < GAP) ys[dn] = ys[up] + GAP;
+      if (ys[up] < TOP) { const dd = TOP - ys[up]; ys[up] += dd; ys[dn] += dd; }
+      if (ys[dn] > BOT) { const dd = ys[dn] - BOT; ys[up] -= dd; ys[dn] -= dd; }
+    } else {
+      const si = ys[0] == null ? 1 : 0;
+      ys[si] = Math.max(TOP, Math.min(BOT, ys[si]));
+    }
+    SER.forEach((s, si) => {
+      if (lastIdx[si] < 0 || ys[si] == null) return;
+      const x = X(lastIdx[si]);
+      const right = lastIdx[si] > (N - 1) * 0.7;
+      callout += '<text class="chart-callout" x="' + (x + (right ? -9 : 9)).toFixed(1) + '" y="' + ys[si].toFixed(1) +
+        '" text-anchor="' + (right ? 'end' : 'start') + '" fill="' + s.color + '">' +
+        tickTxt(d[lastIdx[si]][s.k]) + ' ' + s.unit + '</text>';
+    });
+  }
+
+  const axisTitle =
+    '<text class="chart-axlab" x="' + pl + '" y="' + (pt - 13) + '" fill="#38c6ff">吞吐 Mbps</text>' +
+    '<text class="chart-axlab" x="' + (W - pr) + '" y="' + (pt - 13) + '" text-anchor="end" fill="#9d7bff">时延 ms</text>';
+
+  const svgEl = $('#chart');
+  svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svgEl.innerHTML =
+    '<defs>' +
+      '<linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#38c6ff" stop-opacity=".30"/>' +
+        '<stop offset="1" stop-color="#38c6ff" stop-opacity="0"/></linearGradient>' +
+      '<pattern id="hUnk" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+        '<rect width="8" height="8" fill="rgba(132,146,168,.06)"/>' +
+        '<line x1="0" y1="0" x2="0" y2="8" stroke="rgba(132,146,168,.30)" stroke-width="2"/></pattern>' +
+    '</defs>' +
+    unk + grid + xlab + axisTitle +
+    '<path d="' + area + '" fill="url(#gArea)"/>' +
+    '<path d="' + seg(SER[0], v => Y('l', v)) + '" fill="none" stroke="#38c6ff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<path d="' + seg(SER[1], v => Y('r', v)) + '" fill="none" stroke="#9d7bff" stroke-width="1.9" stroke-dasharray="6 4" stroke-linejoin="round" stroke-linecap="round"/>' +
+    marks + callout +
+    '<line id="crosshair" class="crosshair" x1="0" y1="' + pt + '" x2="0" y2="' + (pt + ih) + '" opacity="0"/>' +
+    '<circle id="hDot0" class="chart-hit l" r="5.4" opacity="0"/>' +
+    '<circle id="hDot1" class="chart-hit r" r="5.4" opacity="0"/>';
+
+  $('#chartLegend').innerHTML = SER.map(s =>
+    '<span><i style="border-top-color:' + s.color + ';border-top-style:' + (s.dash || 'solid') + '"></i>' +
+    s.name + ' ' + s.unit + '</span>').join('');
+
+  $('#chartTitle').textContent = p.name + ' · 吞吐 / 时延';
+  $('#chartStatus').className = 'chip ' + p.status;
+  $('#chartStatus').textContent = STATUS[p.status];
+  $('#chartStatus').dataset.tip = 'path:' + p.status;
+  $('#chartNow').innerHTML = p.metrics.bps === null
+    ? '最近有效监测已过期，当前指标 <b>未知</b>'
+    : '吞吐 <b>' + p.metrics.bps + ' Mbps</b> · 时延 <b>' + p.metrics.lat + ' ms</b>';
+
+  /* 悬停：十字准线 + 命中点高亮 + 浮层 */
+  const cross = $('#crosshair'), h0 = $('#hDot0'), h1 = $('#hDot1');
+  const showDot = (el, s, q, i) => {
+    if (q[s.k] == null) { el.setAttribute('opacity', '0'); return; }
+    el.setAttribute('cx', X(i).toFixed(1));
+    el.setAttribute('cy', Y(s.ax, q[s.k]).toFixed(1));
+    el.setAttribute('opacity', '1');
+  };
+  svgEl.onmousemove = e => {
+    const r = svgEl.getBoundingClientRect();
+    const i = Math.max(0, Math.min(N - 1, Math.round((e.clientX - r.left) / r.width * (N - 1))));
+    const q = d[i];
+    cross.setAttribute('x1', X(i).toFixed(1));
+    cross.setAttribute('x2', X(i).toFixed(1));
+    cross.setAttribute('opacity', '1');
+    showDot(h0, SER[0], q, i); showDot(h1, SER[1], q, i);
+    tip.style.display = 'block';
+    tip.innerHTML = q[0] + '<br>吞吐 <b>' + (q[1] ?? '未知') + '</b> Mbps<br>时延 <b>' + (q[2] ?? '未知') + '</b> ms' +
+      (q[1] == null && q[2] == null ? '<br><span style="color:#8492a8">该时刻无有效监测数据</span>' : '');
+    const wr = svgEl.parentElement.getBoundingClientRect();
+    let tx = e.clientX - wr.left + 12, ty = e.clientY - wr.top - tip.offsetHeight - 10;
+    if (tx + tip.offsetWidth > wr.width - 4) tx = Math.max(4, e.clientX - wr.left - tip.offsetWidth - 12);
+    if (ty < 4) ty = e.clientY - wr.top + 14;
+    tip.style.left = tx + 'px';
+    tip.style.top = ty + 'px';
+  };
+  svgEl.onmouseleave = () => {
+    tip.style.display = 'none';
+    cross.setAttribute('opacity', '0');
+    h0.setAttribute('opacity', '0'); h1.setAttribute('opacity', '0');
+  };
+}
+/* 面积路径：折线 + 回到基线闭合 */
+function areaPath(run) {
+  const last = run[run.length - 1], first = run[0];
+  const base = Math.max(...run.map(q => q[1]));
+  return smoothPath(run) + ' L' + last[0].toFixed(1) + ' ' + (base + 1000).toFixed(1) +
+    ' L' + first[0].toFixed(1) + ' ' + (base + 1000).toFixed(1) + ' Z';
+}
+
+/* ==========================================================================
+   渲染总入口
+   ========================================================================== */
+function render() {
+  renderTop();
+  renderTopology();
+  renderSide();
+  renderAlarms();
+  renderChart();
+}
+
+/* ==========================================================================
+   抽屉
+   ========================================================================== */
+function open(id) {
+  const n = node(id);
+  if (!n) return;
+  const ps = D.paths.filter(p => p.route.includes(id));
+  S.focus = id;
+  S.focusSeg = null;   /* 单节点聚焦与分段聚焦互斥 */
+
+  const flowMap = {
+    blocked:  {cls:'source',  text:'故障源 / 阻断'},
+    impacted: {cls:'impact',  text:'上游中断'},
+    normal:   n.status === 'unknown' ? {cls:'unknown', text:'状态未知'}
+             : n.metric ? {cls:'metric', text:'指标异常，不影响流转'} : {cls:'ok', text:'运行正常'}
+  };
+  const f = flowMap[n.flow];
+  const kindTxt = n.kind === 'device' ? '安全装置' : '业务节点';
+  const rn = n.loc || '—';
+  const segs = D.segments.filter(s => s.a === n.id || s.b === n.id || s.via === n.id);
+
+  $('#drawerBody').innerHTML =
+    '<div class="dw-head">' +
+      '<div class="dw-ic">' + iconFor(n) + '</div>' +
+      '<div><div class="dw-title">' + n.name + '</div>' +
+      '<div class="dw-sub">' + kindTxt + ' · ' + rn + '</div></div>' +
+    '</div>' +
+    '<div class="dw-flow ' + f.cls + '">' + f.text + '</div>' +
+    '<p style="padding:8px 18px 0;font-size:12px;color:var(--muted);line-height:1.6">' + n.note + '</p>' +
+    '<div class="dw-sec">基础信息</div>' +
+    '<table class="dw-tbl">' +
+      '<tr><td>对象类型</td><td>' + kindTxt + '</td></tr>' +
+      '<tr><td>所属分区</td><td>' + rn + '</td></tr>' +
+      '<tr><td>主状态</td><td>' + STATUS[n.status] + '</td></tr>' +
+      '<tr><td>数据流转</td><td>' + ({blocked:'阻断', impacted:'上游中断', normal:'正常'}[n.flow]) + '</td></tr>' +
+      '<tr><td>最近更新</td><td>2026-09-20 ' + n.updated + '</td></tr>' +
+    '</table>' +
+    '<div class="dw-sec">关键指标</div>' +
+    '<div class="dw-kv">' +
+      Object.entries(n.m).map(([k, v]) => '<div><span>' + k + '</span><b>' + v + '</b></div>').join('') +
+    '</div>' +
+    '<div class="dw-sec">相邻链路与方向状态</div>' +
+    '<div class="dw-rel">' +
+      (segs.length ? segs.map(s => {
+        const other = s.via === n.id
+          ? (node(s.a) || {}) : (node(s.via) || {});
+        const otherName = s.via === n.id ? (other.name || '—') : (other.name || '—');
+        return '<div><span>' + n.name + ' ⇄ ' + otherName + '</span>' +
+          '<span class="dw-dirs">' +
+            '<em style="color:' + DIR_CSS(s.down) + '">下行' + DIR_CN(s.down) + '</em>' +
+            '<em style="color:' + DIR_CSS(s.up) + '">上行' + DIR_CN(s.up) + '</em>' +
+          '</span></div>';
+      }).join('') : '<div><span>暂无相邻链路</span></div>') +
+    '</div>' +
+    '<div class="dw-sec">关联业务链路</div>' +
+    '<div class="dw-rel">' +
+      (ps.length ? ps.map(p =>
+        '<div><span>' + p.name + '</span>' + chip(p.status) + '</div>').join('')
+        : '<div><span>暂无关联 Path</span></div>') +
+    '</div>' +
+    '<div class="dw-note">原型边界：指标与事件均为固定本地样例；未声明真实告警平台或生产接口联动。</div>';
+
+  $('#overlay').classList.add('show');
+  $('#drawer').classList.add('show');
+  render();
+}
+function closeDrawer() {
+  $('#overlay').classList.remove('show');
+  $('#drawer').classList.remove('show');
+}
+
+/* ==========================================================================
+   交互
+   ========================================================================== */
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function selectPath(id) {
+  S.selected = id;
+  S.focus = path(id).route[0];
+  S.focusSeg = null;
+  render();
+}
+function bindEvents() {
+  /* 拓扑 / 清单 / 链路：事件委托 */
+  document.addEventListener('click', e => {
+    const n = e.target.closest('[data-node]');
+    const p = e.target.closest('[data-path]');
+    const v = e.target.closest('[data-exc]');
+    if (n) { open(n.dataset.node); return; }
+    if (p) {
+      const g0 = e.target.closest('[data-seg]');
+      if (g0) {
+        /* 分段聚焦：把该段作为一个整体高亮（两端节点 + 经过的装置 + 该段连线），
+           其余降噪；再点同一条目即取消 */
+        S.selected = p.dataset.path;
+        S.focusSeg = (S.focusSeg === g0.dataset.seg) ? null : g0.dataset.seg;
+        render(); return;
+      }
+      selectPath(p.dataset.path); return;
+    }
+    if (v) {
+      /* 清单条目按索引回查渲染集（Node 条目与 Edge 方向条目共用同一路径） */
+      const x = excPool[+v.dataset.exc];
+      if (x && x.node) { if (x.path) S.selected = x.path; open(x.node); }
+    }
+  });
+  /* 告警严重度筛选 */
+  $('#afilter').addEventListener('click', e => {
+    const b = e.target.closest('[data-sev]');
+    if (!b) return;
+    sevFilter = b.dataset.sev;
+    renderAlarms();
+  });
+  /* 查询 / 重置 */
+  $('#query').onclick = () => {
+    S.path = $('#path').value;
+    S.status = $('#status').value;
+    const p = D.paths.find(match);
+    if (p) S.selected = p.id;
+    S.focus = null; S.focusSeg = null;
+    toast(p ? '已聚焦符合条件的链路' : '无匹配链路，保留当前拓扑');
+    render();
+  };
+  $('#reset').onclick = () => {
+    S.path = 'all'; S.status = 'all';
+    S.selected = 'p-full'; S.focus = null; S.focusSeg = null;
+    $('#path').value = 'all'; $('#status').value = 'all';
+    toast('已重置查询条件');
+    render();
+  };
+  /* 立即刷新：更新当前样例对象时间并重绘，不改变任何业务状态。 */
+  $('#refresh').onclick = () => {
+    const d = new Date(), now = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    D.nodes.forEach(n => { n.updated = now; });
+    D.paths.forEach(p => { p.updated = now; });
+    render();
+    setLive(true);
+    toast('已立即刷新当前监控视图');
+  };
+  /* 全屏 */
+  $('#full').onclick = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.().catch(() => toast('浏览器阻止全屏'));
+  };
+  $('#topoPrev').onclick = () => $('#topo').scrollBy({left:-300,behavior:'smooth'});
+  $('#topoNext').onclick = () => $('#topo').scrollBy({left:300,behavior:'smooth'});
+  $('#topo').addEventListener('scroll', updateTopoNav, {passive:true});
+  /* 抽屉关闭 */
+  $('#close').onclick = closeDrawer;
+  $('#overlay').onclick = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+  /* 尺寸变化重绘连线 */
+  let rt = null;
+  const redraw = () => { clearTimeout(rt); rt = setTimeout(() => { hideTip(); drawEdges(); renderChart(); updateTopoNav(); }, 90); };
+  window.addEventListener('resize', redraw);
+  if (window.ResizeObserver) new ResizeObserver(redraw).observe($('#topoCanvas'));
+}
+
+/* ==========================================================================
+   启动
+   ========================================================================== */
+function init() {
+  bindEvents();
+  initFilters();
+  seedAlarms();
+  setLive(true);
+  render();
+  /* 首屏先由既有对象状态派生一条告警（异常对象池首项），避免告警区留白 */
+  if (!alarms.length) { const a0 = deriveAlarm(); if (a0) pushAlarm(a0); }
+
+  /* 时钟 */
+  const clock = () => {
+    const d = new Date();
+    $('#clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    $('#date').textContent = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      ' 星期' + '日一二三四五六'[d.getDay()];
+  };
+  clock();
+  setInterval(clock, 1000);
+
+  /* 实时告警：每 7s 推入一条由既有对象状态派生的告警 */
+  setInterval(() => {
+    const a = deriveAlarm();
+    if (a) pushAlarm(a);
+  }, 7000);
+
+  /* 连线与趋势图在字体/布局稳定后再校准一次 */
+  const settle = () => { drawEdges(); renderChart(); };
+  setTimeout(settle, 60);
+  window.addEventListener('load', settle);
+}
+init();
+})();
+</script>
+</body>
+</html>
