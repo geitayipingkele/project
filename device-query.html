@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>设备查询</title>
+  <style>
+    :root {
+      --primary: #2468f2;
+      --primary-hover: #1454d8;
+      --primary-soft: #eaf1ff;
+      --bg: #f3f5f9;
+      --panel: #ffffff;
+      --line: #e3e8f0;
+      --text: #27364b;
+      --muted: #758196;
+      --placeholder: #a8b1c1;
+      --success: #21a366;
+      --warning: #f29b38;
+      --danger: #ee5b5b;
+      --tree-bg: #f7f9fc;
+      --shadow: 0 6px 18px rgba(42, 61, 91, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font: 14px/1.5 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      overflow: hidden;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell {
+      display: flex;
+      height: 100vh;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .category-panel {
+      position: relative;
+      width: 276px;
+      flex: 0 0 276px;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      transition: width .2s ease, flex-basis .2s ease;
+      overflow: visible;
+    }
+    .category-panel.collapsed { width: 0; flex-basis: 0; border-width: 0; }
+    .category-panel.collapsed .category-inner { opacity: 0; pointer-events: none; }
+    .category-inner { min-width: 274px; height: 100%; transition: opacity .12s; overflow: hidden; }
+    .tree-search { padding: 14px 14px 10px; border-bottom: 1px solid var(--line); }
+    .search-box { position: relative; }
+    .search-box .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: #99a5b7; font-size: 15px; pointer-events: none;
+    }
+    .tree-search input {
+      width: 100%; height: 36px; padding: 0 12px 0 34px;
+      border: 1px solid #d9e0ea; border-radius: 5px; outline: none; color: var(--text);
+    }
+    input:focus, select:focus { border-color: #74a1ff !important; box-shadow: 0 0 0 2px rgba(36,104,242,.08); }
+
+    .tree-area { height: calc(100% - 61px); overflow: auto; padding: 8px; }
+    .tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+    .tree ul { padding-left: 18px; }
+    .tree-row {
+      display: flex; align-items: center; min-height: 34px; padding: 5px 8px;
+      border-radius: 5px; color: #586579; user-select: none; white-space: nowrap;
+    }
+    .tree-row:hover { background: #edf3ff; color: var(--primary); }
+    .tree-row.selected { color: var(--primary); background: var(--primary-soft); font-weight: 600; }
+    .caret { width: 18px; text-align: center; color: #9da8b9; font-size: 11px; transition: transform .15s; }
+    .branch.closed > .tree-row .caret { transform: rotate(-90deg); }
+    .branch.closed > ul { display: none; }
+    .tree-icon { margin-right: 7px; color: #7f8ca0; }
+    .tree-row.selected .tree-icon { color: var(--primary); }
+
+    .panel-toggle {
+      position: absolute; z-index: 8; right: -13px; top: 50%; transform: translateY(-50%);
+      width: 26px; height: 36px; padding: 0; border-radius: 14px; background: #fff;
+      border: 1px solid var(--line); color: #8793a6; box-shadow: 0 2px 7px rgba(42,61,91,.08);
+    }
+    .category-panel.collapsed .panel-toggle { right: -25px; }
+
+    .content-panel {
+      min-width: 0; flex: 1; display: flex; flex-direction: column;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+    }
+
+    .query-area { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+    .quick-row { display: flex; align-items: center; gap: 10px; min-width: max-content; }
+    .field { display: flex; align-items: center; min-width: 0; }
+    .field-label {
+      height: 36px; display: inline-flex; align-items: center; padding: 0 10px;
+      border: 1px solid #d9e0ea; border-right: 0; border-radius: 5px 0 0 5px;
+      color: #3d4b60; background: #fafbfd; white-space: nowrap;
+    }
+    .field input, .field select, .plain-input, .plain-select {
+      height: 36px; border: 1px solid #d9e0ea; background: #fff; color: var(--text);
+      outline: 0; padding: 0 10px; min-width: 0;
+    }
+    .field input, .field select { width: 148px; border-radius: 0 5px 5px 0; }
+    .field input::placeholder, .plain-input::placeholder { color: var(--placeholder); }
+    select { color: #66758a; }
+    .org-field input { width: 156px; }
+
+    .actions { display: flex; gap: 8px; margin-left: auto; }
+    .btn {
+      height: 34px; padding: 0 16px; border: 1px solid #d5dce7; border-radius: 5px;
+      background: #fff; color: #526075; transition: .15s; white-space: nowrap;
+    }
+    .btn:hover { color: var(--primary); border-color: #8db0fa; }
+    .btn-primary { color: #fff; border-color: var(--primary); background: var(--primary); }
+    .btn-primary:hover { color: #fff; background: var(--primary-hover); border-color: var(--primary-hover); }
+    .btn-text { color: var(--primary); border-color: #b8cdfb; background: #f6f9ff; }
+    .btn .chevron { display: inline-block; margin-left: 6px; transition: transform .18s; }
+    .btn.expanded .chevron { transform: rotate(180deg); }
+
+    .advanced-panel {
+      display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 12px 18px;
+      margin-top: 0; padding: 0 14px; max-height: 0; opacity: 0; overflow: hidden;
+      background: #f6f8fd; border: 0 solid #e3e9f4; border-radius: 6px;
+      transition: max-height .25s ease, opacity .18s ease, margin-top .25s, padding .25s, border-width .25s;
+    }
+    .advanced-panel.open {
+      max-height: 340px; opacity: 1; margin-top: 12px; padding: 14px; border-width: 1px;
+    }
+    .advanced-item { min-width: 0; }
+    .advanced-item > label { display: block; margin-bottom: 6px; color: #647187; font-size: 13px; }
+    .plain-input, .plain-select { width: 100%; border-radius: 5px; }
+    .span-2 { grid-column: span 2; }
+    .span-4 { grid-column: 1 / -1; }
+    .date-range { display: grid; grid-template-columns: 1fr 20px 1fr; align-items: center; gap: 5px; }
+    .date-range span { text-align: center; color: #929daf; }
+    .date-range input { width: 100%; }
+    .cascade { display: grid; grid-template-columns: 1fr 1.15fr 1.35fr; gap: 8px; }
+    .model-attribute-grid { display: grid; grid-template-columns: minmax(210px, .9fr) minmax(520px, 2.5fr) minmax(190px, 1fr); gap: 14px; align-items: end; }
+    .model-attribute-grid label { display: block; margin-bottom: 6px; color: #647187; font-size: 13px; }
+    .advanced-footer { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: -2px; }
+
+    .table-toolbar {
+      height: 46px; flex: 0 0 46px; padding: 0 14px; display: flex; align-items: center;
+      border-bottom: 1px solid var(--line); background: #fff;
+    }
+    .result-summary { color: #5e6b7d; }
+    .result-summary strong { color: var(--primary); font-size: 16px; margin: 0 3px; }
+    .selected-summary { margin-left: 14px; color: #8692a5; }
+    .toolbar-tip { margin-left: auto; color: #8b97a9; font-size: 13px; }
+
+    .table-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; }
+    table { width: 100%; min-width: 1740px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    th, td {
+      height: 44px; padding: 0 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    th {
+      position: sticky; z-index: 3; top: 0; height: 46px; background: #f7f9fc;
+      color: #3e4c61; font-weight: 600;
+    }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
+    tbody tr:hover td { background: #edf4ff; }
+    th:first-child, td:first-child { width: 48px; text-align: center; padding: 0; }
+    .check { width: 15px; height: 15px; accent-color: var(--primary); }
+    .code-cell { color: #4b617e; font-family: Consolas, "Microsoft YaHei", monospace; font-size: 13px; }
+    .device-name { color: #2d5fae; font-weight: 500; }
+    .tag {
+      display: inline-flex; align-items: center; height: 23px; padding: 0 8px; border-radius: 12px;
+      font-size: 12px; border: 1px solid transparent;
+    }
+    .tag.success { color: #168554; background: #e8f7ef; border-color: #bde7d0; }
+    .tag.warning { color: #b66a12; background: #fff4e4; border-color: #f5d5a7; }
+    .tag.info { color: #2863ca; background: #eaf1ff; border-color: #c5d8ff; }
+    .tag.muted { color: #7a8799; background: #f0f2f5; border-color: #dfe3e9; }
+    .status-dot { width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: currentColor; }
+    .empty-state { display: none; padding: 70px 20px; text-align: center; color: #98a4b6; }
+    .empty-state .empty-icon { font-size: 42px; opacity: .65; }
+
+    .pagination {
+      height: 56px; flex: 0 0 56px; padding: 0 14px; display: flex; align-items: center;
+      border-top: 1px solid var(--line); background: #fff; color: #6c788b;
+    }
+    .page-size { margin-left: 12px; height: 32px; padding: 0 8px; border: 1px solid #d9e0ea; border-radius: 4px; color: #607086; }
+    .pages { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+    .page-btn {
+      min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid transparent; border-radius: 4px;
+      background: #fff; color: #556277;
+    }
+    .page-btn:hover { color: var(--primary); border-color: #bfd0f5; }
+    .page-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+    .toast {
+      position: fixed; z-index: 30; left: 50%; top: 26px; transform: translate(-50%, -15px);
+      padding: 10px 18px; border-radius: 6px; background: #26354a; color: #fff;
+      box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: .2s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1450px) {
+      .quick-row { gap: 5px; }
+      .field input, .field select { width: 112px; }
+      .org-field input { width: 132px; }
+      .btn { padding: 0 12px; }
+      .advanced-panel { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+    }
+    @media (max-width: 1050px) {
+      .category-panel { width: 236px; flex-basis: 236px; }
+      .category-inner { min-width: 234px; }
+      .field:nth-of-type(3) { display: none; }
+      .advanced-panel { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+      .model-attribute-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="category-panel" id="categoryPanel" aria-label="设备品类">
+      <div class="category-inner">
+        <div class="tree-search">
+          <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <input id="treeSearch" type="search" placeholder="请输入品类名称" aria-label="搜索品类" />
+          </div>
+        </div>
+        <div class="tree-area">
+          <ul class="tree" id="categoryTree">
+            <li class="branch">
+              <div class="tree-row selected" data-category="全部"><span class="caret">▼</span><span class="tree-icon">▦</span><span>全部设备</span></div>
+              <ul>
+                <li class="branch">
+                  <div class="tree-row" data-category="发电"><span class="caret">▼</span><span class="tree-icon">◈</span><span>发电</span></div>
+                  <ul>
+                    <li><div class="tree-row" data-category="光伏逆变器"><span class="caret"></span><span class="tree-icon">◇</span><span>光伏逆变器</span></div></li>
+                    <li><div class="tree-row" data-category="风机监控终端"><span class="caret"></span><span class="tree-icon">◇</span><span>风机监控终端</span></div></li>
+                  </ul>
+                </li>
+                <li class="branch">
+                  <div class="tree-row" data-category="输电"><span class="caret">▼</span><span class="tree-icon">◈</span><span>输电</span></div>
+                  <ul>
+                    <li class="branch">
+                      <div class="tree-row" data-category="在线监测装置"><span class="caret">▼</span><span class="tree-icon">◇</span><span>在线监测装置</span></div>
+                      <ul>
+                        <li><div class="tree-row" data-category="覆冰在线监测装置"><span class="caret"></span><span class="tree-icon">·</span><span>覆冰在线监测装置</span></div></li>
+                        <li><div class="tree-row" data-category="弧垂监测装置"><span class="caret"></span><span class="tree-icon">·</span><span>弧垂及交叉跨越监测装置</span></div></li>
+                        <li><div class="tree-row" data-category="杆塔倾斜监测"><span class="caret"></span><span class="tree-icon">·</span><span>杆塔倾斜监测</span></div></li>
+                        <li><div class="tree-row" data-category="导线温度监测"><span class="caret"></span><span class="tree-icon">·</span><span>导线温度监测</span></div></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li class="branch">
+                  <div class="tree-row" data-category="变电"><span class="caret">▼</span><span class="tree-icon">◈</span><span>变电</span></div>
+                  <ul>
+                    <li><div class="tree-row" data-category="变压器监测终端"><span class="caret"></span><span class="tree-icon">◇</span><span>变压器监测终端</span></div></li>
+                    <li><div class="tree-row" data-category="局放监测终端"><span class="caret"></span><span class="tree-icon">◇</span><span>局放监测终端</span></div></li>
+                  </ul>
+                </li>
+                <li class="branch">
+                  <div class="tree-row" data-category="配电"><span class="caret">▼</span><span class="tree-icon">◈</span><span>配电</span></div>
+                  <ul>
+                    <li><div class="tree-row" data-category="台区智能终端"><span class="caret"></span><span class="tree-icon">◇</span><span>台区智能终端</span></div></li>
+                    <li><div class="tree-row" data-category="低压智能开关"><span class="caret"></span><span class="tree-icon">◇</span><span>低压智能开关</span></div></li>
+                    <li><div class="tree-row" data-category="配变监测终端"><span class="caret"></span><span class="tree-icon">◇</span><span>配变监测终端</span></div></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <button class="panel-toggle" id="panelToggle" title="收起品类树" aria-label="收起品类树">‹</button>
+    </aside>
+
+    <section class="content-panel">
+      <section class="query-area" aria-label="设备查询条件">
+        <div class="quick-row">
+          <div class="field"><span class="field-label">终端名称</span><input id="terminalName" placeholder="请输入终端名称" /></div>
+          <div class="field"><span class="field-label">物联标识码</span><input id="iotCode" placeholder="请输入标识码" /></div>
+          <div class="field"><span class="field-label">终端型号</span><input id="terminalModel" placeholder="请输入终端型号" /></div>
+          <div class="field org-field"><span class="field-label">所属单位</span><input id="orgName" placeholder="请输入所属单位" /></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="queryBtn">查询</button>
+            <button class="btn" id="resetBtn">重置</button>
+            <button class="btn btn-text" id="advancedBtn">高级筛选<span class="chevron">⌄</span></button>
+            <button class="btn" id="exportBtn">⇩&nbsp; 导出</button>
+          </div>
+        </div>
+
+        <div class="advanced-panel" id="advancedPanel">
+          <div class="advanced-item"><label for="projectName">所属项目</label><input class="plain-input" id="projectName" placeholder="请输入所属项目" /></div>
+          <div class="advanced-item"><label for="monitorTarget">监测对象</label><input class="plain-input" id="monitorTarget" placeholder="请输入监测对象" /></div>
+          <div class="advanced-item"><label for="businessStatus">业务连接状态</label><select class="plain-select" id="businessStatus"><option value="">全部状态</option><option>在线</option><option>离线</option></select></div>
+          <div class="advanced-item"><label for="manageStatus">管理连接状态</label><select class="plain-select" id="manageStatus"><option value="">全部状态</option><option>在线</option><option>离线</option><option>休眠</option></select></div>
+          <div class="model-attribute-grid span-4">
+            <div>
+              <label for="thingModel">物模型名称</label>
+              <select class="plain-select" id="thingModel"><option value="" selected disabled hidden>请选择物模型</option></select>
+            </div>
+            <div>
+              <label>属性名称</label>
+              <div class="cascade">
+                <select class="plain-select" id="dataCategory" aria-label="参数分类" disabled><option value="" selected disabled hidden>参数分类</option></select>
+                <select class="plain-select" id="serviceName" aria-label="服务名称" disabled><option value="" selected disabled hidden>服务名称</option></select>
+                <select class="plain-select" id="attributeName" aria-label="属性名称" disabled><option value="" selected disabled hidden>属性名称</option></select>
+              </div>
+            </div>
+            <div><label for="attributeValue">属性值</label><div id="attributeValueWrap"><input class="plain-input" id="attributeValue" placeholder="请先选择属性" disabled /></div></div>
+          </div>
+          <div class="advanced-item span-2"><label>最近在线时间</label><div class="date-range"><input class="plain-input" id="onlineStart" type="datetime-local" /><span>至</span><input class="plain-input" id="onlineEnd" type="datetime-local" /></div></div>
+          <div class="advanced-item span-2"><label>最近离线时间</label><div class="date-range"><input class="plain-input" id="offlineStart" type="datetime-local" /><span>至</span><input class="plain-input" id="offlineEnd" type="datetime-local" /></div></div>
+          <div class="advanced-footer"><button class="btn" id="collapseAdvanced">收起⌃</button></div>
+        </div>
+      </section>
+
+      <div class="table-toolbar">
+        <span class="result-summary">共 <strong id="resultCount">0</strong> 条设备</span>
+        <span class="selected-summary" id="selectedSummary">已选择 0 项</span>
+        <span class="toolbar-tip" id="categoryTip">当前品类：全部设备</span>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table aria-label="设备查询结果">
+          <colgroup>
+            <col style="width:48px"><col style="width:190px"><col style="width:190px"><col style="width:130px">
+            <col style="width:100px"><col style="width:180px"><col style="width:150px"><col style="width:145px">
+            <col style="width:105px"><col style="width:120px"><col style="width:120px"><col style="width:165px">
+            <col style="width:165px"><col style="width:165px"><col style="width:165px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th><input class="check" id="checkAll" type="checkbox" aria-label="全选" /></th>
+              <th>物联标识码</th><th>终端名称</th><th>终端型号</th><th>安全分区</th><th>所属单位</th>
+              <th>所属项目</th><th>监测对象</th><th>业务状态</th><th>业务连接状态</th><th>管理连接状态</th>
+              <th>首次上线时间</th><th>最近上线时间</th><th>最近离线时间</th><th>创建时间</th>
+            </tr>
+          </thead>
+          <tbody id="deviceBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState"><div class="empty-icon">⌕</div><div>暂无符合条件的设备</div></div>
+      </div>
+
+      <footer class="pagination">
+        <span id="pageTotal">共 0 条</span>
+        <select class="page-size" aria-label="每页条数"><option>10 条/页</option><option>20 条/页</option><option>50 条/页</option></select>
+        <div class="pages"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button></div>
+      </footer>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script>
+    const devices = [
+      { code:'iot-gd-440106-202608001', name:'花城站主变温度监测终端', model:'BWJC-9000', zone:'生产控制大区', org:'广东电网有限责任公司', project:'广州变电站智能巡检项目', target:'花城站1号主变', run:'投运', business:'在线', manage:'在线', first:'2026-03-12 09:20:16', online:'2026-08-10 10:28:41', offline:'2026-08-09 23:12:06', created:'2026-03-10 14:02:35', category:'变压器监测终端', domain:'变电', thingModel:'主变温度监测物模型', attrs:{'油温':67.3,'设备状态':'正常','通信方式':'5G'}},
+      { code:'iot-js-320115-202608017', name:'龙湖线覆冰在线监测装置', model:'FBJC-V5.2', zone:'管理信息大区', org:'江苏省电力有限公司', project:'输电线路状态感知提升', target:'220kV龙湖线#087杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-01-18 15:11:43', online:'2026-08-10 10:27:08', offline:'2026-08-08 02:31:17', created:'2026-01-12 11:43:28', category:'覆冰在线监测装置', domain:'输电', thingModel:'输电覆冰监测物模型', attrs:{'覆冰厚度':3.2,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-zj-330106-202607203', name:'钱塘线导线温度监测终端', model:'DXWD-300', zone:'管理信息大区', org:'浙江省电力有限公司', project:'杭州输电数字化改造', target:'500kV钱塘线#126杆塔', run:'调试中', business:'离线', manage:'离线', first:'2026-05-26 08:34:12', online:'2026-08-09 18:05:33', offline:'2026-08-09 18:36:52', created:'2026-05-22 16:08:51', category:'导线温度监测', domain:'输电', thingModel:'导线温度监测物模型', attrs:{'导线温度':42.8,'设备状态':'告警','通信方式':'4G'}},
+      { code:'iot-sc-510107-202607128', name:'锦江台区智能融合终端', model:'TTU-8200E', zone:'生产控制大区', org:'四川省电力公司', project:'成都低压台区透明化项目', target:'锦江路公变3号台区', run:'投运', business:'在线', manage:'在线', first:'2026-04-09 13:20:30', online:'2026-08-10 10:25:19', offline:'2026-08-07 01:12:44', created:'2026-04-08 10:18:27', category:'台区智能终端', domain:'配电', thingModel:'台区融合终端物模型', attrs:{'电压':223.6,'开关状态':'合闸','设备状态':'正常'}},
+      { code:'iot-hb-420106-202606099', name:'东湖低压智能开关A17', model:'LTU-S160', zone:'生产控制大区', org:'湖北省电力有限公司', project:'武汉配网自愈能力提升', target:'东湖台区低压分支A17', run:'投运', business:'在线', manage:'休眠', first:'2026-02-15 07:51:22', online:'2026-08-10 10:23:57', offline:'2026-08-06 03:46:10', created:'2026-02-12 09:06:18', category:'低压智能开关', domain:'配电', thingModel:'低压智能开关物模型', attrs:{'电压':187.2,'开关状态':'合闸','设备状态':'告警'}},
+      { code:'iot-fj-350203-202605076', name:'鹭岛光伏逆变器监控单元', model:'PV-INV-X8', zone:'管理信息大区', org:'福建省电力有限公司', project:'厦门分布式光伏可观可测', target:'鹭岛产业园光伏阵列B区', run:'投运', business:'在线', manage:'在线', first:'2026-03-28 10:06:35', online:'2026-08-10 10:20:15', offline:'2026-08-04 20:12:33', created:'2026-03-25 17:22:49', category:'光伏逆变器', domain:'发电', thingModel:'光伏逆变器物模型', attrs:{'有功功率':486.5,'设备状态':'正常','通信方式':'以太网'}},
+      { code:'iot-nm-150102-202604052', name:'风场07号风机监控终端', model:'WT-CMU-6A', zone:'管理信息大区', org:'蒙东电力有限公司', project:'兴安风场智慧运维项目', target:'兴安风场07号风机', run:'投运', business:'在线', manage:'在线', first:'2026-01-08 14:18:20', online:'2026-08-10 10:18:32', offline:'2026-08-03 00:26:17', created:'2026-01-05 09:51:08', category:'风机监控终端', domain:'发电', thingModel:'风机运行监控物模型', attrs:{'有功功率':2180,'设备状态':'正常','通信方式':'光纤'}},
+      { code:'iot-sd-370102-202603041', name:'泉城配变监测终端012', model:'TTU-PM500', zone:'生产控制大区', org:'山东省电力公司', project:'济南配变精益运维项目', target:'泉城花园12号配变', run:'停运', business:'离线', manage:'离线', first:'2025-11-19 11:25:09', online:'2026-07-28 16:44:02', offline:'2026-07-28 17:02:19', created:'2025-11-15 15:37:42', category:'配变监测终端', domain:'配电', thingModel:'配变监测物模型', attrs:{'电压':0,'设备状态':'离线','通信方式':'4G'}},
+      { code:'iot-ah-340104-202602033', name:'皖江线杆塔倾斜监测终端', model:'GTQX-210', zone:'管理信息大区', org:'安徽省电力有限公司', project:'皖江输电线路防灾项目', target:'500kV皖江线#211杆塔', run:'投运', business:'在线', manage:'在线', first:'2026-02-03 09:41:55', online:'2026-08-10 10:16:28', offline:'2026-08-01 22:35:45', created:'2026-01-29 13:12:07', category:'杆塔倾斜监测', domain:'输电', thingModel:'杆塔倾斜监测物模型', attrs:{'倾斜角度':0.7,'设备状态':'正常','通信方式':'北斗'}},
+      { code:'iot-hn-410105-202601025', name:'郑东局放监测终端03', model:'PD-MON-7', zone:'生产控制大区', org:'河南省电力公司', project:'郑州站局放综合在线监测', target:'郑东站GIS间隔03', run:'调试中', business:'离线', manage:'休眠', first:'2026-07-10 08:06:11', online:'2026-08-10 10:15:04', offline:'2026-08-09 20:01:36', created:'2026-07-08 16:28:55', category:'局放监测终端', domain:'变电', thingModel:'局部放电监测物模型', attrs:{'放电量':28.6,'设备状态':'告警','通信方式':'5G'}}
+    ];
+
+    const attributeTree = {
+      '基本信息': {
+        '设备档案': [{name:'设备状态', type:'enum', options:['正常','告警','离线']}, {name:'投运日期', type:'date'}]
+      },
+      '技术参数': {
+        '通信参数': [{name:'通信方式', type:'enum', options:['4G','5G','北斗','光纤','以太网']}],
+        '额定参数': [{name:'额定电压', type:'number'}, {name:'额定电流', type:'number'}]
+      },
+      '量测参数': {
+        '电气量测': [{name:'电压', type:'number'}, {name:'有功功率', type:'number'}, {name:'导线温度', type:'number'}],
+        '状态监测': [{name:'油温', type:'number'}, {name:'覆冰厚度', type:'number'}, {name:'倾斜角度', type:'number'}, {name:'放电量', type:'number'}]
+      },
+      '消息和服务': {
+        '遥控服务': [{name:'开关状态', type:'enum', options:['合闸','分闸']}],
+        '告警服务': [{name:'告警级别', type:'enum', options:['一般','重要','严重']}]
+      }
+    };
+
+    const $ = id => document.getElementById(id);
+    let filteredDevices = [...devices];
+    let selectedCategory = '全部';
+    let toastTimer;
+
+    function statusTag(value, type) {
+      const cls = value === '在线' || value === '投运' ? 'success' : value === '告警' || value === '调试中' || value === '休眠' ? 'warning' : 'muted';
+      return `<span class="tag ${type || cls}"><i class="status-dot"></i>${value}</span>`;
+    }
+
+    function renderRows() {
+      const body = $('deviceBody');
+      body.innerHTML = filteredDevices.map((d, i) => `
+        <tr>
+          <td><input class="check row-check" type="checkbox" data-index="${i}" aria-label="选择${d.name}" /></td>
+          <td class="code-cell" title="${d.code}">${d.code}</td>
+          <td class="device-name" title="${d.name}">${d.name}</td>
+          <td>${d.model}</td><td>${d.zone}</td><td title="${d.org}">${d.org}</td>
+          <td title="${d.project}">${d.project}</td><td title="${d.target}">${d.target}</td>
+          <td>${statusTag(d.run, d.run === '投运' ? 'info' : '')}</td><td>${statusTag(d.business)}</td><td>${statusTag(d.manage)}</td>
+          <td>${d.first}</td><td>${d.online}</td><td>${d.offline}</td><td>${d.created}</td>
+        </tr>`).join('');
+      const hasData = filteredDevices.length > 0;
+      document.querySelector('table').style.display = hasData ? 'table' : 'none';
+      $('emptyState').style.display = hasData ? 'none' : 'block';
+      $('resultCount').textContent = filteredDevices.length;
+      $('pageTotal').textContent = `共 ${filteredDevices.length} 条`;
+      $('checkAll').checked = false;
+      updateSelected();
+      bindRowEvents();
+    }
+
+    function bindRowEvents() {
+      document.querySelectorAll('.row-check').forEach(el => el.addEventListener('change', updateSelected));
+    }
+
+    function updateSelected() {
+      const total = document.querySelectorAll('.row-check:checked').length;
+      $('selectedSummary').textContent = `已选择 ${total} 项`;
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.add('show');
+      toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2200);
+    }
+
+    function inRange(dateText, start, end) {
+      if (!start && !end) return true;
+      const value = new Date(dateText.replace(' ', 'T')).getTime();
+      return (!start || value >= new Date(start).getTime()) && (!end || value <= new Date(end).getTime());
+    }
+
+    function runQuery() {
+      const val = id => $(id).value.trim().toLowerCase();
+      const attr = $('attributeName').value;
+      const attrValue = $('attributeValue') ? $('attributeValue').value.trim().toLowerCase() : '';
+      filteredDevices = devices.filter(d => {
+        const categoryMatch = selectedCategory === '全部' || d.category === selectedCategory || d.domain === selectedCategory || (selectedCategory === '在线监测装置' && d.domain === '输电');
+        const attrMatch = !attr || (Object.prototype.hasOwnProperty.call(d.attrs, attr) && (!attrValue || String(d.attrs[attr]).toLowerCase().includes(attrValue)));
+        return categoryMatch
+          && (!val('terminalName') || d.name.toLowerCase().includes(val('terminalName')))
+          && (!val('iotCode') || d.code.toLowerCase().includes(val('iotCode')))
+          && (!val('terminalModel') || d.model.toLowerCase().includes(val('terminalModel')))
+          && (!val('thingModel') || d.thingModel.toLowerCase().includes(val('thingModel')))
+          && (!val('orgName') || d.org.toLowerCase().includes(val('orgName')))
+          && (!val('projectName') || d.project.toLowerCase().includes(val('projectName')))
+          && (!val('monitorTarget') || d.target.toLowerCase().includes(val('monitorTarget')))
+          && (!$('businessStatus').value || d.business === $('businessStatus').value)
+          && (!$('manageStatus').value || d.manage === $('manageStatus').value)
+          && inRange(d.online, $('onlineStart').value, $('onlineEnd').value)
+          && inRange(d.offline, $('offlineStart').value, $('offlineEnd').value)
+          && attrMatch;
+      });
+      renderRows();
+      showToast(`查询完成，共找到 ${filteredDevices.length} 条设备`);
+    }
+
+    function clearQueryFields() {
+      document.querySelectorAll('.query-area input').forEach(el => { if (el.type !== 'checkbox') el.value = ''; });
+      document.querySelectorAll('.query-area select').forEach(el => el.selectedIndex = 0);
+      $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>';
+      $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>';
+      $('dataCategory').disabled = true;
+      $('serviceName').disabled = true;
+      $('attributeName').disabled = true;
+      renderAttributeInput();
+    }
+
+    function resetQuery() {
+      clearQueryFields();
+      selectedCategory = '全部';
+      document.querySelectorAll('.tree-row').forEach(el => el.classList.toggle('selected', el.dataset.category === '全部'));
+      $('categoryTip').textContent = '当前品类：全部设备';
+      filteredDevices = [...devices]; renderRows(); showToast('查询条件已重置');
+    }
+
+    function exportCsv() {
+      const headers = ['物联标识码','终端名称','终端型号','安全分区','所属单位','所属项目','监测对象','业务状态','业务状态','管理状态','首次上线时间','最近上线时间','最近离线时间','创建时间'];
+      const rows = filteredDevices.map(d => [d.code,d.name,d.model,d.zone,d.org,d.project,d.target,d.run,d.business,d.manage,d.first,d.online,d.offline,d.created]);
+      const csv = '\ufeff' + [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+      const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+      const a = document.createElement('a'); a.href = url; a.download = '设备查询结果.csv'; a.click(); URL.revokeObjectURL(url);
+      showToast(`已导出 ${filteredDevices.length} 条设备数据`);
+    }
+
+    function renderAttributeInput(config) {
+      const wrap = $('attributeValueWrap');
+      if (!config) { wrap.innerHTML = '<input class="plain-input" id="attributeValue" placeholder="请先选择属性" disabled />'; return; }
+      if (config.type === 'enum') wrap.innerHTML = `<select class="plain-select" id="attributeValue"><option value="">请选择</option>${config.options.map(v => `<option>${v}</option>`).join('')}</select>`;
+      else if (config.type === 'number') wrap.innerHTML = '<input class="plain-input" id="attributeValue" type="number" step="any" placeholder="请输入数值" />';
+      else if (config.type === 'date') wrap.innerHTML = '<input class="plain-input" id="attributeValue" type="date" />';
+      else wrap.innerHTML = '<input class="plain-input" id="attributeValue" placeholder="请输入属性值" />';
+    }
+
+    function initCascade() {
+      const modelNames = [...new Set(devices.map(device => device.thingModel))];
+      $('thingModel').innerHTML += modelNames.map(name => `<option>${name}</option>`).join('');
+      $('dataCategory').innerHTML += Object.keys(attributeTree).map(k => `<option>${k}</option>`).join('');
+      $('thingModel').addEventListener('change', e => {
+        $('dataCategory').selectedIndex = 0;
+        $('dataCategory').disabled = !e.target.value;
+        $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>';
+        $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>';
+        $('serviceName').disabled = true;
+        $('attributeName').disabled = true;
+        renderAttributeInput();
+      });
+      $('dataCategory').addEventListener('change', e => {
+        const services = attributeTree[e.target.value] || {};
+        $('serviceName').innerHTML = '<option value="" selected disabled hidden>服务名称</option>' + Object.keys(services).map(k => `<option>${k}</option>`).join('');
+        $('serviceName').disabled = !e.target.value; $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>'; $('attributeName').disabled = true; renderAttributeInput();
+      });
+      $('serviceName').addEventListener('change', e => {
+        const list = attributeTree[$('dataCategory').value]?.[e.target.value] || [];
+        $('attributeName').innerHTML = '<option value="" selected disabled hidden>属性名称</option>' + list.map(x => `<option value="${x.name}">${x.name}</option>`).join('');
+        $('attributeName').disabled = !e.target.value; renderAttributeInput();
+      });
+      $('attributeName').addEventListener('change', e => {
+        const list = attributeTree[$('dataCategory').value]?.[$('serviceName').value] || [];
+        renderAttributeInput(list.find(x => x.name === e.target.value));
+      });
+    }
+
+    function toggleAdvanced(open) {
+      const shouldOpen = open ?? !$('advancedPanel').classList.contains('open');
+      $('advancedPanel').classList.toggle('open', shouldOpen); $('advancedBtn').classList.toggle('expanded', shouldOpen);
+      $('advancedBtn').setAttribute('aria-expanded', String(shouldOpen));
+    }
+
+    document.querySelectorAll('.tree-row').forEach(row => {
+      row.addEventListener('click', e => {
+        e.stopPropagation();
+        const li = row.parentElement;
+        if (li.classList.contains('branch')) li.classList.toggle('closed');
+        document.querySelectorAll('.tree-row').forEach(el => el.classList.remove('selected'));
+        row.classList.add('selected'); selectedCategory = row.dataset.category;
+        $('categoryTip').textContent = `当前品类：${row.lastElementChild.textContent}`;
+        clearQueryFields();
+        runQuery();
+      });
+    });
+
+    $('treeSearch').addEventListener('input', e => {
+      const keyword = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('#categoryTree .tree-row').forEach(row => {
+        const matched = !keyword || row.textContent.toLowerCase().includes(keyword);
+        row.style.display = matched ? 'flex' : 'none';
+        if (matched) { let p = row.parentElement.parentElement; while (p && p.id !== 'categoryTree') { if (p.tagName === 'UL') p.style.display = 'block'; p = p.parentElement; } }
+      });
+      if (!keyword) document.querySelectorAll('#categoryTree ul').forEach(ul => ul.style.display = '');
+    });
+
+    $('panelToggle').addEventListener('click', () => {
+      const collapsed = $('categoryPanel').classList.toggle('collapsed');
+      $('panelToggle').textContent = collapsed ? '›' : '‹'; $('panelToggle').title = collapsed ? '展开品类树' : '收起品类树';
+    });
+    $('advancedBtn').addEventListener('click', () => toggleAdvanced());
+    $('collapseAdvanced').addEventListener('click', () => toggleAdvanced(false));
+    $('queryBtn').addEventListener('click', runQuery);
+    $('resetBtn').addEventListener('click', resetQuery);
+    $('exportBtn').addEventListener('click', exportCsv);
+    $('checkAll').addEventListener('change', e => { document.querySelectorAll('.row-check').forEach(x => x.checked = e.target.checked); updateSelected(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.query-area')) runQuery(); });
+
+    initCascade();
+    renderRows();
+  </script>
+</body>
+</html>
