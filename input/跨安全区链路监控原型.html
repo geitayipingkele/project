@@ -956,7 +956,7 @@ body::after{display:none}
         <div class="chart-wrap">
           <div class="chart-now" id="chartNow"></div>
           <div class="chart-box" id="chartBox">
-            <svg id="chart" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="吞吐与时延趋势"></svg>
+            <svg id="chart" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="文件积压数与时延趋势"></svg>
             <div class="chart-tip" id="chartTip"></div>
           </div>
         </div>
@@ -992,15 +992,15 @@ const STATUS = {normal:'正常', abnormal:'异常', unknown:'未知', partialAbn
 /* ==========================================================================
    数据模型
    当前承载两条完全独立的深圳模拟链路：
-      p-full 深圳Ⅳ区 ⇄ 安全接入区（c9 至 c4）
-      p-file 深圳Ⅳ区 ⇄ 安全接入区（文件，c10 至 c5）
-   两条链路各有 4 个业务节点、3 个隔离装置和 3 个分段，不复用 Node / Edge / 装置。
+      p-full 深圳信息Ⅲ区 ⇄ 安全接入区（c9 至 c4）
+      p-file 深圳信息Ⅲ区 ⇄ 安全接入区（文件，c10 至 c5）
+   通信链路 5 个业务节点、4 个装置；文件链路 4 个业务节点、3 个装置，不复用 Node / Edge / 装置。
    拓扑为「深圳链路行 × 分区列」矩阵（5 行 × 10 列）：
      · 行 = 列标题 / 间隔 / 链路 1 / 间隔 / 链路 2；
-    · 列 = 5 个分区列（安全接入区 / Ⅰ区 / Ⅱ区 / Ⅲ区 / Ⅳ区）
-       + 4 个装置列（当前使用前 3 列）；
+    · 列 = 5 个分区列（安全接入区 / 计量Ⅰ区 / 计量Ⅱ区 / 计量Ⅲ区 / 信息Ⅲ区）
+       + 装置列；文件链路跳过计量Ⅲ区；
      · 两组隔离装置分行落在分区列的分界线上；
-    · 两条独立链路均延伸至Ⅳ区，各自拥有独立节点与装置。
+    · 两条独立链路均延伸至信息Ⅲ区，各自拥有独立节点与装置。
    交付件样例含一条异常链路：sg1 上行不通（仅 p-full 使用），
      故 p-full 异常、p-file 正常，用于演示红色断线、不通徽标与告警。
    指标与状态仍为本地固定样例，不构成正式阈值或告警政策。
@@ -1015,19 +1015,19 @@ const D = {
     {id:'file', name:'文件链路', row:5}
   ],
   /* 列 = 分区（顶部列标题）。col 为网格列号：
-     1 层标签 · 2/4/6/8/10 分区（安全接入区 / Ⅰ区 / Ⅱ区 / Ⅲ区 / Ⅳ区）；
-     3/5/7/9 为装置列，两条链路均完整使用。 */
+     1 层标签 · 2/4/6/8/10 分区（安全接入区 / 计量Ⅰ区 / 计量Ⅱ区 / 计量Ⅲ区 / 信息Ⅲ区）；
+     3/5/7/9 为通信装置列，文件链路跨过计量Ⅲ区。 */
   zones:[
     {id:'z1a', name:'安全接入区', col:2},
-    {id:'z1b', name:'Ⅰ区',       col:4},
-    {id:'z2',  name:'Ⅱ区',       col:6},
-    {id:'z3',  name:'Ⅲ区',       col:8},
-    {id:'z4',  name:'Ⅳ区',       col:10}
+    {id:'z1b', name:'计量Ⅰ区',   col:4},
+    {id:'z2',  name:'计量Ⅱ区',   col:6},
+    {id:'z3',  name:'计量Ⅲ区',   col:8},
+    {id:'z4',  name:'信息Ⅲ区',   col:10}
   ],
-  /* 两条链路各自拥有 4 个隔离装置，分别落在 row 3 / 5，不复用。 */
+  /* 通信链路 4 个装置，文件链路 3 个装置，分别落在 row 3 / 5，不复用。 */
   bars:[
     {id:'isoA',   col:3, row:3}, {id:'iso12',  col:5, row:3}, {id:'iso23',  col:7, row:3}, {id:'iso34', col:9, row:3},
-    {id:'isoB',   col:3, row:5}, {id:'isoB12', col:5, row:5}, {id:'isoB23', col:7, row:5}, {id:'isoB34', col:9, row:5}
+    {id:'isoB',   col:3, row:5}, {id:'isoB12', col:5, row:5}, {id:'isoB34', col:9, row:5}
   ],
   bands:[],
 
@@ -1037,39 +1037,37 @@ const D = {
   nodes:[
     /* ── 深圳链路 1（row 3） ── */
     {id:'c4',name:'跨区通信服务',kind:'service',zone:'z1a',layer:'edge',loc:'安全接入区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{吞吐:'64 Mbps',时延:'0.9 ms'},note:'安全接入区侧跨区通信服务；至Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
-    {id:'c1',name:'跨区通信服务',kind:'service',zone:'z1b',layer:'edge',loc:'Ⅰ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{吞吐:'128 Mbps',时延:'1.4 ms'},note:'Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
-    {id:'c2',name:'跨区通信服务',kind:'service',zone:'z2',layer:'edge',loc:'Ⅱ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{吞吐:'124 Mbps',时延:'1.7 ms'},note:'Ⅱ区侧跨区通信服务，上下行均通畅。'},
-    {id:'c3',name:'跨区通信服务',kind:'service',zone:'z3',layer:'edge',loc:'Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{吞吐:'118 Mbps',时延:'1.9 ms'},note:'Ⅲ区侧跨区通信服务，上下行均通畅。'},
-    {id:'c9',name:'跨区通信服务',kind:'service',zone:'z4',layer:'edge',loc:'Ⅳ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{吞吐:'116 Mbps',时延:'2.2 ms'},note:'深圳Ⅳ区侧跨区通信服务，与通信链路前三段连续。'},
+     m:{文件积压数:'8 个',时延:'0.9 ms'},note:'安全接入区侧跨区通信服务；至计量Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
+    {id:'c1',name:'跨区通信服务',kind:'service',zone:'z1b',layer:'edge',loc:'计量Ⅰ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{文件积压数:'12 个',时延:'1.4 ms'},note:'计量Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
+    {id:'c2',name:'跨区通信服务',kind:'service',zone:'z2',layer:'edge',loc:'计量Ⅱ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{文件积压数:'16 个',时延:'1.7 ms'},note:'计量Ⅱ区侧跨区通信服务，上下行均通畅。'},
+    {id:'c3',name:'跨区通信服务',kind:'service',zone:'z3',layer:'edge',loc:'计量Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{文件积压数:'20 个',时延:'1.9 ms'},note:'计量Ⅲ区侧跨区通信服务，上下行均通畅。'},
+    {id:'c9',name:'跨区通信服务',kind:'service',zone:'z4',layer:'edge',loc:'信息Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
+     m:{文件积压数:'24 个',时延:'2.2 ms'},note:'深圳信息Ⅲ区侧跨区通信服务，与通信链路前三段连续。'},
     /* ── 深圳链路 2（row 5） ── */
     {id:'c5',name:'跨区文件服务',kind:'service',zone:'z1a',layer:'edge',row:5,loc:'安全接入区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',
-     m:{吞吐:'96 Mbps',时延:'1.1 ms'},note:'深圳文件链路的安全接入区节点，与通信链路节点独立。'},
-    {id:'c6',name:'跨区文件服务',kind:'service',zone:'z1b',layer:'edge',row:5,loc:'Ⅰ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'101 Mbps',时延:'1.3 ms'},note:'深圳文件链路的Ⅰ区节点。'},
-    {id:'c7',name:'跨区文件服务',kind:'service',zone:'z2',layer:'edge',row:5,loc:'Ⅱ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'99 Mbps',时延:'1.6 ms'},note:'深圳文件链路的Ⅱ区节点。'},
-    {id:'c8',name:'跨区文件服务',kind:'service',zone:'z3',layer:'edge',row:5,loc:'Ⅲ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'96 Mbps',时延:'2.1 ms'},note:'深圳文件链路的Ⅲ区节点。'},
-    {id:'c10',name:'跨区文件服务',kind:'service',zone:'z4',layer:'edge',row:5,loc:'Ⅳ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{吞吐:'94 Mbps',时延:'2.3 ms'},note:'深圳文件链路的Ⅳ区节点，与通信链路节点独立。'},
+     m:{文件积压数:'3 个',时延:'1.1 ms'},note:'深圳文件链路的安全接入区节点，与通信链路节点独立。'},
+    {id:'c6',name:'跨区文件服务',kind:'service',zone:'z1b',layer:'edge',row:5,loc:'计量Ⅰ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'6 个',时延:'1.3 ms'},note:'深圳文件链路的计量Ⅰ区节点。'},
+    {id:'c7',name:'跨区文件服务',kind:'service',zone:'z2',layer:'edge',row:5,loc:'计量Ⅱ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'9 个',时延:'1.6 ms'},note:'深圳文件链路的计量Ⅱ区节点。'},
+    {id:'c10',name:'跨区文件服务',kind:'service',zone:'z4',layer:'edge',row:5,loc:'信息Ⅲ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'12 个',时延:'2.3 ms'},note:'深圳文件链路的信息Ⅲ区节点，与通信链路节点独立。'},
     /* ── 两条链路的独立装置（位置由 D.bars 决定） ── */
-    {id:'isoA',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/Ⅰ区之间',status:'normal',updated:'10:24:36',
-     m:{正向:'64 Mbps',反向:'58 Mbps',时延:'0.6 ms'},note:'安全接入区与Ⅰ区之间的正反向隔离装置。'},
-    {id:'iso12',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅰ区/Ⅱ区之间',status:'normal',updated:'10:24:36',
-     m:{正向:'128 Mbps',反向:'121 Mbps',时延:'1.2 ms'},note:'Ⅰ区与Ⅱ区之间的正反向隔离装置。'},
-    {id:'iso23',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅱ区/Ⅲ区之间',status:'normal',updated:'10:24:36',
-     m:{正向:'118 Mbps',反向:'112 Mbps',时延:'1.5 ms'},note:'Ⅱ区与Ⅲ区之间的正反向隔离装置。'},
-    {id:'iso34',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅲ区/Ⅳ区之间',status:'normal',updated:'10:24:36',
-     m:{正向:'116 Mbps',反向:'110 Mbps',时延:'1.6 ms'},note:'Ⅲ区与Ⅳ区之间的正反向隔离装置。'},
-    {id:'isoB',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/Ⅰ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'96 Mbps',反向:'92 Mbps',时延:'0.7 ms'},note:'文件链路独立隔离装置。'},
-    {id:'isoB12',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅰ区/Ⅱ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'101 Mbps',反向:'98 Mbps',时延:'1.1 ms'},note:'文件链路独立隔离装置。'},
-    {id:'isoB23',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅱ区/Ⅲ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'99 Mbps',反向:'95 Mbps',时延:'1.4 ms'},note:'文件链路独立隔离装置。'},
-    {id:'isoB34',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'Ⅲ区/Ⅳ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{正向:'94 Mbps',反向:'91 Mbps',时延:'1.6 ms'},note:'文件链路Ⅲ区与Ⅳ区之间的独立隔离装置。'}
+    {id:'isoA',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/计量Ⅰ区之间',status:'normal',updated:'10:24:36',
+     m:{},note:'安全接入区与计量Ⅰ区之间的正反向隔离装置，仅监控状态。'},
+    {id:'iso12',name:'防火墙',kind:'device',layer:'edge',loc:'计量Ⅰ区/计量Ⅱ区之间',status:'normal',updated:'10:24:36',
+     m:{},note:'计量Ⅰ区与计量Ⅱ区之间的防火墙，仅监控状态。'},
+    {id:'iso23',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'计量Ⅱ区/计量Ⅲ区之间',status:'normal',updated:'10:24:36',
+     m:{},note:'计量Ⅱ区与计量Ⅲ区之间的正反向隔离装置，仅监控状态。'},
+    {id:'iso34',name:'防火墙',kind:'device',layer:'edge',loc:'计量Ⅲ区/信息Ⅲ区之间',status:'normal',updated:'10:24:36',
+     m:{},note:'计量Ⅲ区与信息Ⅲ区之间的防火墙，仅监控状态。'},
+    {id:'isoB',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/计量Ⅰ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{},note:'文件链路独立隔离装置，仅监控状态。'},
+    {id:'isoB12',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'计量Ⅰ区/计量Ⅱ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{},note:'文件链路独立隔离装置，仅监控状态。'},
+    {id:'isoB34',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'计量Ⅱ区/信息Ⅲ区之间 · 文件链路',status:'normal',updated:'10:24:34',m:{},note:'文件链路跨过计量Ⅲ区，由计量Ⅱ区直接连接信息Ⅲ区的独立隔离装置；仅监控状态。'}
   ],
 
   /* 链路分段：每段经一处装置转发。
-     统一约定：a = 下游端（靠近安全接入区），b = 上游端（靠近Ⅳ区），
+     统一约定：a = 下游端（靠近安全接入区），b = 上游端（靠近信息Ⅲ区），
      故「下行」箭头一律指向 a，「上行」沿同一条深圳区内路径返回。
      axis 为走向；方向状态取值：normal 通畅 / abnormal 异常 / interrupted 不通。
      paths 为该段的归属链路：公共段列多条（只画一次，由多条链路复用），独有段列一条。 */
@@ -1081,23 +1079,22 @@ const D = {
     {id:'sg7', a:'c3',  via:'iso34',  b:'c9', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-full']},
     {id:'sg4', a:'c5',  via:'isoB',   b:'c6', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
     {id:'sg5', a:'c6',  via:'isoB12', b:'c7', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
-    {id:'sg6', a:'c7',  via:'isoB23', b:'c8', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']},
-    {id:'sg8', a:'c8',  via:'isoB34', b:'c10', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']}
+    {id:'sg8', a:'c7',  via:'isoB34', b:'c10', axis:'h',downInto:'a',down:'normal',up:'normal',paths:['p-file']}
   ],
 
-  /* 完整链路：深圳Ⅳ区下行至安全接入区，再原路返回 */
+  /* 完整链路：深圳信息Ⅲ区下行至安全接入区，再原路返回 */
   paths:[
-    {id:'p-full',unit:'sz',object:'comm',name:'深圳Ⅳ区 ⇄ 安全接入区',type:'深圳跨区通信链路 · 往返',
+    {id:'p-full',unit:'sz',object:'comm',name:'深圳信息Ⅲ区 ⇄ 安全接入区',type:'深圳跨区通信链路 · 往返',
      status:'normal',updated:'10:24:36',
      route:['c9','iso34','c3','iso23','c2','iso12','c1','isoA','c4'],
-     metrics:{bps:118,lat:1.9},
-     history:[['09:50',116,2.0],['09:56',119,1.9],['10:02',117,1.9],['10:08',120,1.8],['10:14',118,1.9],['10:20',118,1.9],['10:24',118,1.9]]},
+     metrics:{backlog:24,lat:1.9},
+     history:[['09:50',21,2.0],['09:56',23,1.9],['10:02',22,1.9],['10:08',25,1.8],['10:14',24,1.9],['10:20',24,1.9],['10:24',24,1.9]]},
     /* 第二条链路为独立文件链路，不复用第一条的节点、分段或装置。样例数据不构成业务规则。 */
-    {id:'p-file',unit:'sz',object:'file',name:'深圳Ⅳ区 ⇄ 安全接入区（文件）',type:'深圳跨区文件链路 · 往返',
+    {id:'p-file',unit:'sz',object:'file',name:'深圳信息Ⅲ区 ⇄ 安全接入区（文件）',type:'深圳跨区文件链路 · 往返',
      status:'normal',updated:'10:24:34',
-     route:['c10','isoB34','c8','isoB23','c7','isoB12','c6','isoB','c5'],
-     metrics:{bps:96,lat:2.1},
-     history:[['09:50',94,2.2],['09:56',97,2.1],['10:02',95,2.1],['10:08',98,2.0],['10:14',96,2.1],['10:20',96,2.1],['10:24',96,2.1]]}
+     route:['c10','isoB34','c7','isoB12','c6','isoB','c5'],
+     metrics:{backlog:12,lat:2.1},
+     history:[['09:50',10,2.2],['09:56',11,2.1],['10:02',10,2.1],['10:08',13,2.0],['10:14',12,2.1],['10:20',12,2.1],['10:24',12,2.1]]}
   ],
   /* 显式事件样例源。交付件的异常对象清单已由分段方向状态（sg1 上行不通）派生，
      故此处留空；如需演示事件类条目，按
@@ -1127,7 +1124,7 @@ const TIPS = {
   'scope:unit'           : '统计口径：当前单位全部已发布且启用 Path；查询仅聚焦视图，不隐藏当前单位其他异常。',
   /* KPI 口径说明（2026-09-22 新增三张指标卡：口径都非显然，必须写明） */
   'kpi:lat'              : '平均时延：当前单位各业务链路整链时延的均值（端到端探测值）。按基线要求，整链时延与分段时延分别采集、不相加、不互相推算，故此处不含任何分段时延。',
-  'kpi:bps'              : '链路吞吐量：当前单位各业务链路当前吞吐之和（各链路流量相加，非瓶颈值）；副文案为各链路历史峰值之和。',
+  'kpi:backlog'          : '文件积压数：当前单位各业务链路文件积压数的算术平均值；副文案为当前链路中的最高积压数。样例数据不构成生产统计规则。',
   'kpi:alarm'            : '今日告警：自本次打开页面以来推送的告警累计条数（每 7 秒一条，不受列表 40 条上限影响）；副文案「未处置」为当前列表中状态仍为未处置的条数，会随处置与列表滚动而变化。',
   /* 链路方向状态说明（源图图例：实线 = 下行、点线 = 上行；绿 = 通畅、红 = 异常、灰 = 不通） */
   'dir:rule'             : '线型即方向：实线 = 下行，点线 = 上行。每段链路同时呈现两个方向，箭头指向该方向的接收端。',
@@ -1331,7 +1328,7 @@ function initFilters() {
 function renderTop() {
   const o = overview();
   /* 首卡「当前单位概况」保留原样；其余三张为指标卡（2026-09-22 改版）：
-     平均时延 / 链路吞吐量 / 今日告警。原「业务链路 / 阻断链路 / 自身异常节点 /
+     平均时延 / 文件积压数 / 今日告警。原「业务链路 / 阻断链路 / 自身异常节点 /
      受上游影响节点」四卡已移除——其中「业务链路」「阻断」两个数仍在首卡副文案里，
      故口径未丢；节点级状态口径（故障源 / 上游中断）改由拓扑与异常清单承载。 */
   /* 统一按 o.ps（当前单位的已发布启用 Path）取值，与首卡副文案同口径，
@@ -1339,14 +1336,9 @@ function renderTop() {
   const lats = o.ps.map(p => Number(p.metrics && p.metrics.lat)).filter(Number.isFinite);
   const latAvg = lats.length ? lats.reduce((a, b) => a + b, 0) / lats.length : null;
   const latMax = lats.length ? Math.max.apply(null, lats) : null;
-  const bps = o.ps.map(p => Number(p.metrics && p.metrics.bps)).filter(Number.isFinite);
-  const bpsSum = bps.length ? bps.reduce((a, b) => a + b, 0) : null;
-  /* 峰值 = 各链路历史吞吐峰值之和；无 history 的链路以当前值兜底 */
-  const peaks = o.ps.map(p => {
-    const hs = (p.history || []).map(h => Number(h[1])).filter(Number.isFinite);
-    return hs.length ? Math.max.apply(null, hs) : Number(p.metrics && p.metrics.bps);
-  }).filter(Number.isFinite);
-  const bpsPeak = peaks.length ? peaks.reduce((a, b) => a + b, 0) : null;
+  const backlogs = o.ps.map(p => p.metrics && p.metrics.backlog).filter(v => v != null && Number.isFinite(Number(v))).map(Number);
+  const backlogAvg = backlogs.length ? backlogs.reduce((a, b) => a + b, 0) / backlogs.length : null;
+  const backlogMax = backlogs.length ? Math.max.apply(null, backlogs) : null;
   const unhandled = alarms.filter(a => a.state === '未处置').length;
   /* 原「状态横幅 + 统计口径」整行已删除，其内容并入首卡，单位口径只在此处出现一次 */
   const sub = o.ps.length
@@ -1357,8 +1349,8 @@ function renderTop() {
     /* 未知一律用 —，不以 0 替代（与图例「未知」项一致） */
     kpi('平均时延', latAvg == null ? '—' : latAvg.toFixed(1) + '<span class="unit"> ms</span>',
       latAvg == null ? '暂无数据' : '最高 ' + latMax.toFixed(1) + ' ms', '', '', 'kpi:lat') +
-    kpi('链路吞吐量', bpsSum == null ? '—' : bpsSum + '<span class="unit"> Mbps</span>',
-      bpsSum == null ? '暂无数据' : '峰值 ' + bpsPeak + ' Mbps', '', '', 'kpi:bps') +
+    kpi('文件积压数', backlogAvg == null ? '—' : backlogAvg.toFixed(1) + '<span class="unit"> 个</span>',
+      backlogAvg == null ? '暂无数据' : '当前最高 ' + backlogMax + ' 个', '', '', 'kpi:backlog') +
     kpi('今日告警', alarmTodayTotal, '未处置 ' + unhandled + ' 条',
       unhandled ? 'danger' : '', '', 'kpi:alarm');
 }
@@ -1396,9 +1388,7 @@ function zoneHeadHtml(z) {
   return '<div class="zone-head" data-zone="' + z.id + '"' +
     ' style="grid-column:' + z.col + ';grid-row:1"><b>' + z.name + '</b></div>';
 }
-/* 竖条窄，指标值取单位简写（Mbps→M）；完整值在悬浮提示与抽屉里 */
-const barVal = v => String(v).replace(' Mbps','M').replace(' ms','ms').replace(' 条','').replace(' %','%');
-/* 装置竖条：竖排装置名 + 竖排指标常显，边框色承载状态 */
+/* 装置竖条：仅展示名称与状态，不展示无法采集的指标 */
 function barHtml(n) {
   if (!n) return '';
   const kind = n.name.includes('防火墙') ? 'fw' : 'iso';
@@ -1408,9 +1398,7 @@ function barHtml(n) {
     ' id="n-' + n.id + '" data-node="' + n.id + '" data-tip="dev:' + kind + '"' +
     ' aria-label="' + n.name + '，' + (n.loc || '') + '">' +
     '<span class="bar-name">' + n.name + '</span>' +
-    '<span class="bar-metrics">' +
-      Object.entries(n.m).slice(0, 3).map(([k, v]) => '<em>' + k + '<b>' + barVal(v) + '</b></em>').join('') +
-    '</span></button>';
+    '<span class="bar-metrics"><em>状态<b>' + STATUS[n.status] + '</b></em></span></button>';
 }
 /* 横向装置条：置于网级行与深圳行之间的分割线上（align-self:end + 半个行间距） */
 function bandHtml(b) {
@@ -1425,9 +1413,7 @@ function bandHtml(b) {
     ' style="grid-column:' + b.col + ';grid-row:4"' +
     ' aria-label="' + n.name + '，' + (n.loc || '') + '，' + STATUS[n.status] + '">' +
     '<span class="band-name">' + n.name + '</span>' +
-    '<span class="band-metrics">' +
-      Object.entries(n.m).slice(0, 3).map(([k, v]) => '<em>' + k + '<b>' + v + '</b></em>').join('') +
-    '</span></button>';
+    '<span class="band-metrics"><em>状态<b>' + STATUS[n.status] + '</b></em></span></button>';
 }
 /* 单元格：按 (列, 行) 聚合节点，多条链路在同一格纵向堆叠（顶部对齐） */
 function cellHtml(col, row, ns) {
@@ -1469,7 +1455,7 @@ function iconFor(n) {
   return n.name.includes('防火墙') ? ICON_FW : ICON_ISO;
 }
 function nodeHtml(n) {
-  const metrics = Object.entries(n.m).slice(0, 3)
+  const metrics = Object.entries(n.m || {}).slice(0, 3)
     .map(([k, v]) => '<span>' + k + '<b>' + v + '</b></span>').join('');
   const kindTxt = n.kind === 'device' ? '安全装置' : (n.kind === 'net' ? '网级节点' : '业务节点');
   /* 分区由列标题整体标识、状态由右上角状态点表示，卡片内不再重复说明 */
@@ -1810,7 +1796,7 @@ function abnormalObjects() {
     if (n.status === 'abnormal') {
       sev = 'critical'; tip = 'flow:blocked';
       detail = n.name + ' 服务进程异常，数据流转受阻。';
-    } else if (n.metric) {
+    } else if (n.kind !== 'device' && n.metric) {
       sev = 'warn'; tip = 'flow:metric';
       detail = n.name + ' 指标越界：' + Object.entries(n.m).map(([k, v]) => k + ' ' + v).join('、') + '。';
     } else if (n.status === 'unknown') {
@@ -2017,7 +2003,7 @@ function renderChart() {
 
   /* 两条序列分属不同量纲，必须各自成轴，不能共用一条纵轴 */
   const SER = [
-    {k: 1, ax: 'l', color: '#38c6ff', name: '吞吐', unit: 'Mbps', dash: ''},
+    {k: 1, ax: 'l', color: '#38c6ff', name: '文件积压数', unit: '个', dash: ''},
     {k: 2, ax: 'r', color: '#9d7bff', name: '时延', unit: 'ms', dash: 'dashed'}
   ];
   const sc = {};
@@ -2034,7 +2020,7 @@ function renderChart() {
   };
   const ptOf = (s, yf) => d.map((q, i) => q[s.k] == null ? null : [X(i), yf(q[s.k])]).filter(Boolean);
 
-  /* 纵轴：左吞吐 / 右时延，共用同一组水平网格线 */
+  /* 纵轴：左文件积压数 / 右时延，共用同一组水平网格线 */
   let grid = '';
   sc.l.ticks.forEach((v, i) => {
     const y = pt + ih - (v / sc.l.top) * ih;
@@ -2075,7 +2061,7 @@ function renderChart() {
     if (x1 - x0 > 36) unk += '<text class="chart-unk-label" x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (pt + 12) + '">未知</text>';
   });
 
-  /* 吞吐面积（同样在未知处断开） */
+  /* 文件积压数面积（同样在未知处断开） */
   let area = '';
   { let run = [];
     d.forEach((q, i) => {
@@ -2085,7 +2071,7 @@ function renderChart() {
     if (run.length > 1) area += areaPath(run, pt + ih);
   }
 
-  /* 数据点标记：吞吐实心圆、时延菱形 */
+  /* 数据点标记：文件积压数实心圆、时延菱形 */
   let marks = '';
   ptOf(SER[0], v => Y('l', v)).forEach(([x, y]) => {
     marks += '<circle class="chart-pt" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.7"/>';
@@ -2129,7 +2115,7 @@ function renderChart() {
   }
 
   const axisTitle =
-    '<text class="chart-axlab" x="' + pl + '" y="' + (pt - 13) + '" fill="#38c6ff">吞吐 Mbps</text>' +
+    '<text class="chart-axlab" x="' + pl + '" y="' + (pt - 13) + '" fill="#38c6ff">文件积压数 个</text>' +
     '<text class="chart-axlab" x="' + (W - pr) + '" y="' + (pt - 13) + '" text-anchor="end" fill="#9d7bff">时延 ms</text>';
 
   const svgEl = $('#chart');
@@ -2156,13 +2142,13 @@ function renderChart() {
     '<span><i style="border-top-color:' + s.color + ';border-top-style:' + (s.dash || 'solid') + '"></i>' +
     s.name + ' ' + s.unit + '</span>').join('');
 
-  $('#chartTitle').textContent = p.name + ' · 吞吐 / 时延';
+  $('#chartTitle').textContent = p.name + ' · 文件积压数 / 时延';
   $('#chartStatus').className = 'chip ' + p.status;
   $('#chartStatus').textContent = STATUS[p.status];
   $('#chartStatus').dataset.tip = 'path:' + p.status;
-  $('#chartNow').innerHTML = p.metrics.bps === null
+  $('#chartNow').innerHTML = p.metrics.backlog == null
     ? '最近有效监测已过期，当前指标 <b>未知</b>'
-    : '吞吐 <b>' + p.metrics.bps + ' Mbps</b> · 时延 <b>' + p.metrics.lat + ' ms</b>';
+    : '文件积压数 <b>' + p.metrics.backlog + ' 个</b> · 时延 <b>' + p.metrics.lat + ' ms</b>';
 
   /* 悬停：十字准线 + 命中点高亮 + 浮层 */
   const cross = $('#crosshair'), h0 = $('#hDot0'), h1 = $('#hDot1');
@@ -2181,7 +2167,7 @@ function renderChart() {
     cross.setAttribute('opacity', '1');
     showDot(h0, SER[0], q, i); showDot(h1, SER[1], q, i);
     tip.style.display = 'block';
-    tip.innerHTML = q[0] + '<br>吞吐 <b>' + (q[1] ?? '未知') + '</b> Mbps<br>时延 <b>' + (q[2] ?? '未知') + '</b> ms' +
+    tip.innerHTML = q[0] + '<br>文件积压数 <b>' + (q[1] ?? '未知') + '</b> 个<br>时延 <b>' + (q[2] ?? '未知') + '</b> ms' +
       (q[1] == null && q[2] == null ? '<br><span style="color:#8492a8">该时刻无有效监测数据</span>' : '');
     const wr = svgEl.parentElement.getBoundingClientRect();
     let tx = e.clientX - wr.left + 12, ty = e.clientY - wr.top - tip.offsetHeight - 10;
@@ -2252,10 +2238,11 @@ function open(id) {
       '<tr><td>数据流转</td><td>' + ({blocked:'阻断', impacted:'上游中断', normal:'正常'}[n.flow]) + '</td></tr>' +
       '<tr><td>最近更新</td><td>2026-09-20 ' + n.updated + '</td></tr>' +
     '</table>' +
-    '<div class="dw-sec">关键指标</div>' +
-    '<div class="dw-kv">' +
-      Object.entries(n.m).map(([k, v]) => '<div><span>' + k + '</span><b>' + v + '</b></div>').join('') +
-    '</div>' +
+    (n.kind === 'device' ? '' :
+      '<div class="dw-sec">关键指标</div>' +
+      '<div class="dw-kv">' +
+        Object.entries(n.m || {}).map(([k, v]) => '<div><span>' + k + '</span><b>' + v + '</b></div>').join('') +
+      '</div>') +
     '<div class="dw-sec">相邻链路与方向状态</div>' +
     '<div class="dw-rel">' +
       (segs.length ? segs.map(s => {
