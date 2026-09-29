@@ -439,6 +439,10 @@ button{cursor:pointer;border:none;background:none}
 .node.is-abnormal .statusdot{background:var(--st-blocked);box-shadow:0 0 10px var(--st-blocked);animation:blink .7s infinite}
 .node.is-abnormal .node-ic{color:#ffb3b3;filter:drop-shadow(0 0 8px rgba(255,95,95,.45))}
 .node.is-abnormal:hover{border-color:var(--st-blocked);box-shadow:0 0 22px rgba(255,95,95,.3)}
+.node.is-partial{border-color:rgba(255,182,72,.55)}
+.node.is-partial .statusdot{background:var(--st-metric);box-shadow:0 0 9px var(--st-metric);animation:none}
+.node.is-partial .node-ic{color:#ffd9a0;filter:drop-shadow(0 0 7px rgba(255,182,72,.35))}
+.node.is-partial:hover{border-color:var(--st-metric);box-shadow:0 0 20px rgba(255,182,72,.25)}
 .node.is-impact{border-color:rgba(175,105,119,.5)}
 .node.is-impact .statusdot{background:var(--st-impact);box-shadow:0 0 8px var(--st-impact);animation:none}
 .node.is-impact .node-ic{color:#e2b0bd}
@@ -684,14 +688,23 @@ button{cursor:pointer;border:none;background:none}
 .dw-tbl td{padding:6px 0;border-bottom:1px dashed rgba(99,150,255,.12);vertical-align:top}
 .dw-tbl td:first-child{color:var(--dim);width:86px}
 .dw-tbl td:last-child{text-align:right}
-.dw-kv{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px}
+.dw-kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:0 18px}
 .dw-kv div{
-  flex:1 1 44%;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;
   padding:6px 10px;border-radius:var(--radius-sm);
   border:1px solid var(--card-border);background:rgba(20,34,62,.45);font-size:11.5px;
 }
-.dw-kv span{color:var(--dim);font-size:10.5px}
-.dw-kv b{font-size:12.5px}
+.dw-kv span{color:var(--dim);font-size:10.5px;white-space:nowrap}
+.dw-kv b{font-size:12.5px;white-space:nowrap}
+.dw-channels{width:calc(100% - 36px);margin:0 18px;border-collapse:separate;border-spacing:0;font-size:10.5px;overflow:hidden;border:1px solid var(--card-border);border-radius:var(--radius-sm)}
+.dw-channels th,.dw-channels td{padding:7px 6px;border-bottom:1px solid rgba(99,150,255,.12);text-align:left;white-space:nowrap}
+.dw-channels th{color:var(--dim);font-weight:600;background:rgba(20,34,62,.72)}
+.dw-channels td{color:var(--text);background:rgba(20,34,62,.38)}
+.dw-channels tr:last-child td{border-bottom:0}
+.ch-state{font-weight:700}
+.ch-state.normal{color:var(--st-normal)}
+.ch-state.abnormal{color:var(--st-blocked)}
+.ch-state.unknown{color:var(--st-unknown)}
 .dw-rel{display:flex;flex-direction:column;gap:6px;padding:0 18px}
 .dw-rel div{
   display:flex;align-items:center;gap:8px;justify-content:space-between;
@@ -988,6 +1001,7 @@ const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const pad = n => String(n).padStart(2, '0');
 const STATUS = {normal:'正常', abnormal:'异常', unknown:'未知', partialAbnormal:'部分异常', partialUnknown:'部分未知'};
+const CHANNEL_STATUS = {normal:'正常', abnormal:'异常', unknown:'未知'};
 
 /* ==========================================================================
    数据模型
@@ -1037,21 +1051,21 @@ const D = {
   nodes:[
     /* ── 深圳链路 1（row 3） ── */
     {id:'c4',name:'跨区通信服务',kind:'service',zone:'z1a',layer:'edge',loc:'安全接入区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'8 个',时延:'0.9 ms'},note:'安全接入区侧跨区通信服务；至计量Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
+     m:{文件积压数:'8 个',上行时延:'1.0 ms',下行时延:'0.9 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.14:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.14:7002',up:'normal',down:'normal'}],note:'安全接入区侧跨区通信服务；至计量Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
     {id:'c1',name:'跨区通信服务',kind:'service',zone:'z1b',layer:'edge',loc:'计量Ⅰ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'12 个',时延:'1.4 ms'},note:'计量Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
+     m:{文件积压数:'12 个',上行时延:'1.5 ms',下行时延:'1.4 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.21:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.21:7002',up:'normal',down:'normal'}],note:'计量Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
     {id:'c2',name:'跨区通信服务',kind:'service',zone:'z2',layer:'edge',loc:'计量Ⅱ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'16 个',时延:'1.7 ms'},note:'计量Ⅱ区侧跨区通信服务，上下行均通畅。'},
+     m:{文件积压数:'16 个',上行时延:'1.8 ms',下行时延:'1.7 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.22:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.22:7002',up:'normal',down:'normal'}],note:'计量Ⅱ区侧跨区通信服务，上下行均通畅。'},
     {id:'c3',name:'跨区通信服务',kind:'service',zone:'z3',layer:'edge',loc:'计量Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'20 个',时延:'1.9 ms'},note:'计量Ⅲ区侧跨区通信服务，上下行均通畅。'},
+     m:{文件积压数:'20 个',上行时延:'2.0 ms',下行时延:'1.9 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.23:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.23:7002',up:'normal',down:'normal'}],note:'计量Ⅲ区侧跨区通信服务，上下行均通畅。'},
     {id:'c9',name:'跨区通信服务',kind:'service',zone:'z4',layer:'edge',loc:'信息Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'24 个',时延:'2.2 ms'},note:'深圳信息Ⅲ区侧跨区通信服务，与通信链路前三段连续。'},
+     m:{文件积压数:'24 个',上行时延:'2.3 ms',下行时延:'2.2 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.24:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.24:7002',up:'normal',down:'normal'}],note:'深圳信息Ⅲ区侧跨区通信服务，与通信链路前三段连续。'},
     /* ── 深圳链路 2（row 5） ── */
     {id:'c5',name:'跨区文件服务',kind:'service',zone:'z1a',layer:'edge',row:5,loc:'安全接入区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',
-     m:{文件积压数:'3 个',时延:'1.1 ms'},note:'深圳文件链路的安全接入区节点，与通信链路节点独立。'},
-    {id:'c6',name:'跨区文件服务',kind:'service',zone:'z1b',layer:'edge',row:5,loc:'计量Ⅰ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'6 个',时延:'1.3 ms'},note:'深圳文件链路的计量Ⅰ区节点。'},
-    {id:'c7',name:'跨区文件服务',kind:'service',zone:'z2',layer:'edge',row:5,loc:'计量Ⅱ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'9 个',时延:'1.6 ms'},note:'深圳文件链路的计量Ⅱ区节点。'},
-    {id:'c10',name:'跨区文件服务',kind:'service',zone:'z4',layer:'edge',row:5,loc:'信息Ⅲ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'12 个',时延:'2.3 ms'},note:'深圳文件链路的信息Ⅲ区节点，与通信链路节点独立。'},
+     m:{文件积压数:'3 个',上行时延:'1.2 ms',下行时延:'1.1 ms'},channels:[{name:'文件主通道',endpoint:'198.51.100.14:8021',up:'normal',down:'normal'},{name:'文件备用通道',endpoint:'198.51.100.14:8022',up:'normal',down:'normal'}],note:'深圳文件链路的安全接入区节点，与通信链路节点独立。'},
+    {id:'c6',name:'跨区文件服务',kind:'service',zone:'z1b',layer:'edge',row:5,loc:'计量Ⅰ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'6 个',上行时延:'1.4 ms',下行时延:'1.3 ms'},channels:[{name:'文件主通道',endpoint:'198.51.100.21:8021',up:'normal',down:'normal'},{name:'文件备用通道',endpoint:'198.51.100.21:8022',up:'normal',down:'normal'}],note:'深圳文件链路的计量Ⅰ区节点。'},
+    {id:'c7',name:'跨区文件服务',kind:'service',zone:'z2',layer:'edge',row:5,loc:'计量Ⅱ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'9 个',上行时延:'1.7 ms',下行时延:'1.6 ms'},channels:[{name:'文件主通道',endpoint:'198.51.100.22:8021',up:'normal',down:'normal'},{name:'文件备用通道',endpoint:'198.51.100.22:8022',up:'normal',down:'abnormal'}],note:'深圳文件链路的计量Ⅱ区节点；备用通道下行异常，用于演示部分通道异常的聚合状态。'},
+    {id:'c10',name:'跨区文件服务',kind:'service',zone:'z4',layer:'edge',row:5,loc:'信息Ⅲ区 · 深圳（文件链路）',status:'normal',updated:'10:24:34',m:{文件积压数:'12 个',上行时延:'2.4 ms',下行时延:'2.3 ms'},channels:[{name:'文件主通道',endpoint:'198.51.100.24:8021',up:'normal',down:'normal'},{name:'文件备用通道',endpoint:'198.51.100.24:8022',up:'normal',down:'normal'}],note:'深圳文件链路的信息Ⅲ区节点，与通信链路节点独立。'},
     /* ── 两条链路的独立装置（位置由 D.bars 决定） ── */
     {id:'isoA',name:'正反向隔离装置',kind:'device',layer:'edge',loc:'安全接入区/计量Ⅰ区之间',status:'normal',updated:'10:24:36',
      m:{},note:'安全接入区与计量Ⅰ区之间的正反向隔离装置，仅监控状态。'},
@@ -1125,7 +1139,7 @@ const TIPS = {
   /* KPI 口径说明（2026-09-22 新增三张指标卡：口径都非显然，必须写明） */
   'kpi:lat'              : '平均时延：当前单位各业务链路整链时延的均值（端到端探测值）。按基线要求，整链时延与分段时延分别采集、不相加、不互相推算，故此处不含任何分段时延。',
   'kpi:backlog'          : '文件积压数：当前单位各业务链路文件积压数的算术平均值；副文案为当前链路中的最高积压数。样例数据不构成生产统计规则。',
-  'kpi:alarm'            : '今日告警：自本次打开页面以来推送的告警累计条数（每 7 秒一条，不受列表 40 条上限影响）；副文案「未处置」为当前列表中状态仍为未处置的条数，会随处置与列表滚动而变化。',
+  'kpi:alarm'            : '今日告警：自本次打开页面以来推送的告警累计条数（每 7 秒一条，不受列表 40 条上限影响）；副文案按严重、警告、提示三个级别展示同期累计数量。',
   /* 链路方向状态说明（源图图例：实线 = 下行、点线 = 上行；绿 = 通畅、红 = 异常、灰 = 不通） */
   'dir:rule'             : '线型即方向：实线 = 下行，点线 = 上行。每段链路同时呈现两个方向，箭头指向该方向的接收端。',
   'dir:normal'           : '通畅：该方向数据正常转发。',
@@ -1198,18 +1212,41 @@ const inFocusSeg = id => {
 /* 默认同时展示全部链路：只在分段聚焦时降噪，不再因「未选中链路」降低透明度。 */
 const ownDim = id => focusSegOf() ? !inFocusSeg(id) : false;
 
-/* 完整链路状态由其全部分段的方向状态聚合得到（异常优先于未知），
-   避免「方向状态」与「链路状态」两处各写一份而互相矛盾 */
+/* 业务节点状态由自身通道聚合：任一方向异常即该通道异常；
+   全部通道正常为正常，部分通道异常为部分异常，全部通道异常为异常。 */
+function deriveNodeStatus() {
+  D.nodes.forEach(n => {
+    if (n.kind === 'device') return;
+    const cs = n.channels || [];
+    if (!cs.length) { n.status = 'unknown'; return; }
+    const states = cs.map(c => {
+      const dirs = [c.up, c.down];
+      if (dirs.some(s => s === 'abnormal')) return 'abnormal';
+      if (dirs.every(s => s === 'normal')) return 'normal';
+      return 'unknown';
+    });
+    n.status = states.every(s => s === 'normal') ? 'normal'
+      : states.every(s => s === 'abnormal') ? 'abnormal'
+      : states.some(s => s === 'abnormal') ? 'partialAbnormal'
+      : states.every(s => s === 'unknown') ? 'unknown'
+      : 'partialUnknown';
+  });
+}
+deriveNodeStatus();
+
+/* 完整链路状态聚合分段方向与业务节点通道状态（异常优先于未知），
+   避免卡片、清单和链路汇总使用不同状态事实源。 */
 function derivePathStatus() {
   D.paths.forEach(p => {
     const ds = [];
     segsOf(p).forEach(s => { ds.push(s.down, s.up); });
+    p.route.map(node).filter(n => n && n.kind !== 'device').forEach(n => ds.push(n.status));
     if (!ds.length) return;
     p.blocked = ds.some(s => s === 'interrupted');
     p.status = p.blocked ? 'abnormal'
-      : ds.some(s => s === 'abnormal') ? 'partialAbnormal'
+      : ds.some(s => s === 'abnormal' || s === 'partialAbnormal') ? 'partialAbnormal'
       : ds.every(s => s === 'unknown') ? 'unknown'
-      : ds.some(s => s === 'unknown') ? 'partialUnknown'
+      : ds.some(s => s === 'unknown' || s === 'partialUnknown') ? 'partialUnknown'
       : 'normal';
   });
 }
@@ -1339,7 +1376,7 @@ function renderTop() {
   const backlogs = o.ps.map(p => p.metrics && p.metrics.backlog).filter(v => v != null && Number.isFinite(Number(v))).map(Number);
   const backlogAvg = backlogs.length ? backlogs.reduce((a, b) => a + b, 0) / backlogs.length : null;
   const backlogMax = backlogs.length ? Math.max.apply(null, backlogs) : null;
-  const unhandled = alarms.filter(a => a.state === '未处置').length;
+  const alarmLevelSummary = '严重 ' + alarmTodayBySeverity.critical + ' · 警告 ' + alarmTodayBySeverity.warn + ' · 提示 ' + alarmTodayBySeverity.info;
   /* 原「状态横幅 + 统计口径」整行已删除，其内容并入首卡，单位口径只在此处出现一次 */
   const sub = o.ps.length
     ? '深圳 · ' + o.ps.length + ' 业务链路 · ' + o.blocked + ' 阻断 · ' + o.bad + ' 异常 · ' + o.unk + ' 未知'
@@ -1351,8 +1388,8 @@ function renderTop() {
       latAvg == null ? '暂无数据' : '最高 ' + latMax.toFixed(1) + ' ms', '', '', 'kpi:lat') +
     kpi('文件积压数', backlogAvg == null ? '—' : backlogAvg.toFixed(1) + '<span class="unit"> 个</span>',
       backlogAvg == null ? '暂无数据' : '当前最高 ' + backlogMax + ' 个', '', '', 'kpi:backlog') +
-    kpi('今日告警', alarmTodayTotal, '未处置 ' + unhandled + ' 条',
-      unhandled ? 'danger' : '', '', 'kpi:alarm');
+    kpi('今日告警', alarmTodayTotal, alarmLevelSummary,
+      alarmTodayBySeverity.critical ? 'danger' : alarmTodayBySeverity.warn ? 'warn' : '', '', 'kpi:alarm');
 }
 function kpi(label, value, sub, cls, extra, tip) {
   /* 首卡的值是「状态」而非「计数」：用状态胶囊承载，与其余卡 19px 数值在形态上区分开
@@ -1427,8 +1464,9 @@ function dirLine(k, w) {
 }
 function stateClass(n) {
   if (n.flow === 'blocked' || n.status === 'abnormal') return 'is-abnormal';
+  if (n.status === 'partialAbnormal') return 'is-partial';
   if (n.flow === 'impacted') return 'is-impact';
-  if (n.status === 'unknown') return 'is-unknown';
+  if (n.status === 'unknown' || n.status === 'partialUnknown') return 'is-unknown';
   if (n.metric) return 'is-metric';
   return '';
 }
@@ -1727,6 +1765,7 @@ let alarms = [];
    只在 pushAlarm 内自增；seedAlarms 末尾按其产出条数赋值。页面刷新即从 0 重新累计
    （原型不建模日期翻转，「今日」是名义口径）。 */
 let alarmTodayTotal = 0;
+let alarmTodayBySeverity = {critical:0, warn:0, info:0};
 let sevFilter = 'all';
 /* 异常对象清单的当前渲染集：条目以 data-exc="<索引>" 回查本数组，
    避免依赖「重算一次必然同序」这一隐含假设 */
@@ -1753,6 +1792,8 @@ function seedAlarms() {
   }));
   /* 首屏补种的告警也要计入「今日累计」（当前 D.events 为空 → 0，属正确的真值） */
   alarmTodayTotal = alarms.length;
+  alarmTodayBySeverity = {critical:0, warn:0, info:0};
+  alarms.forEach(a => { alarmTodayBySeverity[a.sev] = (alarmTodayBySeverity[a.sev] || 0) + 1; });
 }
 /* 由既有对象状态派生「异常对象池」，不新增业务规则。
    口径（2026-09-22 裁决）：Edge（分段方向）与 Node 同样是「对象」——
@@ -1795,7 +1836,10 @@ function abnormalObjects() {
     let sev = null, detail = '', tip = '';
     if (n.status === 'abnormal') {
       sev = 'critical'; tip = 'flow:blocked';
-      detail = n.name + ' 服务进程异常，数据流转受阻。';
+      detail = n.kind === 'device' ? n.name + ' 状态异常。' : n.name + ' 的全部通道异常。';
+    } else if (n.status === 'partialAbnormal') {
+      sev = 'warn'; tip = 'flow:metric';
+      detail = n.name + ' 存在部分通道异常。';
     } else if (n.kind !== 'device' && n.metric) {
       sev = 'warn'; tip = 'flow:metric';
       detail = n.name + ' 指标越界：' + Object.entries(n.m).map(([k, v]) => k + ' ' + v).join('、') + '。';
@@ -1851,6 +1895,7 @@ function pushAlarm(a) {
   if (alarms.length > 40) alarms.pop();
   /* 累计计数在 pop 之外自增：队列截断不回退计数，「今日告警」不会在 40 条后冻结 */
   alarmTodayTotal++;
+  alarmTodayBySeverity[a.sev] = (alarmTodayBySeverity[a.sev] || 0) + 1;
   renderAlarms();
   renderTop();   /* 让「今日告警」卡即时刷新，不必等下一次 render() */
 }
@@ -2211,13 +2256,13 @@ function open(id) {
   S.focus = id;
   S.focusSeg = null;   /* 单节点聚焦与分段聚焦互斥 */
 
-  const flowMap = {
-    blocked:  {cls:'source',  text:'故障源 / 阻断'},
-    impacted: {cls:'impact',  text:'上游中断'},
-    normal:   n.status === 'unknown' ? {cls:'unknown', text:'状态未知'}
-             : n.metric ? {cls:'metric', text:'指标异常，不影响流转'} : {cls:'ok', text:'运行正常'}
-  };
-  const f = flowMap[n.flow];
+  const f = n.flow === 'blocked' ? {cls:'source', text:'故障源 / 阻断'}
+    : n.flow === 'impacted' ? {cls:'impact', text:'上游中断'}
+    : n.status === 'abnormal' ? {cls:'source', text:'全部通道异常'}
+    : n.status === 'partialAbnormal' ? {cls:'metric', text:'部分通道异常'}
+    : (n.status === 'unknown' || n.status === 'partialUnknown') ? {cls:'unknown', text:'通道状态未知'}
+    : n.metric ? {cls:'metric', text:'指标异常，不影响流转'}
+    : {cls:'ok', text:'运行正常'};
   const kindTxt = n.kind === 'device' ? '安全装置' : '业务节点';
   const rn = n.loc || '—';
   const segs = D.segments.filter(s => s.a === n.id || s.b === n.id || s.via === n.id);
@@ -2242,7 +2287,13 @@ function open(id) {
       '<div class="dw-sec">关键指标</div>' +
       '<div class="dw-kv">' +
         Object.entries(n.m || {}).map(([k, v]) => '<div><span>' + k + '</span><b>' + v + '</b></div>').join('') +
-      '</div>') +
+      '</div>' +
+      '<div class="dw-sec">通道列表</div>' +
+      '<table class="dw-channels"><thead><tr><th>通道名称</th><th>IP:Port</th><th>上行状态</th><th>下行状态</th></tr></thead><tbody>' +
+        (n.channels || []).map(c => '<tr><td>' + c.name + '</td><td>' + c.endpoint + '</td>' +
+          '<td><span class="ch-state ' + c.up + '">' + (CHANNEL_STATUS[c.up] || CHANNEL_STATUS.unknown) + '</span></td>' +
+          '<td><span class="ch-state ' + c.down + '">' + (CHANNEL_STATUS[c.down] || CHANNEL_STATUS.unknown) + '</span></td></tr>').join('') +
+      '</tbody></table>') +
     '<div class="dw-sec">相邻链路与方向状态</div>' +
     '<div class="dw-rel">' +
       (segs.length ? segs.map(s => {
