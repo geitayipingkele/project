@@ -661,6 +661,7 @@ button{cursor:pointer;border:none;background:none}
   overflow-y:auto;padding-bottom:20px;
 }
 .drawer.show{transform:translateX(0)}
+.drawer.is-composite{width:760px}
 .dw-bar{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 11px;border-bottom:1px solid rgba(99,150,255,.12)}
 .dw-bar span{font-size:11.5px;color:var(--dim);letter-spacing:1.4px}
 .dw-close{font-size:22px;line-height:1;color:var(--muted);padding:0 6px;transition:color .2s}
@@ -705,6 +706,51 @@ button{cursor:pointer;border:none;background:none}
 .ch-state.normal{color:var(--st-normal)}
 .ch-state.abnormal{color:var(--st-blocked)}
 .ch-state.unknown{color:var(--st-unknown)}
+.svc-map-scroll{margin:0 18px;overflow-x:auto;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:rgba(12,24,44,.55)}
+.svc-map{min-width:680px;display:grid;grid-template-columns:134px 28px 134px 34px 145px 34px 134px;grid-template-rows:64px 64px 64px;align-items:center;justify-content:center;padding:12px 10px}
+.svc-node{position:relative;min-width:0;height:62px;padding:8px 10px;text-align:left;border:1px solid rgba(99,150,255,.34);border-radius:9px;background:#17283e;color:var(--text);transition:border-color .18s,background .18s,box-shadow .18s}
+.svc-node:hover,.svc-node.active{border-color:var(--cyan);background:#1a3048;box-shadow:0 0 0 1px rgba(56,198,255,.2)}
+.svc-node .svc-dot{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--st-normal)}
+.svc-node.partialAbnormal .svc-dot{background:var(--st-metric)}
+.svc-node.abnormal .svc-dot{background:var(--st-blocked)}
+.svc-node.unknown .svc-dot,.svc-node.partialUnknown .svc-dot{background:var(--st-unknown)}
+.svc-node b{display:block;padding-right:10px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc-node small{display:block;margin-top:5px;color:var(--dim);font-size:9.5px;white-space:nowrap}
+.svc-schedule{grid-column:1;grid-row:2}
+.svc-arrow-a{grid-column:2;grid-row:2}
+.svc-ferry{grid-column:3;grid-row:2}
+.svc-branch-up{grid-column:4;grid-row:1}
+.svc-branch-down{grid-column:4;grid-row:3}
+.svc-das-pull{grid-column:5;grid-row:1}
+.svc-das-report{grid-column:5;grid-row:3}
+.svc-arrow-pull{grid-column:6;grid-row:1}
+.svc-arrow-report{grid-column:6;grid-row:3}
+.svc-kafka{grid-column:7;grid-row:2}
+.svc-arrow{color:var(--cyan);font-size:19px;font-weight:700;text-align:center;opacity:.85}
+.svc-directions{display:flex;gap:8px;padding:0 18px 8px}
+.svc-directions span{flex:1;padding:6px 9px;border:1px solid var(--card-border);border-radius:7px;background:rgba(20,34,62,.45);font-size:10.5px;color:var(--muted)}
+.svc-directions b{float:right;color:var(--text)}
+.svc-detail{margin:8px 18px 0;padding:11px 12px;border:1px solid rgba(99,150,255,.25);border-radius:var(--radius-sm);background:rgba(20,34,62,.45)}
+.das-metrics{margin-top:0}
+.das-metrics .svc-groups{grid-template-columns:1fr}
+.svc-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.svc-detail-head b{font-size:13px}
+.svc-detail-head span{font-size:10px;color:var(--dim)}
+.svc-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.svc-group{min-width:0;padding:8px 9px;border:1px solid rgba(99,150,255,.16);border-radius:7px;background:rgba(12,24,44,.55)}
+.svc-group h4{margin:0 0 7px;font-size:11px;color:#bcd4ff}
+.svc-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.svc-values div{min-width:0}
+.svc-values span{display:block;font-size:9.5px;color:var(--dim);white-space:nowrap}
+.svc-values b{display:block;margin-top:2px;font-size:12px;white-space:nowrap}
+.svc-values .fail b{color:#ffb3b3}
+.svc-rule{margin-top:8px;font-size:10px;color:var(--dim);line-height:1.5}
+.svc-kafka-table{width:100%;border-collapse:collapse;font-size:10.5px}
+.svc-kafka-table th,.svc-kafka-table td{padding:6px 7px;text-align:left;border-bottom:1px solid rgba(99,150,255,.12)}
+.svc-kafka-table th{color:var(--dim);font-weight:600}
+.svc-kafka-table td:last-child,.svc-kafka-table th:last-child{text-align:right}
+.svc-kafka-table tr:last-child td{border-bottom:0}
+.composite-tag{display:inline-flex;align-items:center;margin-left:6px;padding:1px 5px;border-radius:999px;border:1px solid rgba(56,198,255,.28);color:#9ddfff;font-size:8.5px;font-weight:600;vertical-align:1px}
 .dw-rel{display:flex;flex-direction:column;gap:6px;padding:0 18px}
 .dw-rel div{
   display:flex;align-items:center;gap:8px;justify-content:space-between;
@@ -1053,11 +1099,11 @@ const D = {
     {id:'c4',name:'跨区通信服务',kind:'service',zone:'z1a',layer:'edge',loc:'安全接入区 · 深圳',status:'normal',updated:'10:24:36',
      m:{文件积压数:'8 个',上行时延:'1.0 ms',下行时延:'0.9 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.14:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.14:7002',up:'normal',down:'normal'}],note:'安全接入区侧跨区通信服务；至计量Ⅰ区的上行方向不通（sg1 上行），下行正常。'},
     {id:'c1',name:'跨区通信服务',kind:'service',zone:'z1b',layer:'edge',loc:'计量Ⅰ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'12 个',上行时延:'1.5 ms',下行时延:'1.4 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.21:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.21:7002',up:'normal',down:'normal'}],note:'计量Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
+     m:{文件积压数:'12 个',上行时延:'1.5 ms',下行时延:'1.4 ms'},dasMetrics:[{name:'文件上报',total:112,success:111,fail:1},{name:'文件拉取',total:108,success:108,fail:0}],channels:[{name:'通信主通道',endpoint:'192.0.2.21:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.21:7002',up:'normal',down:'normal'}],note:'计量Ⅰ区侧跨区通信服务；来自安全接入区的上行方向不通（sg1 上行），下行正常。'},
     {id:'c2',name:'跨区通信服务',kind:'service',zone:'z2',layer:'edge',loc:'计量Ⅱ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'16 个',上行时延:'1.8 ms',下行时延:'1.7 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.22:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.22:7002',up:'normal',down:'normal'}],note:'计量Ⅱ区侧跨区通信服务，上下行均通畅。'},
+     m:{文件积压数:'16 个',上行时延:'1.8 ms',下行时延:'1.7 ms'},dasMetrics:[{name:'文件上报',total:124,success:122,fail:2},{name:'文件拉取',total:118,success:117,fail:1}],channels:[{name:'通信主通道',endpoint:'192.0.2.22:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.22:7002',up:'normal',down:'normal'}],note:'计量Ⅱ区侧跨区通信服务，上下行均通畅。'},
     {id:'c3',name:'跨区通信服务',kind:'service',zone:'z3',layer:'edge',loc:'计量Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
-     m:{文件积压数:'20 个',上行时延:'2.0 ms',下行时延:'1.9 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.23:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.23:7002',up:'normal',down:'normal'}],note:'计量Ⅲ区侧跨区通信服务，上下行均通畅。'},
+     m:{文件积压数:'20 个',上行时延:'2.0 ms',下行时延:'1.9 ms'},dasMetrics:[{name:'文件上报',total:136,success:135,fail:1},{name:'文件拉取',total:129,success:127,fail:2}],channels:[{name:'通信主通道',endpoint:'192.0.2.23:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.23:7002',up:'normal',down:'normal'}],note:'计量Ⅲ区侧跨区通信服务，上下行均通畅。'},
     {id:'c9',name:'跨区通信服务',kind:'service',zone:'z4',layer:'edge',loc:'信息Ⅲ区 · 深圳',status:'normal',updated:'10:24:36',
      m:{文件积压数:'24 个',上行时延:'2.3 ms',下行时延:'2.2 ms'},channels:[{name:'通信主通道',endpoint:'192.0.2.24:7001',up:'normal',down:'normal'},{name:'通信备用通道',endpoint:'192.0.2.24:7002',up:'normal',down:'normal'}],note:'深圳信息Ⅲ区侧跨区通信服务，与通信链路前三段连续。'},
     /* ── 深圳链路 2（row 5） ── */
@@ -1115,6 +1161,36 @@ const D = {
      {id,sev,title,time,detail,impact,node,path} 追加即可。 */
   events:[]
 };
+
+/* 组合业务节点：主拓扑仍只呈现一个「跨区通信服务」，内部服务仅在详情中展开。
+   文件数量按 taskId 在「父节点 + 服务 + 操作」范围内去重；以下均为最近完整自然分钟的固定样例。 */
+const INTERNAL_SERVICE_SETS = {
+  c4:[
+    {id:'schedule',slot:'svc-schedule',name:'文件调度服务',direction:'双向',updated:'10:24',groups:[
+      {name:'文件上传',total:120,success:118,fail:2},{name:'文件下载',total:96,success:96,fail:0}]},
+    {id:'ferry',slot:'svc-ferry',name:'文件摆渡服务',direction:'双向',updated:'10:24',groups:[
+      {name:'文件上报',total:118,success:116,fail:2},{name:'文件拉取',total:94,success:94,fail:0}]},
+    {id:'das-pull',slot:'svc-das-pull',name:'DAS跨区服务',direction:'拉取 →',updated:'10:24',groups:[
+      {name:'文件拉取',total:92,success:92,fail:0}]},
+    {id:'das-report',slot:'svc-das-report',name:'DAS跨区服务',direction:'上报 ←',updated:'10:24',groups:[
+      {name:'文件上报',total:116,success:114,fail:2}]},
+    {id:'kafka',slot:'svc-kafka',name:'Kafka服务',direction:'消费者组',updated:'10:24',consumerGroups:[
+      {name:'file-dispatch-group',rate:128},{name:'file-report-group',rate:96},{name:'file-pull-group',rate:72}]}
+  ],
+  c9:[
+    {id:'schedule',slot:'svc-schedule',name:'文件调度服务',direction:'双向',updated:'10:24',groups:[
+      {name:'文件上传',total:132,success:132,fail:0},{name:'文件下载',total:104,success:104,fail:0}]},
+    {id:'ferry',slot:'svc-ferry',name:'文件摆渡服务',direction:'双向',updated:'10:24',groups:[
+      {name:'文件上报',total:130,success:130,fail:0},{name:'文件拉取',total:102,success:102,fail:0}]},
+    {id:'das-pull',slot:'svc-das-pull',name:'DAS跨区服务',direction:'拉取 →',updated:'10:24',groups:[
+      {name:'文件拉取',total:100,success:100,fail:0}]},
+    {id:'das-report',slot:'svc-das-report',name:'DAS跨区服务',direction:'上报 ←',updated:'10:24',groups:[
+      {name:'文件上报',total:128,success:128,fail:0}]},
+    {id:'kafka',slot:'svc-kafka',name:'Kafka服务',direction:'消费者组',updated:'10:24',consumerGroups:[
+      {name:'file-dispatch-group',rate:142},{name:'file-report-group',rate:108},{name:'file-pull-group',rate:81}]}
+  ]
+};
+D.nodes.forEach(n => { if (INTERNAL_SERVICE_SETS[n.id]) n.internalServices = INTERNAL_SERVICE_SETS[n.id]; });
 
 /* ==========================================================================
    状态说明文案 —— 原「状态说明」卡片内容改为悬浮提示（需求 2）
@@ -1212,11 +1288,63 @@ const inFocusSeg = id => {
 /* 默认同时展示全部链路：只在分段聚焦时降噪，不再因「未选中链路」降低透明度。 */
 const ownDim = id => focusSegOf() ? !inFocusSeg(id) : false;
 
-/* 业务节点状态由自身通道聚合：任一方向异常即该通道异常；
-   全部通道正常为正常，部分通道异常为部分异常，全部通道异常为异常。 */
+/* 内部服务样例阈值：每分钟样本数至少 20；失败率 1%–5% 为警告，5% 及以上为异常。
+   仅用于原型演示，不构成生产告警规则。 */
+function serviceGroupStatus(g) {
+  if (!g || g.total < 20) return 'normal';
+  const rate = g.total ? g.fail / g.total : 0;
+  return rate >= .05 ? 'abnormal' : rate >= .01 ? 'partialAbnormal' : 'normal';
+}
+function internalServiceStatus(s) {
+  if (s.consumerGroups) return s.status || 'normal';
+  const states = (s.groups || []).map(serviceGroupStatus);
+  return states.some(x => x === 'abnormal') ? 'abnormal'
+    : states.some(x => x === 'partialAbnormal') ? 'partialAbnormal'
+    : 'normal';
+}
+function channelDirectionStatus(channels, key) {
+  const states = (channels || []).map(c => c[key] || 'unknown');
+  if (!states.length || states.every(x => x === 'unknown')) return 'unknown';
+  if (states.every(x => x === 'abnormal')) return 'abnormal';
+  if (states.some(x => x === 'abnormal')) return 'partialAbnormal';
+  if (states.some(x => x === 'unknown')) return 'partialUnknown';
+  return 'normal';
+}
+function internalDirectionStatus(n, direction) {
+  const defs = direction === 'report'
+    ? [['schedule','文件上传'],['ferry','文件上报'],['das-report','文件上报'],['kafka',null]]
+    : [['kafka',null],['das-pull','文件拉取'],['ferry','文件拉取'],['schedule','文件下载']];
+  const states = defs.map(([id, group]) => {
+    const s = n.internalServices.find(x => x.id === id);
+    if (!s) return 'unknown';
+    if (!group) return internalServiceStatus(s);
+    return serviceGroupStatus((s.groups || []).find(x => x.name === group));
+  });
+  const channelState = channelDirectionStatus(n.channels, direction === 'report' ? 'up' : 'down');
+  states.push(channelState);
+  if (states.some(x => x === 'abnormal')) return 'abnormal';
+  if (states.some(x => x === 'partialAbnormal')) return 'partialAbnormal';
+  if (states.every(x => x === 'unknown')) return 'unknown';
+  if (states.some(x => x === 'unknown' || x === 'partialUnknown')) return 'partialUnknown';
+  return 'normal';
+}
+
+/* 普通业务节点由通道聚合；组合业务节点先按上报/拉取方向聚合内部服务与通道，
+   两方向均异常为红色，单方向异常为黄色。 */
 function deriveNodeStatus() {
   D.nodes.forEach(n => {
     if (n.kind === 'device') return;
+    if (n.internalServices) {
+      n.internalServices.forEach(s => { s.status = internalServiceStatus(s); });
+      n.directionStatus = {report:internalDirectionStatus(n,'report'),pull:internalDirectionStatus(n,'pull')};
+      const bad = x => x === 'abnormal' || x === 'partialAbnormal';
+      n.status = bad(n.directionStatus.report) && bad(n.directionStatus.pull) ? 'abnormal'
+        : bad(n.directionStatus.report) || bad(n.directionStatus.pull) ? 'partialAbnormal'
+        : n.directionStatus.report === 'unknown' && n.directionStatus.pull === 'unknown' ? 'unknown'
+        : [n.directionStatus.report,n.directionStatus.pull].some(x => x === 'unknown' || x === 'partialUnknown') ? 'partialUnknown'
+        : 'normal';
+      return;
+    }
     const cs = n.channels || [];
     if (!cs.length) { n.status = 'unknown'; return; }
     const states = cs.map(c => {
@@ -1508,7 +1636,7 @@ function nodeHtml(n) {
     '<div class="node-top">' +
       '<span class="node-ic">' + iconFor(n) + '</span>' +
       '<div style="min-width:0">' +
-        '<div class="node-name">' + n.name + '</div>' +
+        '<div class="node-name">' + n.name + (n.internalServices ? '<span class="composite-tag">5项服务</span>' : '') + '</div>' +
         '<div class="node-sub">' + kindTxt + ' · ' + n.updated + '</div>' +
       '</div>' +
     '</div>' +
@@ -2249,6 +2377,63 @@ function render() {
 /* ==========================================================================
    抽屉
    ========================================================================== */
+function serviceDetailHtml(s) {
+  const title = s.name + (s.direction && s.direction !== '双向' && s.direction !== '消费者组' ? '（' + s.direction + '）' : '');
+  if (s.consumerGroups) {
+    return '<div class="svc-detail-head"><b>' + title + '</b><span>最近更新 ' + s.updated + '</span></div>' +
+      '<table class="svc-kafka-table"><thead><tr><th>消费者组</th><th>吞吐量</th></tr></thead><tbody>' +
+      s.consumerGroups.map(g => '<tr><td>' + g.name + '</td><td>' + g.rate + ' 条/秒</td></tr>').join('') +
+      '</tbody></table>' +
+      '<div class="svc-rule">一个 Kafka 集群内按消费者组汇总活跃消费者成员的 records-consumed-rate；固定样例不构成生产阈值。</div>';
+  }
+  return '<div class="svc-detail-head"><b>' + title + '</b><span>最近完整分钟 10:23–10:24</span></div>' +
+    '<div class="svc-groups">' + (s.groups || []).map(g =>
+      '<div class="svc-group"><h4>' + g.name + ' · 个/分钟</h4><div class="svc-values">' +
+      '<div><span>总数</span><b>' + g.total + '</b></div>' +
+      '<div><span>成功数</span><b>' + g.success + '</b></div>' +
+      '<div class="fail"><span>失败数</span><b>' + g.fail + '</b></div>' +
+      '</div></div>').join('') + '</div>' +
+    '<div class="svc-rule">按任务ID在“父节点 + 服务 + 操作”范围内去重；总数 = 成功数 + 失败数。样例阈值：样本不少于20时，失败率1%–5%为警告、5%及以上为异常。</div>';
+}
+function dasMetricsHtml(n) {
+  if (!n.dasMetrics) return '';
+  return '<div class="dw-sec">DAS每分钟文件统计</div><div class="svc-detail das-metrics">' +
+    '<div class="svc-detail-head"><b>DAS跨区服务</b><span>最近完整分钟 10:23–10:24</span></div>' +
+    '<div class="svc-groups">' + n.dasMetrics.map(g =>
+      '<div class="svc-group"><h4>' + g.name + ' · 个/分钟</h4><div class="svc-values">' +
+      '<div><span>总数</span><b>' + g.total + '</b></div>' +
+      '<div><span>成功数</span><b>' + g.success + '</b></div>' +
+      '<div class="fail"><span>失败数</span><b>' + g.fail + '</b></div>' +
+      '</div></div>').join('') + '</div>' +
+    '<div class="svc-rule">按任务ID在“父节点 + DAS服务 + 操作”范围内去重；总数 = 成功数 + 失败数。固定样例仅用于展示，本期不参与节点状态聚合。</div></div>';
+}
+function internalServicesHtml(n) {
+  const services = n.internalServices || [];
+  if (!services.length) return '';
+  const initial = services.find(s => s.status === 'abnormal' || s.status === 'partialAbnormal') || services[0];
+  const btn = id => {
+    const s = services.find(x => x.id === id);
+    return '<button type="button" class="svc-node ' + s.slot + ' ' + s.status + (s.id === initial.id ? ' active' : '') + '" data-service="' + s.id + '">' +
+      '<span class="svc-dot"></span><b>' + s.name + '</b><small>' + s.direction + ' · ' + STATUS[s.status] + ' · ' + s.updated + '</small></button>';
+  };
+  const ds = n.directionStatus || {report:'unknown',pull:'unknown'};
+  return '<div class="dw-sec">内部服务（5项）</div>' +
+    '<div class="svc-directions"><span>上报方向<b>' + STATUS[ds.report] + '</b></span><span>拉取方向<b>' + STATUS[ds.pull] + '</b></span></div>' +
+    '<div class="svc-map-scroll"><div class="svc-map">' +
+      btn('schedule') + '<span class="svc-arrow svc-arrow-a">→</span>' + btn('ferry') +
+      '<span class="svc-arrow svc-branch-up">↗</span><span class="svc-arrow svc-branch-down">↘</span>' +
+      btn('das-pull') + btn('das-report') +
+      '<span class="svc-arrow svc-arrow-pull">→</span><span class="svc-arrow svc-arrow-report">←</span>' + btn('kafka') +
+    '</div></div><div class="svc-detail" id="svcDetail">' + serviceDetailHtml(initial) + '</div>';
+}
+function bindInternalServices(n) {
+  if (!n.internalServices) return;
+  $$('#drawerBody [data-service]').forEach(b => b.addEventListener('click', () => {
+    $$('#drawerBody [data-service]').forEach(x => x.classList.toggle('active', x === b));
+    const s = n.internalServices.find(x => x.id === b.dataset.service);
+    if (s) $('#svcDetail').innerHTML = serviceDetailHtml(s);
+  }));
+}
 function open(id) {
   const n = node(id);
   if (!n) return;
@@ -2259,7 +2444,7 @@ function open(id) {
   const f = n.flow === 'blocked' ? {cls:'source', text:'故障源 / 阻断'}
     : n.flow === 'impacted' ? {cls:'impact', text:'上游中断'}
     : n.status === 'abnormal' ? {cls:'source', text:'全部通道异常'}
-    : n.status === 'partialAbnormal' ? {cls:'metric', text:'部分通道异常'}
+    : n.status === 'partialAbnormal' ? {cls:'metric', text:n.internalServices ? '单方向内部服务异常' : '部分通道异常'}
     : (n.status === 'unknown' || n.status === 'partialUnknown') ? {cls:'unknown', text:'通道状态未知'}
     : n.metric ? {cls:'metric', text:'指标异常，不影响流转'}
     : {cls:'ok', text:'运行正常'};
@@ -2288,6 +2473,8 @@ function open(id) {
       '<div class="dw-kv">' +
         Object.entries(n.m || {}).map(([k, v]) => '<div><span>' + k + '</span><b>' + v + '</b></div>').join('') +
       '</div>' +
+      dasMetricsHtml(n) +
+      internalServicesHtml(n) +
       '<div class="dw-sec">通道列表</div>' +
       '<table class="dw-channels"><thead><tr><th>通道名称</th><th>IP:Port</th><th>上行状态</th><th>下行状态</th></tr></thead><tbody>' +
         (n.channels || []).map(c => '<tr><td>' + c.name + '</td><td>' + c.endpoint + '</td>' +
@@ -2315,6 +2502,8 @@ function open(id) {
     '</div>' +
     '<div class="dw-note">原型边界：指标与事件均为固定本地样例；未声明真实告警平台或生产接口联动。</div>';
 
+  $('#drawer').classList.toggle('is-composite', Boolean(n.internalServices));
+  bindInternalServices(n);
   $('#overlay').classList.add('show');
   $('#drawer').classList.add('show');
   render();
