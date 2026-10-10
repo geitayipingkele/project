@@ -544,6 +544,7 @@ button{cursor:pointer;border:none;background:none}
 }
 .alarm-item.sev-critical{border-left-color:var(--st-blocked)}
 .alarm-item.sev-warn{border-left-color:var(--st-metric)}
+.alarm-item.sev-minor{border-left-color:#e6ce68}
 .alarm-item.sev-info{border-left-color:var(--blue)}
 /* 与异常清单同一套归属高亮/降噪规则（严重条目始终全亮） */
 .alarm-item.is-sel{border-color:rgba(56,198,255,.34);background:rgba(24,40,72,.66)}
@@ -552,6 +553,7 @@ button{cursor:pointer;border:none;background:none}
 .sev-chip{font-size:9.5px;padding:1px 8px;border-radius:999px;letter-spacing:.4px;white-space:nowrap}
 .sev-chip.critical{color:#ffb3b3;background:rgba(255,95,95,.12);border:1px solid rgba(255,95,95,.4)}
 .sev-chip.warn{color:#ffd9a0;background:rgba(255,182,72,.12);border:1px solid rgba(255,182,72,.4)}
+.sev-chip.minor{color:#f1e3a0;background:rgba(230,206,104,.12);border:1px solid rgba(230,206,104,.4)}
 .sev-chip.info{color:#a9d8ff;background:rgba(91,140,255,.12);border:1px solid rgba(91,140,255,.4)}
 .alarm-time{font-size:10px;color:var(--dim);white-space:nowrap}
 .alarm-state{margin-left:auto;font-size:9.5px;color:var(--muted);white-space:nowrap}
@@ -1899,12 +1901,12 @@ let alarms = [];
 let alarmTodayTotal = 0;
 let alarmTodayHandledTotal = 0;
 const activeAlarms = () => alarms.filter(a => a.state === '未处置');
-let alarmTodayBySeverity = {critical:0, warn:0, info:0};
+let alarmTodayBySeverity = {critical:0, warn:0, minor:0, info:0};
 let sevFilter = 'all';
 /* 异常对象清单的当前渲染集：条目以 data-exc="<索引>" 回查本数组，
    避免依赖「重算一次必然同序」这一隐含假设 */
 let excPool = [];
-const SEV_CN = {critical:'严重', warn:'警告', info:'提示'};
+const SEV_CN = {critical:'紧急', warn:'重要', minor:'次要', info:'提示'};
 
 function srcOf(e) {
   const n = node(e.node), p = path(e.path);
@@ -1927,7 +1929,7 @@ function seedAlarms() {
   /* 首屏补种的告警也要计入「今日累计」（当前 D.events 为空 → 0，属正确的真值） */
   alarmTodayTotal = alarms.length;
   alarmTodayHandledTotal = alarms.filter(a => a.state === '已处置').length;
-  alarmTodayBySeverity = {critical:0, warn:0, info:0};
+  alarmTodayBySeverity = {critical:0, warn:0, minor:0, info:0};
   alarms.forEach(a => { alarmTodayBySeverity[a.sev] = (alarmTodayBySeverity[a.sev] || 0) + 1; });
 }
 /* 由既有对象状态派生「异常对象池」，不新增业务规则。
@@ -1935,7 +1937,7 @@ function seedAlarms() {
    基线 §9.2「Path 当前状态聚合该 Path 所包含的全部 Node 和 Edge 状态」，
    故链路方向异常/不通一并进入「异常对象清单」。
    分工：异常对象清单 = 对象汇总；实时告警 = 消息流。两者同源于本函数，不两处各写一份。 */
-const SEV_RANK = {critical:3, warn:2, unknown:1};
+const SEV_RANK = {critical:4, warn:3, minor:2, info:1, unknown:1};
 function abnormalObjects() {
   const out = [];
   /* ① 分段方向（Edge）：一个方向一条 */
@@ -2045,7 +2047,7 @@ function renderAlarms() {
     '</div>').join('') : '<div class="alarm-empty">当前筛选下暂无告警</div>';
 
   const cnt = k => k === 'all' ? active.length : active.filter(a => a.sev === k).length;
-  $('#afilter').innerHTML = ['all','critical','warn','info'].map(k =>
+  $('#afilter').innerHTML = ['all','critical','warn','minor','info'].map(k =>
     '<button class="fchip' + (sevFilter === k ? ' on' : '') + '" data-sev="' + k + '">' +
     (k === 'all' ? '全部' : SEV_CN[k]) + '<i>' + cnt(k) + '</i></button>').join('');
 }
