@@ -1,0 +1,49 @@
+.modal { width: min(700px, calc(100vw - 40px)); }
+.modal .detail-grid { grid-template-columns: 94px minmax(0, 1fr) 94px minmax(0, 1fr); gap: 10px 9px; }
+.modal .detail-grid span { white-space: normal; overflow-wrap: anywhere; }
+
+/* 运行终端管理列表的筛选、表格与分页视觉。 */
+.list-card { padding: 18px; min-height: calc(100vh - 165px); }
+.list-card .section-head { margin-bottom: 20px; }
+.list-card .toolbar { min-height: 48px; margin-bottom: 16px; }
+.list-card .toolbar .field { height: 34px; min-width: 240px; }
+.list-table { max-height: none; border-color: #e9edf3; }
+.list-table table { min-width: 880px; }
+.list-table th { height: 48px; background: #f7f8fb; color: #4c5360; font-weight: 600; }
+.list-table td { height: 43px; }
+.list-table tbody tr:nth-child(even) { background: #eef5fb; }
+.list-table tbody tr:hover { background: #e5f0ff; }
+.list-table .link { margin-right: 6px; }
+.list-card .pagination { padding-top: 18px; }
+.domain-tabs { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 17px; }
+.domain-tabs span { min-width: 66px; text-align: center; padding: 9px 12px; background: #f5f6fa; color: #596170; }
+.domain-tabs span.selected { color: #2266d9; border: 1px solid #2867e9; background: #fff; padding: 8px 11px; }
+.tree-badge { margin-left: 5px; color: #2469d4; font-size: 11px; background: #e5f0ff; padding: 2px 5px; border-radius: 2px; }
+.tree-badge.deleted { color: #c8652b; background: #fff0e5; }
+.tree-row.ghost { color: #906a55; }
+.tree-row.ghost input { visibility: hidden; }
+.tree-hint { margin-left: 5px; font-size: 11px; color: #cf763a; }
+.scan-line { padding: 12px 2px; color: #596170; }
+.event-box { margin-top: 22px; border-top: 1px solid #e6ebf1; padding-top: 15px; }
+.event-box summary { cursor: pointer; color: #2367df; font-size: 15px; font-weight: 600; margin-bottom: 13px; }
+.event-box .table-wrap { margin-top: 13px; }
+.v10-gap { margin-top: 20px; }
+.proposed { margin-top: 6px; color: #2c67cb; white-space: normal; }
+.option-checks { display: flex; gap: 10px; margin-top: 8px; }
+.option-checks label { white-space: nowrap; }
+.settings-hint { margin: 12px 0 0; }
+.list-table td { overflow-wrap: anywhere; }
+.impact-modal { width: min(90vw, 1600px); max-height: 85vh; display: flex; flex-direction: column; }
+.impact-modal .modal-header, .impact-modal .modal-footer { flex: none; }
+.impact-modal .modal-body { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.impact-modal .impact-filter, .impact-modal .pagination { flex: none; }
+.impact-modal .table-wrap { min-height: 0; max-height: none; flex: 1; overflow: auto; }
+.impact-modal table { min-width: 1100px; }
+.impact-modal .impact-reason { min-width: 260px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.tree-badge { border: 0; cursor: pointer; font-family: inherit; }
+.dependency-note { max-width: 210px; margin-top: 5px; white-space: normal; line-height: 1.6; }
+
+.branch-name { display: flex; align-items: center; gap: 4px; }
+.branch-toggle, .branch-toggle-space { flex: 0 0 20px; width: 20px; }
+.branch-toggle { height: 24px; padding: 0; border: 0; border-radius: 3px; background: transparent; color: #315ca2; cursor: pointer; }
+.branch-toggle:hover, .branch-toggle:focus-visible { background: #e5f0ff; }
