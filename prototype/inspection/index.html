@@ -1811,47 +1811,13 @@ table.tbl#resListTable tbody td{ height:0.2967rem; }
       </div>
       <div class="dtl-tabs" id="dtlTabs">
         <div class="dtl-tab on" onclick="dtlTab(-1,this)">全部</div>
-        <div class="dtl-tab" onclick="dtlTab(1,this)">正常终端</div>
-        <div class="dtl-tab" onclick="dtlTab(2,this)">异常终端</div>
+        <div class="dtl-tab" onclick="dtlTab(1,this)">正常对象</div>
+        <div class="dtl-tab" onclick="dtlTab(2,this)">异常对象</div>
       </div>
       <div class="dtl-table" id="dtlTable"></div>
       <div class="dtl-pager" id="dtlPager"></div>
     </div>
     <div class="dlg-foot"><div class="dtl-foot-note">巡检结果：<span class="res-status ok">已完成。</span></div></div>
-  </div>
-
-  <!-- 发起运维工单（R5 / F5 4.6.4 人工兜底发起） -->
-  <div class="dialog dlg-wo" id="dlgWo" style="display:none">
-    <div class="dlg-head">
-      <h3>发起运维工单</h3>
-      <button class="dlg-close" onclick="closeWoDlg()"><svg viewBox="0 0 1024 1024"><path fill="currentColor" d="M764.288 214.592 512 466.944 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.592 764.288a31.936 31.936 0 1 0 45.12 45.12L512 557.248l252.288 252.16a31.936 31.936 0 0 0 45.12-45.12L557.248 512l252.16-252.288a31.936 31.936 0 0 0-45.12-45.12z"/></svg></button>
-    </div>
-    <div class="dlg-body">
-      <div class="wo-bar">
-        <div class="fitem"><input class="inp inp-sm" id="woPkName" placeholder="请输入设备名称"></div>
-        <div class="fitem"><input class="inp inp-sm" id="woPkUnit" placeholder="请输入所属单位"></div>
-        <div class="fitem"><span class="flabel">对象类型</span><div class="sel" id="woPkType" style="width:1.20rem" onclick="openSelect(this,'对象类型',['全部','物联设备','视频设备'],setWoPkType)"><span>全部</span><svg viewBox="0 0 1024 1024"><path fill="currentColor" d="M831.872 340.864 512 652.672 192.128 340.864a30.59 30.59 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.59 30.59 0 0 0-42.752 0z"/></svg></div></div>
-        <div class="filter-right">
-          <button class="btn btn-primary" onclick="woPkQuery()">查询</button>
-          <button class="btn" onclick="woPkReset()">重置</button>
-        </div>
-      </div>
-      <div class="wo-tools">
-        <span class="wo-cnt">候选 <b id="woCandCnt">0</b> 项，已选 <b id="woSelCnt">0</b> 项</span>
-        <div class="wo-tools-right"><a onclick="woPickAll()">全选</a><a onclick="woPickInvert()">反选</a><a onclick="woPickClear()">清空</a></div>
-      </div>
-      <div class="wo-tags" id="woTags"></div>
-      <div class="wo-tbl" id="woPickTable"></div>
-      <div class="wo-pager" id="woPickPager"></div>
-      <div class="wo-form">
-        <div class="wo-frow"><span class="lb"><span class="req">*</span>处理时间:</span><input class="ctrl-inp" id="woDeadline" style="width:2.35rem" placeholder="请输入处理时间"></div>
-        <div class="wo-frow"><span class="lb"><span class="req">*</span>发起原因:</span><textarea class="ctrl-inp" id="woReason" style="width:5.00rem;height:0.60rem" placeholder="请输入发起原因"></textarea></div>
-      </div>
-    </div>
-    <div class="dlg-foot">
-      <button class="btn btn-primary" onclick="woSubmit()">提交</button>
-      <button class="btn" onclick="closeWoDlg()">取消</button>
-    </div>
   </div>
 
   <!-- 确认框 -->
@@ -1968,14 +1934,13 @@ function openConfirm(text, cb){
   el('dlgTaskHide');
   el('dlgPick').style.display = 'none';
   el('dlgDetail').style.display = 'none';
-  el('dlgWo').style.display = 'none';
   el('msgbox').style.display = 'block';
   el('overlay').classList.add('show');
 }
 function closeConfirm(){ el('msgbox').style.display = 'none'; closeOverlayIfEmpty(); }
 function confirmYes(){ const cb = state.confirmCb; closeConfirm(); if (cb) cb(); }
 function closeOverlayIfEmpty(){
-  const any = ['dlgPick','dlgDetail','msgbox','dlgWo','dlgDuplicateDevices'].some(id => el(id).style.display !== 'none');
+  const any = ['dlgPick','dlgDetail','msgbox','dlgDuplicateDevices'].some(id => el(id).style.display !== 'none');
   if (!any) el('overlay').classList.remove('show');
 }
 
@@ -2403,7 +2368,7 @@ document.addEventListener('click', () => el('colPickerPanel').classList.remove('
    ============================================================ */
 /* 列宽（px，不随根字号缩放）。
    原站 12 列合计 1880 = 容器宽。本次因「日超时离线检测」需求新增 3 个统计列
-   （检测设备总数 / 已检测数量 / 超时离线设备数，合计 300），需重新配平。
+   （检测对象总数 / 已检测数量），需重新配平。
    配平依据是**在 1920 视口下实测各列 `.cell` 的 scrollWidth**（列需宽 = 内容宽 + 16
    的 td 内边距），而非目测：巡检单位需 164、操作需 185、任务编号需 145 是三个
    真正的宽列；其余列实测需求都在 85–120 之间。压缩「巡检计划名称」腾出空间
@@ -2414,9 +2379,8 @@ const TASK_COLS = [
   { k:'unitName', w:171, t:'巡检单位' },
   { k:'executeTypeDesc', w:79, t:'执行方式', c:'col-c' },
   { k:'inspectItemNum', w:79, t:'巡检项数' },
-  { k:'deviceTotalNum', w:105, t:'检测设备总数', c:'col-c' },
+  { k:'deviceTotalNum', w:105, t:'检测对象总数', c:'col-c' },
   { k:'deviceCheckedNum', w:92, t:'已检测数量', c:'col-c' },
-  { k:'deviceOvertimeNum', w:118, t:'超时离线设备数', c:'col-c' },
   { k:'taskStatusDesc', w:79, t:'任务状态', c:'col-c' },
   { k:'taskStart', w:136, t:'巡检开始时间' },
   { k:'taskEnd', w:136, t:'巡检结束时间' },
@@ -2425,7 +2389,7 @@ const TASK_COLS = [
   { k:'creatorName', w:88, t:'创建人' },
   { k:'op', w:201, t:'操作', fix:true, c:'col-c' },
 ];
-/* 巡检进程：优先按「已检测数量 ÷ 检测设备总数」计算（日超时离线检测需求）；
+/* 巡检进程：优先按「已检测数量 ÷ 检测对象总数」计算（日超时离线检测需求）；
    老任务无这两个字段时回退到原有的 taskProgress 字符串。 */
 function taskProgressOf(t){
   if (t.deviceTotalNum) return Math.round(((t.deviceCheckedNum || 0) / t.deviceTotalNum) * 100);
@@ -2455,11 +2419,6 @@ function renderTaskList(){
     if (c.k === 'taskProgress') {
       const p = taskProgressOf(t);
       return '<td class="col-c"><div class="cell">' + (p ? '<div class="progress"><div class="track"><i style="width:' + p + '%"></i></div><span class="progress-txt">' + p + '%</span></div>' : '') + '</div></td>';
-    }
-    /* 超时离线设备数 > 0 标红，便于一眼定位异常任务 */
-    if (c.k === 'deviceOvertimeNum') {
-      const n = t.deviceOvertimeNum;
-      return '<td class="col-c"><div class="cell">' + (n == null ? '--' : '<span' + (n > 0 ? ' class="ovt-err"' : '') + '>' + n + '</span>') + '</div></td>';
     }
     if (c.k === 'op') return '<td class="col-op col-c col-fix"><div class="cell"><a onclick="openResultDetail(\'' + t.id + '\')">巡检结果</a><a onclick="toast(\'success\',\'已下载巡检报告（原型演示）\')">下载巡检报告</a><a onclick="taskDel(\'' + t.id + '\')">删除</a></div></td>';
     return '<td title="' + esc(t[c.k]) + '"><div class="cell">' + esc(dash(t[c.k])) + '</div></td>';
@@ -2626,8 +2585,7 @@ function renderResult(){
         '<td><div class="cell"><span class="' + (RESULT_CLS[x.inspectResult] || '') + '">' + esc(RESULT_LABEL[x.inspectResult] || '--') + '</span></div></td>' +
         '<td><div class="cell">' + devs.length + '</div></td>' +
         '<td><div class="cell">' + errN + '</div></td>' +
-        '<td class="col-c"><div class="cell"><a class="lnk" onclick="openDetail(\'' + x.taskDetailId + '\',\'' + esc(x.ruleName) + '\')">详情</a>' +
-          '<a class="lnk" onclick="openWorkOrder(\'' + x.taskDetailId + '\')">查看告警 / 工单</a></div></td>' +
+        '<td class="col-c"><div class="cell"><a class="lnk" onclick="openDetail(\'' + x.taskDetailId + '\',\'' + esc(x.ruleName) + '\')">详情</a></div></td>' +
         '</tr>';
     }).join('');
     return '<div class="cat-wrap">' +
@@ -2641,7 +2599,7 @@ function renderResult(){
       '</div>' +
       '<div class="res-tbl-wrap" id="catBody' + ci + '" style="display:' + (open ? 'block' : 'none') + '">' +
         '<table><colgroup><col><col><col><col style="width:120px"><col style="width:120px"><col style="width:100px"></colgroup>' +
-        '<thead><tr><th><div class="cell">规则名称</div></th><th><div class="cell">规则说明</div></th><th><div class="cell">巡检结果</div></th><th><div class="cell">巡检终端数</div></th><th><div class="cell">异常终端数</div></th><th class="c"><div class="cell">操作</div></th></tr></thead>' +
+        '<thead><tr><th><div class="cell">规则名称</div></th><th><div class="cell">规则说明</div></th><th><div class="cell">巡检结果</div></th><th><div class="cell">巡检对象数</div></th><th><div class="cell">异常对象数</div></th><th class="c"><div class="cell">操作</div></th></tr></thead>' +
         '<tbody>' + (rows || '<tr><td colspan="6"><div class="empty-cell" style="height:1.20rem">暂无数据</div></td></tr>') + '</tbody></table>' +
       '</div>' +
     '</div>';
@@ -2666,7 +2624,6 @@ const DTL_COLS = [
   { t:'物联标识码', w:150, k:'deviceEsn' },
   { t:'业务状态', w:159, k:'deviceStatusDesc' },
   { t:'终端类型', w:155, k:'accessTypeDesc' },
-  { t:'设备类型', w:140, k:'deviceTypeDesc' },
   { t:'生产厂商', w:170, k:'manufacturerName' },
   { t:'部署节点', w:155, k:'nodeName' },
   { t:'安全分区', w:155, k:'zoneDesc' },
@@ -2695,10 +2652,10 @@ function openDetail(taskDetailId, ruleName){
   const all = DATA.devices[taskDetailId] || [];
   const n = { total:all.length, ok:all.filter(d => d.inspectResult === 1).length, err:all.filter(d => d.inspectResult === 2).length, none:all.filter(d => d.inspectResult === 3).length };
   el('dtlStat').innerHTML =
-    '<span><span class="k">巡检终端数：</span><span class="v">' + n.total + '</span></span>' +
-    '<span><span class="k">正常终端数：</span><span class="v">' + n.ok + '</span></span>' +
-    '<span><span class="k">异常终端数：</span><span class="v">' + n.err + '</span></span>' +
-    '<span><span class="k">未巡检终端数：</span><span class="v">' + n.none + '</span></span>';
+    '<span><span class="k">巡检对象数：</span><span class="v">' + n.total + '</span></span>' +
+    '<span><span class="k">正常对象数：</span><span class="v">' + n.ok + '</span></span>' +
+    '<span><span class="k">异常对象数：</span><span class="v">' + n.err + '</span></span>' +
+    '<span><span class="k">未巡检对象数：</span><span class="v">' + n.none + '</span></span>';
   el('dtlTabs').querySelectorAll('.dtl-tab').forEach((t, i) => t.classList.toggle('on', i === 0));
   el('dlgPick').style.display = 'none';
   el('msgbox').style.display = 'none';
@@ -2710,12 +2667,6 @@ function closeDetail(){ el('dlgDetail').style.display = 'none'; closeOverlayIfEm
 /* 处置工单入口（R5 / F5 4.6.4 人工兜底发起）。
    受 R6「工单申请权限」控制：无权限用户该入口隐藏或置灰（原型用 state.canApplyWo 模拟，
    真实环境由服务端二次校验）。 */
-function openWorkOrder(taskDetailId){
-  const alarms=(DATA.alarms||[]).filter(a=>a.taskDetailId===taskDetailId);
-  if(!alarms.length){toast('info','暂无关联告警；工单由检测异常产生告警后，按既有配置生成');return;}
-  openConfirm(alarms.map(a=>'告警编号：'+esc(a.id)+'<br>离线数据日期：'+esc(a.dataDate)+'<br>关联工单：'+esc(a.workOrderId||'尚未生成')).join('<hr>'),()=>activateTab('workorder'));
-}
-
 function dtlTab(v, node){
   state.dtl.tab = v;
   state.dtl.page = 1;
@@ -3849,89 +3800,6 @@ function woView(id){
 }
 /* ---- 发起运维工单（F5 4.6.4）----
    候选范围：本次检测结果中异常、且尚未生成工单的设备（避免同一对象重复开单） */
-function woCandidates(taskDetailId){
-  const devs = DATA.devices[taskDetailId] || [];
-  const opened = {};
-  (DATA.workOrders || []).forEach(w => {
-    if (w.taskDetailId !== taskDetailId) return;
-    (w.deviceIds || [w.deviceId]).forEach(id => { opened[id] = 1; });
-  });
-  return devs.filter(d => d.inspectResult === 2 && !opened[d.deviceId]);
-}
-function woPkFiltered(){
-  const nm = (el('woPkName').value || '').trim();
-  const un = (el('woPkUnit').value || '').trim();
-  return woCandidates(state.woPk.taskDetailId || '').filter(d => {
-    if (nm && String(d.deviceName || '').indexOf(nm) < 0) return false;
-    if (un && String(d.unitName || '').indexOf(un) < 0) return false;
-    if (state.woPk.type !== '全部' && DEV_TYPE_TEXT[devTypeOf(d)] !== state.woPk.type) return false;
-    return true;
-  });
-}
-function renderWoPick(){
-  const cols = [
-    { k:'sel', w:55, t:'' },
-    { k:'deviceName', t:'设备名称' },
-    { k:'deviceType', w:160, t:'设备类型' },
-    { k:'overtime', w:200, t:'超时时长' },
-  ];
-  const list = woPkFiltered();
-  const rows = paged(list, state.woPk.page);
-  el('woPickTable').innerHTML = '<table><colgroup>' + cols.map(c => '<col' + (c.w ? ' style="width:' + c.w + 'px"' : '') + '>').join('') + '</colgroup>' +
-    '<thead><tr>' + cols.map(c => '<th' + (c.k === 'sel' ? ' class="sel-c"' : '') + '>' + (c.t ? '<div class="cell">' + c.t + '</div>' : '') + '</th>').join('') + '</tr></thead><tbody>' +
-    (rows.length ? rows.map(d => '<tr>' + cols.map(c => {
-      if (c.k === 'sel') return '<td class="sel-c"><div class="cell"><span class="pick-box' + (state.woPk.sel[d.deviceId] ? ' on' : '') + '" onclick="woPkToggle(\'' + d.deviceId + '\')">' + CHECK + '</span></div></td>';
-      if (c.k === 'deviceType') return '<td><div class="cell">' + (DEV_TYPE_TEXT[devTypeOf(d)] || '--') + '</div></td>';
-      if (c.k === 'overtime') return '<td><div class="cell">' + esc(d.offlineTotalDurationDesc || '--') + '</div></td>';
-      return '<td title="' + esc(d[c.k]) + '"><div class="cell">' + esc(dash(d[c.k])) + '</div></td>';
-    }).join('') + '</tr>').join('') : '<tr><td colspan="' + cols.length + '"><div class="empty-cell" style="height:1.20rem">暂无数据</div></td></tr>') +
-    '</tbody></table>';
-  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-  let nums = '';
-  const start = Math.max(1, Math.min(state.woPk.page - 1, pages - 2));
-  for (let i = start; i <= Math.min(pages, start + 2); i++) nums += '<button class="' + (i === state.woPk.page ? 'on' : '') + '" data-p="' + i + '">' + i + '</button>';
-  el('woPickPager').innerHTML = '<span>共 ' + list.length + ' 条</span>' + pgSizeHtml(20) + '<div class="right">' +
-    '<button data-p="' + (state.woPk.page - 1) + '" ' + (state.woPk.page <= 1 ? 'disabled' : '') + '>&lsaquo;</button>' + nums +
-    '<button data-p="' + (state.woPk.page + 1) + '" ' + (state.woPk.page >= pages ? 'disabled' : '') + '>&rsaquo;</button></div>';
-  el('woPickPager').querySelectorAll('[data-p]').forEach(b => b.onclick = () => {
-    const p = +b.getAttribute('data-p');
-    if (p < 1 || p > pages) return;
-    state.woPk.page = p; renderWoPick();
-  });
-  const devs = DATA.devices[state.woPk.taskDetailId] || [];
-  const selIds = Object.keys(state.woPk.sel);
-  el('woCandCnt').textContent = list.length;
-  el('woSelCnt').textContent = selIds.length;
-  el('woTags').innerHTML = selIds.map(id => {
-    const d = devs.find(x => x.deviceId === id) || {};
-    return '<span class="wo-tag">' + esc(d.deviceName || id) + '<i onclick="woPkRemove(\'' + id + '\')">×</i></span>';
-  }).join('');
-}
-function woPkToggle(id){
-  if (state.woPk.sel[id]) delete state.woPk.sel[id]; else state.woPk.sel[id] = 1;
-  renderWoPick();
-}
-function woPkRemove(id){ delete state.woPk.sel[id]; renderWoPick(); }
-function woPickAll(){ woPkFiltered().forEach(d => { state.woPk.sel[d.deviceId] = 1; }); renderWoPick(); }
-function woPickInvert(){
-  woPkFiltered().forEach(d => { if (state.woPk.sel[d.deviceId]) delete state.woPk.sel[d.deviceId]; else state.woPk.sel[d.deviceId] = 1; });
-  renderWoPick();
-}
-function woPickClear(){ state.woPk.sel = {}; renderWoPick(); }
-function woPkQuery(){ state.woPk.page = 1; renderWoPick(); }
-function woPkReset(){
-  el('woPkName').value = '';
-  el('woPkUnit').value = '';
-  el('woPkType').querySelector('span').textContent = '全部';
-  state.woPk.type = '全部';
-  state.woPk.page = 1;
-  renderWoPick();
-}
-function setWoPkType(v){ state.woPk.type = v; renderWoPick(); }
-function closeWoDlg(){ el('dlgWo').style.display = 'none'; closeOverlayIfEmpty(); }
-/* 提交：多对象合并为一张工单（F5 4.6.4） */
-function woSubmit(){ toast('info','请在既有告警列表复用派单入口；本页仅查看关联工单'); }
-
 function init(){
   renderTabs();
   renderTree();
