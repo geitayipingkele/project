@@ -15,11 +15,6 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .topbar{height:51px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 20px 0 16px;border-bottom:1px solid #e2e5eb}
 .brand,.topright,.switcher{display:flex;align-items:center;gap:10px}
 .apps{width:18px;height:18px;background:repeating-linear-gradient(90deg,transparent 0 4px,#fff 4px 6px),repeating-linear-gradient(0deg,#2159fc 0 4px,#fff 4px 6px);flex:none}
-.brandmark{position:relative;width:34px;height:28px;flex:none}
-.brandmark i{position:absolute;left:0;top:7px;width:30px;height:3px;background:#1250ae;transform:skewY(8deg);box-shadow:0 5px #1250ae,0 10px #1250ae}
-.brandmark::after{position:absolute;content:"";height:25px;width:4px;left:19px;top:2px;background:#1250ae;transform:skewY(8deg)}
-.brandtitle{color:#10151d;font-weight:750;font-size:16px;white-space:nowrap;letter-spacing:.35px;line-height:18px}
-.brandtitle small{display:block;font:700 6px/8px Arial,sans-serif;letter-spacing:.45px}
 .topright{gap:14px;color:#5c6879}
 .prototype{font-size:12px;color:#697588}
 .avatar{background:#edf2ff;color:#285cf0;border-radius:50%;display:grid;place-items:center;font-weight:700;width:27px;height:27px;flex:none}
@@ -132,7 +127,7 @@ dialog::backdrop{background:#16243b63}
 .toast:empty{display:none}
 dialog .toast-inline{color:#2456d8;min-height:18px;margin:8px 0 0}
 @media(max-width:1100px){.field{flex:1 1 142px}.filter-date{flex:1 1 240px}}
-@media(max-width:700px){.topbar{padding:0 10px}.brandtitle{font-size:12px}.brandmark{display:none}.prototype,.avatar{display:none}.topright{gap:5px}.switcher{gap:3px}.switcher select{min-width:91px;max-width:125px}.tab{min-width:0;padding:5px 10px}.tabs{overflow:auto}.filters{margin-bottom:15px}.actions{margin-left:0}main{padding:14px 10px;height:auto}.tableframe{max-height:52vh}.summary{grid-template-columns:1fr}.dialog-header,.dialog-body,.dialog-foot{padding-left:13px;padding-right:13px}.target-group{overflow:auto}.target-group .subtable{min-width:530px}}
+@media(max-width:700px){.topbar{padding:0 10px}.prototype,.avatar{display:none}.topright{gap:5px}.switcher{gap:3px}.switcher select{min-width:91px;max-width:125px}.tab{min-width:0;padding:5px 10px}.tabs{overflow:auto}.filters{margin-bottom:15px}.actions{margin-left:0}main{padding:14px 10px;height:auto}.tableframe{max-height:52vh}.summary{grid-template-columns:1fr}.dialog-header,.dialog-body,.dialog-foot{padding-left:13px;padding-right:13px}.target-group{overflow:auto}.target-group .subtable{min-width:530px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -140,8 +135,6 @@ dialog .toast-inline{color:#2456d8;min-height:18px;margin:8px 0 0}
 <header class="topbar">
   <div class="brand">
     <span class="apps" aria-hidden="true"></span>
-    <span class="brandmark" aria-hidden="true"><i></i></span>
-    <div class="brandtitle">中国南方电网 · 统一物联网平台<small>CHINA SOUTHERN POWER GRID</small></div>
   </div>
   <div class="topright">
     <span class="prototype">原型演示</span>
