@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>级联门户同步记录</title>
+<style>
+:root{--blue:#2159fc;--ink:#263345;--muted:#667284;--edge:#e2e6ed;--head:#f7f7fb;--stripe:#eef3f7;--tabs:#edf0fa;--shadow:0 12px 36px #17294b26}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:13px/1.5 "Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.55}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.topbar{height:51px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 20px 0 16px;border-bottom:1px solid #e2e5eb}
+.brand,.topright,.switcher{display:flex;align-items:center;gap:10px}
+.apps{width:18px;height:18px;background:repeating-linear-gradient(90deg,transparent 0 4px,#fff 4px 6px),repeating-linear-gradient(0deg,#2159fc 0 4px,#fff 4px 6px);flex:none}
+.brandmark{position:relative;width:34px;height:28px;flex:none}
+.brandmark i{position:absolute;left:0;top:7px;width:30px;height:3px;background:#1250ae;transform:skewY(8deg);box-shadow:0 5px #1250ae,0 10px #1250ae}
+.brandmark::after{position:absolute;content:"";height:25px;width:4px;left:19px;top:2px;background:#1250ae;transform:skewY(8deg)}
+.brandtitle{color:#10151d;font-weight:750;font-size:16px;white-space:nowrap;letter-spacing:.35px;line-height:18px}
+.brandtitle small{display:block;font:700 6px/8px Arial,sans-serif;letter-spacing:.45px}
+.topright{gap:14px;color:#5c6879}
+.prototype{font-size:12px;color:#697588}
+.avatar{background:#edf2ff;color:#285cf0;border-radius:50%;display:grid;place-items:center;font-weight:700;width:27px;height:27px;flex:none}
+.switcher select{min-width:128px;height:30px}
+.tabs{height:39px;display:flex;align-items:flex-end;gap:5px;padding:5px 4px 0;background:#fafbfd;box-shadow:0 2px 5px #2036550d}
+.tab{height:31px;min-width:156px;padding:5px 15px;text-align:center;background:var(--tabs);color:#475267;border:1px solid #ebedf4;border-bottom:0;border-radius:4px 4px 0 0;font-size:12px;white-space:nowrap}
+.tab.active{background:#fff;color:var(--blue);border-color:#e7eaf1;font-weight:650}
+main{padding:22px 20px 13px;max-width:2400px;margin:0 auto;height:calc(100dvh - 90px);display:flex;flex-direction:column}
+.filters{display:flex;flex-wrap:wrap;align-items:end;column-gap:10px;row-gap:12px;margin:0 0 22px;flex:none}
+.field{display:grid;gap:4px;min-width:0;flex:1 1 113px}
+.field label,.filter-date legend{color:#4b5666;font-size:12px}
+.select,input[type=date],.jump input{width:100%;height:33px;color:#344052;background:#fff;border:1px solid #dce0e7;border-radius:3px;padding:0 10px}
+.select{appearance:none;padding-right:25px;background:linear-gradient(45deg,transparent 49%,#828d9c 50%,#828d9c 60%,transparent 61%) right 13px center/5px 6px no-repeat,linear-gradient(135deg,transparent 39%,#828d9c 40%,#828d9c 50%,transparent 51%) right 8px center/5px 6px no-repeat #fff}
+.select:invalid{color:#8c96a3}
+.filter-date{border:0;margin:0;padding:0;flex:1 1 236px;min-width:226px}
+.filter-date legend{padding:0 0 4px}
+.daterange{display:flex;align-items:center;height:33px;border:1px solid #dce0e7;border-radius:3px;background:#fff}
+.daterange input{border:0;min-width:0;height:30px;padding:0 5px 0 8px;font-variant-numeric:tabular-nums;color:#445064}
+.daterange span{color:#758094;flex:none;margin:0 3px}
+.actions{display:flex;gap:9px;margin-left:auto}
+.btn{height:32px;border:1px solid #dce0e7;border-radius:4px;background:#fff;color:#414b59;padding:0 15px;white-space:nowrap;font-size:12px}
+.btn:not(:disabled):hover{border-color:#a8beff;color:var(--blue);background:#f4f7ff}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.btn.primary:not(:disabled):hover{background:#4673ff;border-color:#4673ff;color:#fff}
+.link{padding:2px 0;border:0;background:none;color:var(--blue);white-space:nowrap;font-size:12px;line-height:1.5}
+.link:not(:disabled):hover{text-decoration:underline}
+.tableframe{border:1px solid var(--edge);overflow:auto;flex:1 1 auto;min-height:130px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.record-table{min-width:880px;table-layout:fixed}
+th,td{text-align:left;border-bottom:1px solid #e7eaf0;vertical-align:middle}
+.record-table th,.record-table td{height:43px;padding:0 13px;border-right:1px solid #e7eaf0}
+.record-table th:last-child,.record-table td:last-child{border-right:0}
+th{background:var(--head);color:#344154;font-weight:650}
+.record-table th{height:44px;position:sticky;top:0;z-index:1}
+.record-table td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#445064}
+tbody tr:nth-child(even){background:var(--stripe)}
+tbody tr:hover{background:#eaf0ff}
+tbody tr:last-child td{border-bottom:0}
+.row-actions{display:flex;gap:15px;align-items:center}
+.state{display:inline-flex;align-items:center;white-space:nowrap;gap:7px;font-size:12px;line-height:20px}
+.state::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.state.success{color:#208653}.state.fail{color:#cc453b}.state.partial{color:#a96211}.state.running{color:#2159fc}.state.pending{color:#697687}.state.covered{color:#6e7786}
+.state.running::before{animation:pulse 1.25s infinite alternate}
+@keyframes pulse{to{box-shadow:0 0 0 3px #2159fc27}}
+.empty{text-align:center!important;height:126px!important;color:#7b8694!important}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;flex:none;font-size:12px;color:#465263}
+.pager-left,.pager-right,.pagebuttons,.jump{display:flex;align-items:center;gap:8px}
+.pager select{width:105px;height:31px}
+.page{min-width:28px;height:28px;padding:0 4px;border:0;background:transparent;border-radius:3px;color:#3f4d5d}
+.page:hover:not(:disabled),.page[aria-current=page]{color:var(--blue);background:#f0f4ff;font-weight:700}
+.jump{margin-left:12px}
+.jump input{width:52px;text-align:center;height:28px;padding:0}
+dialog{width:min(1080px,calc(100vw - 38px));max-height:calc(100dvh - 56px);padding:0;border:1px solid #e1e6ed;border-radius:5px;color:var(--ink);box-shadow:var(--shadow);background:#fff}
+dialog[open]{display:flex;flex-direction:column}
+dialog::backdrop{background:#16243b63}
+#retry-dialog{width:min(920px,calc(100vw - 36px))}
+#segment-dialog{width:min(850px,calc(100vw - 36px))}
+.dialog-route{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:9px 11px;margin:0 0 12px;background:#f1f4fa;color:#465367}
+.route-arrow{color:#8390a1;padding:0 6px}
+.detail-tabs{display:flex;gap:14px;border-bottom:1px solid var(--edge);margin-bottom:12px}
+.detail-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;color:#536176;padding:7px 4px}
+.detail-tabs button[aria-pressed=true]{color:var(--blue);border-color:var(--blue);font-weight:650}
+.paged-table{border:1px solid var(--edge);overflow:auto;max-height:min(400px,48dvh)}
+.paged-table th{position:sticky;top:0;z-index:1}
+.paged-table .subtable{min-width:470px}
+.object-pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:#536176;font-size:12px}
+.object-pager div{display:flex;align-items:center;gap:8px}
+.portal-popover{position:fixed;z-index:4;min-width:126px;max-width:min(290px,calc(100vw - 20px));max-height:min(225px,50dvh);overflow:auto;margin:0;padding:5px 0;border:1px solid var(--edge);border-radius:4px;box-shadow:0 5px 16px #17294b22;background:#fff;color:var(--ink);font-size:12px;list-style:none}
+.portal-popover li{padding:5px 11px;overflow-wrap:anywhere}
+.dialog-header{display:flex;align-items:center;justify-content:space-between;padding:14px 21px;border-bottom:1px solid var(--edge);flex:none}
+.dialog-header h2{margin:0;font-size:16px;font-weight:650;color:#27364a}
+.icon-close{background:none;border:0;padding:0 2px;color:#687487;font-size:22px;line-height:24px}
+.dialog-body{padding:17px 21px 20px;overflow:auto;min-height:0;overscroll-behavior:contain}
+.dialog-foot{padding:11px 21px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid var(--edge);background:#fff;flex:none}
+.section-title{font-size:13px;font-weight:700;margin:0 0 10px;color:#334156}
+.section-title.spaced{margin-top:17px}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--edge);border-left:1px solid var(--edge);margin:0}
+.summary div{display:flex;align-items:stretch;min-width:0;min-height:38px;border-bottom:1px solid var(--edge);border-right:1px solid var(--edge)}
+.summary dt{background:#f7f8fc;padding:8px 10px;min-width:90px;flex:none;color:#4d5a6d}
+.summary dd{margin:0;padding:8px 10px;overflow-wrap:anywhere}
+.notice{padding:9px 11px;margin:12px 0 0;background:#f3f6fc;color:#56657b;border:1px solid #e3eaf5;border-radius:3px}
+.target-group{margin-top:11px;border:1px solid var(--edge)}
+.target-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;background:#f1f4fa;font-weight:650}
+.target-head .state{font-weight:400}
+.subtable{font-size:12px}
+.subtable th,.subtable td{padding:8px 9px;overflow-wrap:anywhere}
+.subtable th{background:#f7f8fb}
+.subtable td{color:#465367}
+.subtable tbody tr:hover{background:#f5f8ff}
+.subtable .inline-actions{display:flex;gap:12px;align-items:center}
+.counts{white-space:nowrap;font-size:12px;color:#536176}
+.small-empty{padding:10px;color:#738092}
+.retry-section+.retry-section{margin-top:16px}
+.retry-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 14px;min-width:0}
+.retry-heading h2,#retry-dialog .icon-close{flex:none}
+.retry-section-head{margin:0 0 8px;font-size:13px;font-weight:700;color:#334156}
+.retry-summary{margin:0;color:#58667a;font-size:12px}
+.retry-summary:empty{display:none}
+.retry-summary strong{color:#244cb4}
+.retry-scope{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:#4b5666;font-size:12px}
+.retry-scope .select{width:min(245px,100%);min-width:0}
+.retry-links{max-height:min(154px,22dvh);overflow:auto;border:1px solid var(--edge);border-radius:4px}
+.retry-links .subtable{min-width:480px}
+.retry-links th{position:sticky;top:0;z-index:1}
+.retry-links .selected-route td{background:#eef3ff}
+.retry-links .selected-route td:first-child{box-shadow:inset 3px 0 var(--blue)}
+.retry-links .link[aria-pressed=true]{font-weight:650}
+.retry-section .paged-table{max-height:min(405px,48dvh);border-radius:4px}
+.toast{position:fixed;z-index:5;top:61px;left:50%;transform:translateX(-50%);border:1px solid #cbdafa;background:#f1f5ff;color:#264fbe;padding:9px 15px;border-radius:4px;box-shadow:0 4px 13px #20365512}
+.toast:empty{display:none}
+dialog .toast-inline{color:#2456d8;min-height:18px;margin:8px 0 0}
+@media(max-width:1100px){.field{flex:1 1 142px}.filter-date{flex:1 1 240px}}
+@media(max-width:700px){.topbar{padding:0 10px}.brandtitle{font-size:12px}.brandmark{display:none}.prototype,.avatar{display:none}.topright{gap:5px}.switcher{gap:3px}.switcher select{min-width:91px;max-width:125px}.tab{min-width:0;padding:5px 10px}.tabs{overflow:auto}.filters{margin-bottom:15px}.actions{margin-left:0}main{padding:14px 10px;height:auto}.tableframe{max-height:52vh}.summary{grid-template-columns:1fr}.dialog-header,.dialog-body,.dialog-foot{padding-left:13px;padding-right:13px}.target-group{overflow:auto}.target-group .subtable{min-width:530px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="apps" aria-hidden="true"></span>
+    <span class="brandmark" aria-hidden="true"><i></i></span>
+    <div class="brandtitle">中国南方电网 · 统一物联网平台<small>CHINA SOUTHERN POWER GRID</small></div>
+  </div>
+  <div class="topright">
+    <span class="prototype">原型演示</span>
+    <label class="switcher"><span class="avatar" aria-hidden="true">运</span><select id="role" class="select" aria-label="切换演示角色"></select></label>
+  </div>
+</header>
+<nav class="tabs" aria-label="平台页面">
+  <span class="tab">首页</span><span class="tab">运行终端管理</span><span class="tab active" aria-current="page">级联门户同步记录</span>
+</nav>
+<main aria-label="级联门户同步记录">
+  <form id="filters" class="filters">
+    <div class="field"><label for="filter-category">同步分类</label><select class="select" id="filter-category"></select></div>
+    <div class="field"><label for="filter-type">同步类型</label><select class="select" id="filter-type"></select></div>
+    <div class="field"><label for="filter-origin">发起门户</label><select class="select" id="filter-origin"></select></div>
+    <div class="field"><label for="filter-target">目标门户</label><select class="select" id="filter-target"></select></div>
+    <div class="field"><label for="filter-status">状态</label><select class="select" id="filter-status"></select></div>
+    <fieldset class="filter-date"><legend>发起时间</legend><div class="daterange"><input type="date" id="filter-start" aria-label="开始日期"><span>至</span><input type="date" id="filter-end" aria-label="结束日期"></div></fieldset>
+    <div class="actions"><button type="submit" class="btn primary">查询</button><button type="button" class="btn" id="reset-filters">重置</button></div>
+  </form>
+  <div class="tableframe" tabindex="0" aria-label="同步任务列表">
+    <table class="record-table">
+      <colgroup><col style="width:17%"><col style="width:18%"><col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:10%"><col style="width:11%"></colgroup>
+      <thead><tr><th scope="col">同步分类</th><th scope="col">同步类型</th><th scope="col">发起门户</th><th scope="col">目标门户</th><th scope="col" aria-sort="descending">发起时间 <span aria-hidden="true">↓</span></th><th scope="col">状态</th><th scope="col">操作</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <footer class="pager">
+    <div class="pager-left"><span id="total"></span><select class="select" id="page-size" aria-label="每页条数"><option value="10">10条/页</option><option value="20" selected>20条/页</option><option value="50">50条/页</option></select></div>
+    <div class="pager-right"><div class="pagebuttons" id="page-buttons"></div><form class="jump" id="jump"><label for="page-number">前往</label><input type="number" id="page-number" min="1" value="1" aria-label="前往页码"><span>页</span></form></div>
+  </footer>
+</main>
+<dialog id="detail-dialog" aria-labelledby="detail-title">
+  <div class="dialog-header"><h2 id="detail-title">同步详情</h2><button class="icon-close" type="button" data-action="close-detail" aria-label="关闭详情">×</button></div>
+  <div class="dialog-body" id="detail-body"></div>
+  <div class="dialog-foot"><button class="btn" id="close-detail" type="button" data-action="close-detail">关闭</button><button class="btn primary" id="retry-all" type="button" data-action="retry-all" hidden>全量重试</button></div>
+</dialog>
+<dialog id="segment-dialog" aria-labelledby="segment-title">
+  <div class="dialog-header"><h2 id="segment-title">链路明细</h2><button class="icon-close" type="button" data-action="close-segment" aria-label="关闭链路明细">×</button></div>
+  <div class="dialog-body" id="segment-body"></div>
+  <div class="dialog-foot"><button class="btn" type="button" data-action="close-segment">关闭</button></div>
+</dialog>
+<dialog id="retry-dialog" aria-labelledby="retry-title" aria-describedby="retry-summary">
+  <div class="dialog-header">
+    <div class="retry-heading"><h2 id="retry-title">重试确认</h2><p class="retry-summary" id="retry-summary"></p></div>
+    <button class="icon-close" type="button" data-action="close-retry" aria-label="关闭重试确认">×</button>
+  </div>
+  <div class="dialog-body" id="retry-body"></div>
+  <div class="dialog-foot"><button class="btn" type="button" data-action="close-retry">取消</button><button class="btn primary" id="submit-retry" type="button" data-action="submit-retry">确认重试</button></div>
+</dialog>
+<ul id="portal-popover" class="portal-popover" aria-label="目标门户名称" hidden></ul>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+
+const CATALOG={"平台基础配置":["组织机构","级联门户信息","接入节点配置","资源空间"],"基础数据":["品类","物模型","产品","项目","厂商","型号","告警类型","应用","算法","配置文件","固件","管理组件","整包"],"设备操作":["新增准入终端","修改终端信息","删除准入终端","所属单位变更","激活终端","启用终端","禁用终端","投运终端","停运终端","退运终端","挂接关系","软件版本更新","应用安装","指令下发","OTA 升级"],"设备状态与关联数据":["终端状态","子设备台账"],"视频编码":["视频编码同步"],"历史档案":["退运历史档案"],"智能运维":["告警消息","告警处理结果","智能运维终端新增","智能运维终端状态变化","智能运维终端信息变更"],"门户与接入节点状态":["门户状态变更","接入节点状态"],"工单":["工单审批结果"],"文件":["级联文件同步"]};
+
+"use strict";
+const NAMES={net:"网级门户",gd:"广东省门户",gx:"广西省门户",yn:"云南省门户",fs:"佛山市门户",dg:"东莞市门户",gz:"广州市门户",sz:"深圳市门户",ehv:"超高压门户",nn:"南宁市门户"};
+const ROLES=[
+  {id:"net",label:"网级运营",portal:"net",scope:null,retry:true},
+  {id:"gd",label:"广东省运营",portal:"gd",scope:["gd","fs","dg"],retry:true},
+  {id:"gdlimited",label:"广东省运营（佛山权限）",portal:"gd",scope:["fs"],retry:true},
+  {id:"fs",label:"佛山市运营",portal:"fs",scope:["fs"],retry:true},
+  {id:"gz",label:"广州市运营",portal:"gz",scope:["gz"],retry:true}
+];
+const STATUS={success:"成功",fail:"失败",partial:"部分成功",running:"同步中",pending:"待同步",covered:"已覆盖"};
+const COVERED="已被后续同类型变更覆盖，不需再处理";
+const TYPE_TO_CATEGORY=Object.fromEntries(Object.entries(CATALOG).flatMap(([category,types])=>types.map(type=>[type,category])));
+const $=id=>document.getElementById(id);
+const detail=$("detail-dialog"), segmentDialog=$("segment-dialog"), retryDialog=$("retry-dialog");
+const portalPopover=$("portal-popover");
+const objectPageSize=10;
+const escapeHtml=value=>String(value??"—").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const pad=n=>String(n).padStart(2,"0");
+function day(value){const d=new Date(value);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function stamp(value){if(!value)return "—";const d=new Date(value);return day(value)+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())}
+function label(state){return '<span class="state '+state+'">'+STATUS[state]+'</span>'}
+function options(select,items,first){select.replaceChildren(new Option(first,""),...items.map(([value,title])=>new Option(title,value)))}
+function portal(p){return NAMES[p]||"—"}
+function sampleTime(minutes){return Date.now()-minutes*60000}
+
+const seeds=[];
+function object(id,name){return {id,name}}
+function route(path,objects,states,failures={}){
+  return {target:path.at(-1),segments:path.slice(1).map((to,index)=>({
+    from:path[index],to,history:[],
+    objects:objects.map((info,i)=>{
+      const status=Array.isArray(states[index])?states[index][i]:states[index];
+      const error=status==="fail"?(failures[index]?.[i]||"目标门户处理超时"):null;
+      return {...info,status,reason:error,attempts:0};
+    })
+  }))};
+}
+function seed(type,origin,minutes,routes,config={}){
+  const at=sampleTime(minutes);
+  const t={id:"CL"+String(seeds.length+1).padStart(5,"0"),category:TYPE_TO_CATEGORY[type],type,origin,at,routes,scope:config.scope||[origin],business:config.business,covered:!!config.covered};
+  routes.forEach((r,ri)=>r.segments.forEach((s,si)=>{
+    s.key=ri+"-"+si;
+    s.updated=s.objects.some(o=>o.status!=="pending")?at+1000+si*1000:null;
+    s.objects.forEach(o=>{
+      if(o.status==="fail"){o.failureTime=s.updated;o.lastReason=o.reason}
+      if(o.status==="running")o.due=Date.now()+11000;
+    });
+  }));
+  seeds.push(t);return t;
+}
+const models=Array.from({length:100},(_,i)=>object("MDL-"+String(i+1).padStart(4,"0"),"配网采集终端型号 "+String(i+1).padStart(3,"0")));
+const failureMap={0:{98:"型号资料写入超时",99:"目标门户暂时无法写入"}};
+seed("型号","net",4,[
+  route(["net","gd","fs"],models,[models.map((_,i)=>i<98?"success":"fail"),models.map((_,i)=>i<98?"success":"pending")],failureMap),
+  route(["net","gx"],models,["success"])
+],{scope:["fs","gx"]});
+const projects=[object("PRJ-0101","配网设备接入项目"),object("PRJ-0102","站点巡检项目"),object("PRJ-0103","终端状态监测项目")];
+seed("项目","net",8,[
+  route(["net","gd","fs"],projects,["fail","pending"],{0:{0:"广东省门户处理超时",1:"广东省门户处理超时",2:"广东省门户处理超时"}}),
+  route(["net","gx"],projects,["fail"],{0:{0:"广西省门户写入超时",1:"广西省门户写入超时",2:"广西省门户写入超时"}})
+],{scope:["fs","gx"]});
+seed("所属单位变更","net",13,[route(["net","gd","dg"],[object("TERM-036201","东区配电监测终端")],["fail","pending"])],{scope:["fs","dg"],business:"单位变更成功"});
+seed("修改终端信息","net",22,[route(["net","gz"],[object("TERM-017603","配网通信网关")],["fail"],{0:{0:"接收门户确认超时"}})],{scope:["gz"],business:"修改成功",covered:true});
+seed("固件","net",38,[route(["net","gd","fs"],[object("FW-2.1.0","边缘网关固件 2.1.0")],["success","fail"],{1:{0:"固件文件完整性校验失败，版本未生效"}})],{scope:["fs"]});
+const vendors=Array.from({length:100},(_,i)=>object("VDR-"+String(i+1).padStart(4,"0"),"配网终端厂商 "+String(i+1).padStart(3,"0")));
+seed("厂商","net",44,[route(["net","gd","fs"],vendors,["fail","pending"])],{scope:["fs"]});
+seed("工单审批结果","net",52,[route(["net","gd","fs"],[object("WO-20261112-008","终端投运工单")],["success","success"])],{scope:["fs"]});
+seed("终端状态","fs",69,[route(["fs","gd","net"],[object("TERM-027101","采集终端 027101"),object("TERM-027102","采集终端 027102")],["success","fail"],{1:{0:"确认回执超时",1:"确认回执超时"}})],{scope:["fs"]});
+seed("修改终端信息","gd",83,[
+  route(["gd","net"],[object("TERM-036201","东区配电监测终端")],["fail"]),
+  route(["gd","fs"],[object("TERM-036202","西区配电监测终端")],["fail"])
+],{scope:["fs","dg"],business:"修改成功"});
+seed("级联文件同步","net",97,[route(["net","ehv"],[object("FILE-0062","终端型号安装附件.pdf")],["running"])],{scope:["ehv"]});
+seed("投运终端","gz",120,[route(["gz","net"],[object("TERM-012605","广域通信终端")],["success"])],{scope:["gz"],business:"投运成功"});
+seed("退运历史档案","fs",150,[route(["fs","gd","net"],[object("ARCH-00582","东区采集终端退运档案")],["success","success"])],{scope:["fs"]});
+seed("门户状态变更","gd",182,[route(["gd","net"],[object("PORTAL-GD","广东省门户")],["success"])],{scope:["gd"]});
+seed("视频编码同步","net",226,[route(["net","sz"],[object("VIDEO-03210","城区视频终端编码")],["success"])],{scope:["sz"]});
+seed("接入节点状态","gd",268,[route(["gd","net"],[object("NODE-GD-04","广东接入节点 04")],["success"])],{scope:["gd"]});
+seed("资源空间","net",295,[route(["net","gx"],[object("SPACE-005","计量数据资源空间")],["success"])],{scope:["gx"]});
+seed("应用安装","net",345,[route(["net","gd","fs"],[object("APP-008","终端巡检应用")],["success","success"])],{scope:["fs"],business:"安装完成"});
+seed("指令下发","net",380,[route(["net","ehv"],[object("CMD-0012","读取运行参数")],["success"])],{scope:["ehv"],business:"下发成功"});
+seed("软件版本更新","gd",475,[route(["gd","net"],[object("TERM-029207","边缘网关 · 版本 2.1.0")],["success"])],{scope:["gd"],business:"版本已更新"});
+seed("告警处理结果","fs",600,[route(["fs","gd","net"],[object("ALARM-0112","终端通信异常告警")],["success","success"])],{scope:["fs"]});
+seed("组织机构","net",850,[route(["net","gx"],[object("ORG-GX-001","广西电网所属单位")],["success"]),route(["net","yn"],[object("ORG-YN-001","云南电网所属单位")],["success"])],{scope:["gx","yn"]});
+seed("子设备台账","gd",1440,[route(["gd","net"],[object("SUB-0068","采集网关子设备")],["success"])],{scope:["gd"]});
+seed("激活终端","gz",1600,[route(["gz","net"],[object("TERM-0051","图像监控终端")],["success"])],{scope:["gz"],business:"激活成功"});
+seed("告警类型","net",2180,[route(["net","gx"],[object("ATYPE-22","终端连接异常")],["success"]),route(["net","gd","fs"],[object("ATYPE-22","终端连接异常")],["success","success"])],{scope:["gx","fs"]});
+seed("挂接关系","fs",2860,[route(["fs","gd","net"],[object("TERM-10312","采集终端监测对象关系")],["success","success"])],{scope:["fs"],business:"挂接成功"});
+seed("智能运维终端新增","gd",3590,[route(["gd","net"],[object("ESN-8821","配网边缘运维终端")],["success"])],{scope:["gd"]});
+seed("产品","net",26*1440,[route(["net","gd"],[object("PROD-001","物联接入产品")],["success"])],{scope:["gd"]});
+
+let role=ROLES[0], currentPage=1, pageSize=20, criteria, detailId=null, retrySelection=null;
+let segmentSelection=null, portalAnchor=null, toastTimer;
+function permitted(key){return role.scope===null||role.scope.includes(key)}
+function view(task){
+  if(task.origin===role.portal){
+    return task.scope.every(permitted)?task.routes.map(r=>({target:r.target,segments:r.segments})):[];
+  }
+  return task.routes.flatMap(r=>{
+    if(role.scope!==null&&!permitted(r.target)&&!permitted(task.origin))return [];
+    const segments=r.segments.filter(s=>s.from===role.portal||s.to===role.portal);
+    return segments.length?[{target:r.target,segments}]:[];
+  });
+}
+function allSegments(routes){return routes.flatMap(r=>r.segments)}
+function count(objects){return objects.reduce((n,o)=>{n[o.status]++;return n},{success:0,fail:0,pending:0,running:0})}
+function summarize(objects,covered=false){
+  if(covered)return "covered";
+  const n=count(objects);
+  if(n.running)return "running";
+  if(n.fail)return n.success?"partial":"fail";
+  if(n.pending)return "pending";
+  return n.success?"success":"pending";
+}
+function failureScope(task,segmentKey=null,target=null){
+  if(task.covered||task.origin!==role.portal||!role.retry||!task.scope.every(permitted))return [];
+  return view(task).filter(r=>target===null||r.target===target).flatMap(r=>r.segments.flatMap(s=>{
+    if((segmentKey!==null&&s.key!==segmentKey)||s.objects.some(o=>o.status==="running"))return [];
+    const failed=s.objects.filter(o=>o.status==="fail");
+    return failed.length?[{target:r.target,segment:s,objects:failed}]:[];
+  }));
+}
+function defaults(){
+  const now=new Date(), start=new Date(now);
+  start.setDate(start.getDate()-14);
+  return {category:"",type:"",origin:"",target:"",status:"",start:day(start),end:day(now)};
+}
+function updateTypes(category,keep){
+  const types=category?CATALOG[category]:Object.values(CATALOG).flat();
+  options($("filter-type"),types.map(x=>[x,x]),"请选择同步类型");
+  if(types.includes(keep))$("filter-type").value=keep;
+}
+function setFilters(value){
+  $("filter-category").value=value.category;
+  updateTypes(value.category,value.type);
+  for(const key of ["origin","target","status","start","end"])$("filter-"+key).value=value[key];
+}
+function filters(){
+  return Object.fromEntries(["category","type","origin","target","status","start","end"].map(k=>[k,$("filter-"+k).value]));
+}
+function refreshPortals(){
+  const visible=seeds.map(t=>[t,view(t)]).filter(([,r])=>r.length);
+  const ids=(arr)=>[...new Set(arr)].map(id=>[id,portal(id)]);
+  options($("filter-origin"),ids(visible.map(([t])=>t.origin)),"请选择发起门户");
+  options($("filter-target"),ids(visible.flatMap(([,r])=>r.map(x=>x.target))),"请选择目标门户");
+}
+function filtered(){
+  return seeds.flatMap(task=>{
+    const routes=view(task), f=criteria, date=day(task.at);
+    if(!routes.length||(f.category&&task.category!==f.category)||(f.type&&task.type!==f.type)||(f.origin&&task.origin!==f.origin)||
+       (f.target&&!routes.some(r=>r.target===f.target))||(f.start&&date<f.start)||(f.end&&date>f.end))return [];
+    const state=summarize(allSegments(routes).flatMap(s=>s.objects),task.covered);
+    return !f.status||f.status===state?[{task,routes,state}]:[];
+  }).sort((a,b)=>b.task.at-a.task.at);
+}
+function button(text,action,task,key,extra=""){
+  return '<button class="link" type="button" data-action="'+action+'" data-id="'+task.id+'"'+(key?' data-key="'+key+'"':"")+" "+extra+">"+text+"</button>";
+}
+function closePortals(restoreFocus=false){
+  if(!portalAnchor)return;
+  portalAnchor.setAttribute("aria-expanded","false");
+  if(restoreFocus)portalAnchor.focus();
+  portalAnchor=null;portalPopover.hidden=true;
+}
+function showPortals(anchor,task){
+  const wasOpen=portalAnchor===anchor;
+  closePortals();
+  if(wasOpen)return;
+  portalAnchor=anchor;
+  portalPopover.replaceChildren(...view(task).map(r=>{
+    const item=document.createElement("li");
+    item.textContent=portal(r.target);
+    return item;
+  }));
+  portalPopover.hidden=false;
+  anchor.setAttribute("aria-expanded","true");
+  const rect=anchor.getBoundingClientRect();
+  const left=Math.min(rect.left,innerWidth-portalPopover.offsetWidth-10);
+  const top=rect.bottom+portalPopover.offsetHeight+6<=innerHeight?rect.bottom+6:rect.top-portalPopover.offsetHeight-6;
+  portalPopover.style.left=Math.max(10,left)+"px";
+  portalPopover.style.top=Math.max(6,top)+"px";
+}
+function drawTable(){
+  closePortals();
+  const list=filtered(), totalPages=Math.max(1,Math.ceil(list.length/pageSize));
+  currentPage=Math.min(currentPage,totalPages);
+  const page=list.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  $("rows").innerHTML=page.length?page.map(({task:t,routes,state})=>{
+    const targets=routes.map(r=>portal(r.target));
+    const target=targets.length===1?escapeHtml(targets[0]):button(targets.length+" 个门户","show-portals",t,null,'aria-label="查看 '+targets.length+' 个目标门户名称" aria-expanded="false" aria-controls="portal-popover"');
+    return '<tr data-task="'+t.id+'"><td>'+escapeHtml(t.category)+'</td><td>'+escapeHtml(t.type)+'</td><td>'+escapeHtml(portal(t.origin))+'</td><td>'+target+
+      '</td><td>'+stamp(t.at)+'</td><td>'+label(state)+'</td><td><div class="row-actions">'+button("详情","details",t)+(failureScope(t).length?button("重试","retry",t):"")+"</div></td></tr>";
+  }).join(""):'<tr><td class="empty" colspan="7">暂无同步记录</td></tr>';
+  $("total").textContent="共 "+list.length+" 条";
+  const first=Math.max(1,Math.min(currentPage-2,totalPages-4));
+  const pages=Array.from({length:Math.min(5,totalPages)},(_,i)=>first+i);
+  $("page-buttons").innerHTML='<button class="page" data-action="page" data-page="'+(currentPage-1)+'" aria-label="上一页" '+(currentPage===1?"disabled":"")+'>‹</button>'+
+    pages.map(n=>'<button class="page" data-action="page" data-page="'+n+'" '+(n===currentPage?'aria-current="page"':"")+'>'+n+"</button>").join("")+
+    '<button class="page" data-action="page" data-page="'+(currentPage+1)+'" aria-label="下一页" '+(currentPage===totalPages?"disabled":"")+'>›</button>';
+  const jump=$("page-number");jump.max=totalPages;if(document.activeElement!==jump)jump.value=currentPage;
+}
+function subtable(headers,body){
+  return '<table class="subtable"><thead><tr>'+headers.map(h=>'<th scope="col">'+h+"</th>").join("")+'</tr></thead><tbody>'+body+"</tbody></table>";
+}
+function tr(values){return "<tr>"+values.map(x=>"<td>"+x+"</td>").join("")+"</tr>"}
+function note(text){return '<p class="notice">'+escapeHtml(text)+"</p>"}
+function spanCount(objects){
+  const n=count(objects);
+  return '<span class="counts">共 '+objects.length+" · 成功 "+n.success+" · 失败 "+n.fail+" · 待同步 "+n.pending+(n.running?" · 同步中 "+n.running:"")+"</span>";
+}
+function pagedTable(items,selection,action,headers,render,empty){
+  if(!items.length)return '<div class="small-empty">'+empty+'</div>';
+  const pages=Math.ceil(items.length/objectPageSize);
+  selection.page=Math.min(selection.page,pages);
+  const first=(selection.page-1)*objectPageSize;
+  const rows=items.slice(first,first+objectPageSize).map(render).join("");
+  return '<div class="paged-table">'+subtable(headers,rows)+'</div><nav class="object-pager" aria-label="明细分页"><span>共 '+
+    items.length+' 条</span><div><button class="btn" type="button" data-action="'+action+'" data-step="-1" '+(selection.page===1?"disabled":"")+
+    '>上一页</button><span>第 '+selection.page+' / '+pages+' 页</span><button class="btn" type="button" data-action="'+action+'" data-step="1" '+
+    (selection.page===pages?"disabled":"")+'>下一页</button></div></nav>';
+}
+function routeContext(target,segment){
+  return '<p class="dialog-route"><span>目标门户 '+escapeHtml(portal(target))+'</span><span>'+escapeHtml(portal(segment.from))+
+    '<span class="route-arrow" aria-hidden="true">→</span>'+escapeHtml(portal(segment.to))+'</span>'+label(summarize(segment.objects))+'</p>';
+}
+function drawSegment(){
+  if(!segmentSelection)return;
+  const {task,key,tab}=segmentSelection;
+  const route=view(task).find(r=>r.segments.some(s=>s.key===key));
+  if(!route){segmentDialog.close();return}
+  const segment=route.segments.find(s=>s.key===key);
+  const failed=segment.objects.filter(o=>o.lastReason);
+  const tabs=[["failures","失败明细",failed.length],["history","重试记录",segment.history.length]];
+  const body=tab==="failures"
+    ?pagedTable(failed,segmentSelection,"segment-page",["对象名称","对象标识","失败原因","最近失败时间"],
+      o=>tr([escapeHtml(o.name),escapeHtml(o.id),escapeHtml(o.lastReason),stamp(o.failureTime)]),"暂无失败对象")
+    :pagedTable(segment.history,segmentSelection,"segment-page",["重试时间","操作人","重试对象数","重试结果","成功数","失败数"],
+      h=>tr([stamp(h.at),escapeHtml(h.actor),h.total,label(h.state),h.success,h.fail]),"暂无重试记录");
+  $("segment-body").innerHTML=routeContext(route.target,segment)+'<nav class="detail-tabs" aria-label="链路明细分类">'+
+    tabs.map(([value,title,total])=>'<button type="button" data-action="segment-tab" data-tab="'+value+'" aria-pressed="'+(tab===value)+'">'+title+'（'+total+'）</button>').join("")+
+    '</nav>'+body;
+}
+function drawDetail(){
+  const task=seeds.find(t=>t.id===detailId);
+  if(!task)return;
+  const routes=view(task), container=$("detail-body"), scroll=container.scrollTop;
+  if(!routes.length){detail.close();return}
+  const retryAll=$("retry-all");
+  retryAll.hidden=!failureScope(task).length;
+  retryAll.dataset.id=task.id;
+  const state=summarize(allSegments(routes).flatMap(s=>s.objects),task.covered);
+  const facts=[["同步分类",escapeHtml(task.category)],["同步类型",escapeHtml(task.type)],["发起门户",escapeHtml(portal(task.origin))],
+    ["目标门户",routes.map(r=>escapeHtml(portal(r.target))).join("、")],["发起时间",stamp(task.at)],["汇总状态",label(state)]];
+  if(task.business)facts.push(["业务结果",escapeHtml(task.business)]);
+  const groups=routes.map(r=>{
+    const groupState=summarize(r.segments.flatMap(s=>s.objects),task.covered);
+    const body=r.segments.map(s=>tr([escapeHtml(portal(r.target)),escapeHtml(portal(s.from)),escapeHtml(portal(s.to)),label(summarize(s.objects)),
+      stamp(s.updated),spanCount(s.objects),'<div class="inline-actions">'+button("查看明细","open-segment",task,s.key)+
+      (failureScope(task,s.key).length?button("重试","retry",task,s.key):"")+"</div>"])).join("");
+    return '<section class="target-group"><div class="target-head"><span>'+escapeHtml(portal(r.target))+"</span>"+label(groupState)+"</div>"+
+      subtable(["目标门户","发送门户","接收门户","同步状态","最近处理时间","对象处理结果","操作"],body)+"</section>";
+  }).join("");
+  container.innerHTML='<h3 class="section-title">任务信息</h3><dl class="summary">'+facts.map(([key,value])=>"<div><dt>"+key+"</dt><dd>"+value+"</dd></div>").join("")+"</dl>"+
+    (task.covered?note(COVERED):"")+'<p class="toast-inline" id="detail-feedback" aria-live="polite">'+escapeHtml(task.feedback||"")+'</p><h3 class="section-title">同步链路</h3>'+groups;
+  container.scrollTop=scroll;
+}
+function drawRetry(){
+  if(!retrySelection)return;
+  const {task,key,target,targets,chooseScope}=retrySelection, list=failureScope(task,key,target);
+  const total=list.reduce((count,link)=>count+link.objects.length,0);
+  const portalCount=new Set(list.map(link=>link.target)).size;
+  $("submit-retry").disabled=!total;
+  $("retry-summary").innerHTML=total?'将重试 '+(portalCount>1?'<strong>'+portalCount+'</strong> 个门户、':'')+
+    '<strong>'+list.length+'</strong> 段链路，共 <strong>'+total+'</strong> 个失败对象':"";
+  const body=$("retry-body"), scroll=body.scrollTop;
+  const scopeFocused=document.activeElement?.id==="retry-scope";
+  const scope=chooseScope?'<label class="retry-scope" for="retry-scope">重试范围<select class="select" id="retry-scope">'+
+    '<option value="">全部失败门户</option>'+targets.map(id=>'<option value="'+id+'" '+(id===target?'selected':'')+'>'+escapeHtml(portal(id))+'</option>').join("")+
+    '</select></label>':"";
+  const selected=list.find(link=>link.segment.key===retrySelection.objectKey)??list[0];
+  if(!selected){
+    body.innerHTML=scope+'<div class="small-empty">当前范围暂无可重试对象。</div>';
+    if(scopeFocused)$("retry-scope").focus({preventScroll:true});
+    return;
+  }
+  if(retrySelection.objectKey!==selected.segment.key){
+    retrySelection.objectKey=selected.segment.key;
+    retrySelection.page=1;
+  }
+  const multiple=list.length>1;
+  const headers=["目标门户","发送门户","接收门户","待重试对象数"];
+  if(multiple)headers.push("操作");
+  const rows=list.map(link=>{
+    const active=link===selected;
+    const cells=[escapeHtml(portal(link.target)),escapeHtml(portal(link.segment.from)),
+      escapeHtml(portal(link.segment.to)),link.objects.length];
+    if(multiple){
+      cells.push(button(active?"当前查看":"查看对象","select-retry-link",task,link.segment.key,'aria-pressed="'+active+'"'));
+    }
+    return tr(cells).replace("<tr>",active&&multiple?'<tr class="selected-route">':"<tr>");
+  }).join("");
+  const links='<section class="retry-section" aria-labelledby="retry-links-title">'+
+    '<h3 id="retry-links-title" class="retry-section-head">重试链路</h3>'+scope+'<div class="retry-links">'+
+    subtable(headers,rows)+'</div></section>';
+  const objects='<section class="retry-section" aria-labelledby="retry-objects-title">'+
+    '<h3 id="retry-objects-title" class="retry-section-head">待重试对象</h3>'+
+    pagedTable(selected.objects,retrySelection,"retry-page",["对象名称","对象标识","最近失败原因"],
+      object=>tr([escapeHtml(object.name),escapeHtml(object.id),escapeHtml(object.lastReason)]),"暂无待重试对象")+'</section>';
+  body.innerHTML=links+objects;
+  body.scrollTop=scroll;
+  if(scopeFocused)$("retry-scope").focus({preventScroll:true});
+}
+function message(text){
+  if(detail.open){
+    const task=seeds.find(t=>t.id===detailId);
+    if(task){task.feedback=text;drawDetail()}
+    return;
+  }
+  $("toast").textContent=text;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").textContent="",3000);
+}
+function startRetry(){
+  if(!retrySelection)return;
+  const {task,key,target}=retrySelection, scope=failureScope(task,key,target);
+  if(!scope.length){drawRetry();return}
+  const now=Date.now();
+  for(const {segment,objects} of scope){
+    const attempt={at:now,actor:role.label,total:objects.length,success:0,fail:0,state:"running"};
+    segment.history.unshift(attempt);segment.updated=now;
+    for(const o of objects){o.status="running";o.due=now+2800;o.attempt=attempt;o.attempts++}
+  }
+  const feedback="已提交重试，请查看同步状态";
+  const returning=Boolean(retrySelection.returnToDetail);
+  if(returning)task.feedback=feedback;
+  retryDialog.close();drawTable();
+  if(!returning)message(feedback);
+}
+function updateJobs(){
+  const now=Date.now();let changed=false;
+  for(const task of seeds){
+    for(const route of task.routes){
+      route.segments.forEach((segment,index)=>{
+        segment.objects.forEach((o,objectIndex)=>{
+          if(o.status!=="running"||o.due>now)return;
+          o.status="success";o.due=null;segment.updated=now;changed=true;
+          if(o.attempt){o.attempt.success++;if(o.attempt.success+o.attempt.fail===o.attempt.total)o.attempt.state="success";o.attempt=null}
+          const next=route.segments[index+1]?.objects[objectIndex];
+          if(next?.status==="pending"){
+            next.status="running";next.due=now+1600;route.segments[index+1].updated=now;
+          }
+        });
+      });
+    }
+  }
+  if(changed){drawTable();if(detail.open)drawDetail();if(segmentDialog.open)drawSegment();if(retryDialog.open)drawRetry()}
+}
+$("filters").addEventListener("submit",event=>{
+  event.preventDefault();const next=filters();
+  if(next.start&&next.end&&next.start>next.end){message("开始日期不能晚于结束日期");return}
+  criteria=next;currentPage=1;drawTable();
+});
+$("filter-category").addEventListener("change",event=>updateTypes(event.target.value,$("filter-type").value));
+$("reset-filters").addEventListener("click",()=>{criteria=defaults();setFilters(criteria);currentPage=1;drawTable()});
+$("role").addEventListener("change",event=>{
+  role=ROLES.find(r=>r.id===event.target.value);criteria=defaults();currentPage=1;refreshPortals();setFilters(criteria);drawTable();
+});
+$("page-size").addEventListener("change",event=>{pageSize=Number(event.target.value);currentPage=1;drawTable()});
+$("jump").addEventListener("submit",event=>{event.preventDefault();currentPage=Math.max(1,Number($("page-number").value)||1);drawTable()});
+detail.addEventListener("close",()=>{if(!detail.open)detailId=null});
+segmentDialog.addEventListener("close",()=>{
+  const key=segmentSelection?.key;segmentSelection=null;
+  if(key)$("detail-body").querySelector('button[data-action="open-segment"][data-key="'+key+'"]')?.focus();
+});
+retryDialog.addEventListener("close",()=>{
+  const selection=retrySelection;
+  retrySelection=null;
+  if(!selection?.returnToDetail)return;
+  detailId=selection.task.id;
+  drawDetail();
+  detail.showModal();
+  $("detail-body").scrollTop=selection.returnToDetail.scroll;
+  const key=selection.key;
+  const focusTarget=key===null?($("retry-all").hidden?$("close-detail"):$("retry-all")):
+    $("detail-body").querySelector('button[data-action="retry"][data-key="'+key+'"]')??
+    $("detail-body").querySelector('button[data-action="open-segment"][data-key="'+key+'"]');
+  focusTarget?.focus({preventScroll:true});
+});
+retryDialog.addEventListener("change",event=>{
+  if(event.target.id!=="retry-scope"||!retrySelection?.chooseScope)return;
+  const target=event.target.value;
+  if(target&&!retrySelection.targets.includes(target))return;
+  Object.assign(retrySelection,{target:target||null,objectKey:null,page:1});
+  drawRetry();
+});
+document.querySelector(".tableframe").addEventListener("scroll",()=>closePortals());
+window.addEventListener("resize",()=>closePortals());
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!portalPopover.hidden)closePortals(true)});
+
+document.addEventListener("click",event=>{
+  const b=event.target.closest("button[data-action]");
+  if(b?.dataset.action!=="show-portals"&&!portalPopover.contains(event.target))closePortals();
+  if(!b||b.disabled)return;
+  const task=seeds.find(t=>t.id===b.dataset.id);
+  switch(b.dataset.action){
+    case "page":currentPage=Number(b.dataset.page);drawTable();break;
+    case "show-portals":
+      if(task)showPortals(b,task);
+      break;
+    case "details":
+      if(!task||!view(task).length)break;
+      detailId=task.id;drawDetail();detail.showModal();break;
+    case "close-detail":detail.close();break;
+    case "open-segment":
+      if(!task)break;
+      segmentSelection={task,key:b.dataset.key,tab:"failures",page:1};drawSegment();segmentDialog.showModal();break;
+    case "close-segment":segmentDialog.close();break;
+    case "segment-tab":
+      segmentSelection.tab=b.dataset.tab;segmentSelection.page=1;drawSegment();
+      $("segment-body").querySelector('button[aria-pressed="true"]')?.focus();break;
+    case "segment-page":
+      segmentSelection.page+=Number(b.dataset.step);drawSegment();break;
+    case "retry-all":
+    case "retry": {
+      if(!task)break;
+      const key=b.dataset.key??null, scope=failureScope(task,key);
+      if(!scope.length)break;
+      const targets=[...new Set(scope.map(link=>link.target))];
+      const allFromDetail=b.dataset.action==="retry-all";
+      const returnToDetail=detail.open?{scroll:$("detail-body").scrollTop}:null;
+      const target=!allFromDetail&&targets.length===1?targets[0]:null;
+      const chooseScope=!allFromDetail&&key===null&&targets.length>1;
+      retrySelection={task,key,target,targets,chooseScope,objectKey:null,page:1,returnToDetail};
+      if(returnToDetail)detail.close();
+      drawRetry();retryDialog.showModal();break;
+    }
+    case "select-retry-link":
+      if(retrySelection.objectKey!==b.dataset.key){
+        retrySelection.objectKey=b.dataset.key;retrySelection.page=1;drawRetry();
+        $("retry-body").querySelector('button[data-action="select-retry-link"][aria-pressed="true"]')?.focus({preventScroll:true});
+      }
+      break;
+    case "retry-page": {
+      const step=b.dataset.step;
+      retrySelection.page+=Number(step);drawRetry();
+      const pager=$("retry-body").querySelector(".object-pager");
+      (pager?.querySelector('button[data-step="'+step+'"]:not(:disabled)')??
+        pager?.querySelector("button:not(:disabled)"))?.focus({preventScroll:true});
+      break;
+    }
+    case "close-retry":retryDialog.close();break;
+    case "submit-retry":startRetry();break;
+  }
+});
+
+$("role").replaceChildren(...ROLES.map(r=>new Option(r.label,r.id)));
+options($("filter-category"),Object.keys(CATALOG).map(x=>[x,x]),"请选择同步分类");
+options($("filter-status"),Object.entries(STATUS),"请选择状态");
+criteria=defaults();
+refreshPortals();setFilters(criteria);drawTable();
+setInterval(updateJobs,550);
+</script>
+</body>
+</html>
