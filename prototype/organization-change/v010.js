@@ -77,7 +77,7 @@ const targetNode = () => pick(state.newTree, targetId());
 const targetName = () => targetNode()?.name || '';
 const targetConfig = () => state.config[targetId()] || null;
 const hasTarget = () => !!targetNode();
-const targetPath = () => hasTarget() ? `中国南方电网 / 广东电网 / 梅州供电局 / ${targetName()}` : '待选择';
+const targetPath = () => hasTarget() ? `网级 / 广东电网 / 梅州供电局 / ${targetName()}` : '待选择';
 function defaultTargetId() {
   const sourceParent=pick(state.newTree,CHILD)?.parent;
   return v10Options().some(n=>n.id===sourceParent) ? sourceParent : '';
@@ -285,7 +285,7 @@ plan = function() {
   const a=state.config[OLD],b=targetConfig(),c=chosenConfig(),locked=v10().submitPending;
   const fields=[['type','机构类型','用户组织机构、项目/设备单位'],['division','部门/单位','单位'],['region','关联行政区域','广东省 / 梅州市'],['terminal','终端挂靠权限','启用']];
   return `<section class="card list-card"><div class="section-head"><div class="section-title">变更详情 · ${safe(cfg().old)}</div><button class="btn" data-page="compare">返回处理变更</button></div>
-  <div class="detail-grid"><b>原机构</b><span>${safe(cfg().old)} · DEMO-OLD</span><b>源侧状态</b><span>最新 4A 中已删除</span><b>原路径</b><span>中国南方电网 / 广东电网 / 梅州供电局 / ${safe(cfg().old)}</span><b>系统使用</b><span>当前仍已纳入</span></div>
+  <div class="detail-grid"><b>原机构</b><span>${safe(cfg().old)} · DEMO-OLD</span><b>源侧状态</b><span>最新 4A 中已删除</span><b>原路径</b><span>网级 / 广东电网 / 梅州供电局 / ${safe(cfg().old)}</span><b>系统使用</b><span>当前仍已纳入</span></div>
   <div class="section-head v10-gap"><div class="section-title">机构变更</div></div>
   <div class="toolbar"><select id="candidate-select" class="field" aria-label="组织节点" ${locked?'disabled':''}><option value="">请选择机构</option>${v10Options().map(n=>`<option value="${n.id}" ${targetId()===n.id?'selected':''}>${safe(n.name)} · ${safe(n.code)}</option>`).join('')}</select><span class="subtle">系统自行判断的替代节点，可依据实际业务调整</span></div>
   <div class="detail-grid"><b>当前所选</b><span>${hasTarget()?safe(targetName()):'待选择'}</span><b>机构编码</b><span>${hasTarget()?safe(targetNode().code):'待选择'}</span><b>所属路径</b><span>${safe(targetPath())}</span><b>系统使用</b><span>${hasTarget()?(pick(state.currentTree,targetId())?'已纳入':'待纳入'):'待选择'}</span><b>下级调整</b><span>新陂供电所按最新 4A 归属 ${safe(nodeName(pick(state.newTree,CHILD)?.parent))}</span></div>
