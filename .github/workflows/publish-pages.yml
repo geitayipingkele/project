@@ -21,4 +21,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh api --method POST "repos/$GH_REPO/pages/builds" --jq '{status: .status, url: .url}'
+        run: |
+          gh api --method POST "repos/$GH_REPO/pages/builds" --jq '{status: .status, url: .url}'
