@@ -141,8 +141,6 @@ input[type=text],input[type=search]{width:100%;height:33px;color:#344052;backgro
 #record-view tbody tr:hover td:last-child{background:#eaf0ff}
 .retry-links{max-height:none;overflow:visible;border:0}
 .retry-links .paged-table{max-height:min(310px,35dvh)}
-.init-history{margin-top:14px}
-.init-history summary{cursor:pointer;color:#455976;margin-bottom:8px}
 .row-actions{gap:12px}
 #detail-dialog{width:min(1160px,calc(100vw - 36px))}
 #manual-dialog,#init-dialog{width:min(960px,calc(100vw - 36px))}
@@ -166,11 +164,7 @@ button.chain-hop:hover{background:#eef3ff}
 .retry-hop{font-weight:650}
 .chain-arrow{position:relative;height:1px;margin:4px 2px 0;background:currentColor}
 .chain-arrow::after{content:"";position:absolute;right:0;top:50%;width:5px;height:5px;border:solid currentColor;border-width:1px 1px 0 0;transform:translateY(-50%) rotate(45deg)}
-.manual-layout>section{min-width:0}
-.sidecar{border:1px solid var(--edge);border-radius:4px;background:#f8fafe;min-width:0;padding:12px 13px;align-self:start}
-.sidecar-head,.selection-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
-.sidecar-head{margin:0 0 9px}
-.sidecar-head h3{margin:0;font-size:14px}
+.selection-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
 .compact-note{color:#5c6a80;font-size:12px;margin:7px 0}
 .scope-tags{display:flex;flex-wrap:wrap;gap:4px 7px;margin:6px 0 4px}
 .scope-tags span{font-size:11px;white-space:nowrap;border-radius:3px;background:#edf2fc;padding:2px 6px;color:#4d6181}
@@ -190,14 +184,9 @@ input[type=checkbox]{accent-color:var(--blue);vertical-align:middle}
 .steps{display:flex;list-style:none;margin:0 0 16px;padding:0;border-bottom:1px solid var(--edge);gap:14px}
 .steps li{padding:0 1px 8px;color:#657388;font-size:12px;border-bottom:2px solid transparent}
 .steps li[aria-current=step]{border-color:var(--blue);color:var(--blue);font-weight:650}
-.manual-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.manual-layout.with-sidecar{grid-template-columns:minmax(0,1.7fr) minmax(240px,1fr)}
+.manual-data-list .subtable{min-width:640px}
 .manual-result{border:1px solid var(--edge);background:#f8faff;padding:15px;margin:4px 0 0}
 .manual-result h3{font-size:15px;margin:0 0 7px}
-.selected-groups{max-height:285px;overflow:auto}
-.selected-groups details{border-top:1px solid var(--edge);padding:8px 0}
-.selected-groups summary{cursor:pointer}
-.selected-groups .picked-row{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;gap:7px}
 .target-search>input[type=search]{width:min(235px,100%)}
 .management-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .management-title h1{font-size:17px;margin:0}
@@ -206,11 +195,83 @@ input[type=checkbox]{accent-color:var(--blue);vertical-align:middle}
 #detail-feedback:empty{display:none}
 .note-line{margin:7px 0}
 .inline-empty{border:1px solid var(--edge);border-radius:3px;padding:18px;text-align:center;color:#647386}
-@media(max-width:880px){
-  .manual-layout.with-sidecar{grid-template-columns:minmax(0,1fr)}
-  .with-sidecar .sidecar{grid-row:1}
-}
 @media(max-width:700px){.management-title{align-items:stretch}.management-title h1{white-space:nowrap}}
+
+.portal-field{position:relative}.portal-cascader{min-width:0}
+.cascader-control{position:relative;min-height:33px;border:1px solid #dce0e7;border-radius:3px;background:#fff}
+.cascader-control:focus-within,.portal-cascader.is-open .cascader-control{border-color:var(--blue)}
+.cascader-trigger{position:absolute;inset:0;width:100%;padding:0 27px 0 10px;border:0;background:transparent;text-align:left;color:#344052;border-radius:3px}
+.cascader-placeholder{white-space:nowrap;font-size:12px;color:#87919d}
+.cascader-caret{position:absolute;right:9px;top:5px;color:#8a95a2;font-size:15px;transition:transform .15s}
+.portal-cascader.is-open .cascader-caret{transform:rotate(180deg)}
+.cascader-tags{position:relative;display:flex;align-items:center;gap:4px;min-height:31px;margin:0 27px 0 5px;pointer-events:none;overflow:hidden}
+.cascader-tag{display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:calc(100% - 33px);height:24px;padding:0 5px;background:#f0f2f5;border:1px solid #e9edf2;border-radius:3px;color:#606875;font-size:12px}
+.cascader-tag:only-child{max-width:100%}.cascader-tag span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cascader-tag button,.cascader-more{pointer-events:auto;border:0;color:#89929d;background:transparent;padding:0 1px;font-size:12px;flex:none}
+.cascader-tag button:hover{color:var(--blue)}
+.cascader-more{height:24px;padding:0 5px;border:1px solid #e9edf2;border-radius:3px;background:#f0f2f5;color:#606875}
+.cascader-clear{position:absolute;right:7px;top:5px;width:20px;height:20px;padding:0;border:0;border-radius:50%;color:#89929d;background:#fff;font-size:16px}
+.cascader-control:has(.cascader-clear:not([hidden])) .cascader-caret{visibility:hidden}
+.cascader-popup{position:fixed;z-index:20;max-width:calc(100vw - 24px);border:1px solid #e1e5ec;border-radius:4px;background:#fff;box-shadow:0 3px 14px #17294b24;font-size:12px}
+.cascader-toolbar{display:flex;align-items:center;gap:9px;padding:9px;border-bottom:1px solid #edf0f4}
+.cascader-toolbar input{min-width:70px;width:100%;height:30px;border:1px solid #dce0e7;border-radius:3px;padding:0 8px;color:#344052}
+.cascader-toolbar .link{flex:none}.cascader-menus{display:flex;overflow-x:auto;max-width:100%}
+.cascader-column{flex:1 0 180px;min-width:180px;max-height:248px;overflow-y:auto;margin:0;padding:5px 0;list-style:none;border-right:1px solid #e4e7ed;overscroll-behavior:contain}
+.cascader-column:last-child{border-right:0}
+.cascader-node{display:flex;align-items:center;min-height:34px;padding:0 10px;gap:8px;white-space:nowrap}
+.cascader-node:hover,.cascader-node.is-expanded{background:#f5f7fa}
+.cascader-node.is-checked{color:var(--blue);font-weight:600}
+.cascader-node input{flex:none;width:14px;height:14px;margin:0;accent-color:var(--blue)}
+.cascader-node button{display:flex;align-items:center;justify-content:space-between;gap:14px;flex:1;min-width:0;min-height:32px;padding:0;border:0;background:none;text-align:left;color:inherit;font:inherit}
+.cascader-node label{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer}
+.cascader-node button span,.cascader-node label span{overflow:hidden;text-overflow:ellipsis}
+.cascader-node .node-arrow{color:#9099a6;flex:none}
+.cascader-results{width:100%;max-height:248px;overflow-y:auto;list-style:none;margin:0;padding:5px 0}
+.cascader-results .cascader-node{white-space:normal}
+.cascader-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 10px;border-top:1px solid #edf0f4;color:#7b8694;font-size:12px}
+.cascader-empty{padding:30px 14px;color:#87919d;text-align:center;width:100%}
+
+
+.sync-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 20px;flex:none}
+.sync-metric-card{position:relative;min-width:0;min-height:142px;padding:16px 18px 13px;border:1px solid var(--edge);border-radius:5px;background:#fff}
+.sync-metric-title{display:flex;align-items:center;gap:7px;color:#566277;font-size:13px;font-weight:500;margin:0 0 8px}
+.sync-metric-value{display:flex;align-items:baseline;gap:6px;margin:0 0 8px;color:#27364b;font-size:30px;font-weight:650;line-height:1.25;font-variant-numeric:tabular-nums}
+.sync-metric-unit{font-size:12px;font-weight:400;color:#758094}
+.sync-metric-card[data-metric=abnormal] .sync-metric-value{color:#cb5148}
+.sync-metric-card[data-metric=rate] .sync-metric-value{color:#208653}
+.sync-metric-caption{color:#7b8694;font-size:12px;line-height:1.8}
+.sync-metric-statuses{display:flex;flex-wrap:wrap;gap:2px 12px;color:#748093;font-size:12px;line-height:1.8}
+.sync-metric-statuses span{white-space:nowrap}
+.sync-metric-statuses b{font-weight:600;color:#4b596e;margin-left:3px}
+.sync-metric-statuses .success b{color:#208653}.sync-metric-statuses .fail b{color:#cc453b}
+.sync-metric-statuses .partial b{color:#a96211}.sync-metric-statuses .running b{color:#2159fc}
+.metric-help-button{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;border:1px solid #a6afbd;border-radius:50%;padding:0;background:#fff;color:#8c96a5;font-size:11px;font-weight:600;line-height:1}
+.metric-help:hover .metric-help-button,.metric-help:focus-within .metric-help-button{color:var(--blue);border-color:var(--blue)}
+.metric-tooltip{position:absolute;top:43px;left:15px;z-index:25;width:min(360px,calc(100vw - 50px));padding:12px 14px;border-radius:4px;background:#303846;color:#fff;box-shadow:0 4px 16px #15213a30;font-size:12px;line-height:1.8;font-weight:400;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .12s}
+.metric-tooltip p{margin:0 0 6px}.metric-tooltip p:last-child{margin:0}
+.metric-tooltip .tooltip-formula{padding-top:6px;border-top:1px solid #ffffff29;color:#e1e9ff}
+.metric-help:hover .metric-tooltip,.metric-help:focus-within .metric-tooltip{visibility:visible;opacity:1;pointer-events:auto}
+.sync-metric-card:has(.metric-help:hover),.sync-metric-card:has(.metric-help:focus-within){z-index:26}
+.sync-metric-card:nth-child(n+3) .metric-tooltip{left:auto;right:15px}
+@media(max-width:1200px){.sync-metrics{gap:10px}.sync-metric-card{padding:13px 14px;min-height:148px}.sync-metric-statuses{gap:2px 8px}}
+@media(max-width:900px){.sync-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.sync-metric-card{min-height:136px}.sync-metric-card:nth-child(odd) .metric-tooltip{left:12px;right:auto}.sync-metric-card:nth-child(even) .metric-tooltip{left:auto;right:12px}}
+@media(max-width:480px){.sync-metrics{grid-template-columns:1fr}.sync-metric-card:nth-child(n) .metric-tooltip{left:12px;right:auto}}
+
+
+#init-dialog{width:min(1040px,calc(100vw - 36px))}
+#initialization-detail-dialog{width:min(1160px,calc(100vw - 36px))}
+.initialization-type-results .subtable{min-width:930px;table-layout:fixed}
+.initialization-type-results th:nth-child(1){width:110px}
+.initialization-type-results th:nth-child(2){width:110px}
+.initialization-type-results th:nth-child(3){width:280px}
+.initialization-type-results th:nth-child(4){width:65px}
+.initialization-type-results th:nth-child(5){width:85px}
+.initialization-type-results th:nth-child(6){width:180px}
+.initialization-type-results th:nth-child(7){width:80px}
+.initialization-preview .subtable{min-width:630px}
+.initialization-preview th:nth-child(1){width:20%}
+.initialization-preview th:nth-child(2){width:19%}
+
 </style>
 </head>
 <body>
@@ -227,12 +288,14 @@ input[type=checkbox]{accent-color:var(--blue);vertical-align:middle}
   <span class="tab">首页</span><span class="tab">运行终端管理</span><button class="tab" type="button" id="tab-management" data-action="show-management">级联门户管理</button><button class="tab active" type="button" id="tab-records" data-action="show-records" aria-current="page">级联门户同步记录</button>
 </nav>
 <main id="record-view" aria-label="级联门户同步记录">
+  <section id="sync-metrics" class="sync-metrics" aria-label="同步统计指标"></section>
   <form id="filters" class="filters">
+    <input type="hidden" id="filter-recordId" value="">
     <div class="field"><label for="filter-category">同步分类</label><select class="select" id="filter-category"></select></div>
     <div class="field"><label for="filter-type">同步类型</label><select class="select" id="filter-type"></select></div>
     <div class="field data-field"><label for="filter-data">同步数据</label><input type="search" id="filter-data" placeholder="请输入数据名称或标识"></div>
-    <div class="field"><label for="filter-origin">发起门户</label><select class="select" id="filter-origin"></select></div>
-    <div class="field"><label for="filter-target">目标门户</label><select class="select" id="filter-target"></select></div>
+    <div class="field portal-field"><label id="cascader-origin-label" for="cascader-origin-trigger">发起门户</label><div class="portal-cascader" id="cascader-origin"><input type="hidden" id="filter-origin" value=""><div class="cascader-control"><button type="button" class="cascader-trigger" id="cascader-origin-trigger" data-action="portal-filter-toggle" data-key="origin" aria-labelledby="cascader-origin-label" aria-haspopup="dialog" aria-expanded="false" aria-controls="cascader-origin-popup"><span class="cascader-placeholder">请选择发起门户</span><span class="cascader-caret" aria-hidden="true">⌄</span></button><div class="cascader-tags" id="cascader-origin-tags"></div><button class="cascader-clear" type="button" data-action="portal-filter-clear" data-key="origin" aria-label="清空发起门户" hidden>×</button></div><div class="cascader-popup" id="cascader-origin-popup" role="dialog" aria-labelledby="cascader-origin-label" hidden></div></div></div>
+    <div class="field portal-field"><label id="cascader-target-label" for="cascader-target-trigger">目标门户</label><div class="portal-cascader" id="cascader-target"><input type="hidden" id="filter-target" value=""><div class="cascader-control"><button type="button" class="cascader-trigger" id="cascader-target-trigger" data-action="portal-filter-toggle" data-key="target" aria-labelledby="cascader-target-label" aria-haspopup="dialog" aria-expanded="false" aria-controls="cascader-target-popup"><span class="cascader-placeholder">请选择目标门户</span><span class="cascader-caret" aria-hidden="true">⌄</span></button><div class="cascader-tags" id="cascader-target-tags"></div><button class="cascader-clear" type="button" data-action="portal-filter-clear" data-key="target" aria-label="清空目标门户" hidden>×</button></div><div class="cascader-popup" id="cascader-target-popup" role="dialog" aria-labelledby="cascader-target-label" hidden></div></div></div>
     <div class="field"><label for="filter-status">状态</label><select class="select" id="filter-status"></select></div>
     <fieldset class="filter-date"><legend>发起时间</legend><div class="daterange"><input type="date" id="filter-start" aria-label="开始日期"><span>至</span><input type="date" id="filter-end" aria-label="结束日期"></div></fieldset>
     <div class="actions"><button type="submit" class="btn primary">查询</button><button type="button" class="btn" id="reset-filters">重置</button><button type="button" class="btn primary" id="go-manual" data-action="manual-start">发起同步</button></div>
@@ -285,6 +348,11 @@ input[type=checkbox]{accent-color:var(--blue);vertical-align:middle}
   <div class="dialog-body" id="init-body"></div>
   <div class="dialog-foot"><button class="btn" type="button" data-action="init-close">取消</button><button class="btn primary" type="button" data-action="init-submit">确认初始化</button></div>
 </dialog>
+<dialog id="initialization-detail-dialog" aria-labelledby="initialization-detail-title">
+  <div class="dialog-header"><h2 id="initialization-detail-title">初始化同步详情</h2><button class="icon-close" type="button" data-action="initialization-detail-close" aria-label="关闭初始化同步详情">×</button></div>
+  <div class="dialog-body" id="initialization-detail-body"></div>
+  <div class="dialog-foot"><button class="btn" type="button" data-action="initialization-detail-close">关闭</button></div>
+</dialog>
 <ul id="portal-popover" class="portal-popover" aria-label="目标门户名称" hidden></ul>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -312,34 +380,32 @@ const ROLES = [
   {id:"gz",label:"广州市运营",portal:"gz",scope:["gz"],retry:true}
 ];
 const CATALOG = {
-  "平台基础配置":["组织机构","级联门户信息","接入节点配置","资源空间"],
+  "平台基础配置":["组织机构","级联门户信息","接入节点配置","资源空间","菜单","数据字典","系统参数"],
   "基础数据":["品类","物模型","产品","项目","厂商","型号","告警类型","应用","算法","配置文件","固件","管理组件","整包"],
-  "设备操作":["新增准入终端","修改终端信息","删除准入终端","删除调试终端","所属单位变更","激活终端","启用终端","禁用终端","投运终端","停运终端","退运终端","挂接关系","软件版本更新","应用安装","指令下发","OTA 升级"],
-  "设备状态与关联数据":["终端状态","终端台账","子设备台账","设备上报数据回传"],
-  "视频编码":["视频编码同步"],"历史档案":["退运历史档案","历史终端档案"],
+  "设备业务信息":["新增准入终端","修改终端信息","删除准入终端","删除调试终端","所属单位变更","激活终端","启用终端","禁用终端","投运终端","停运终端","退运终端","挂接关系","软件版本更新","应用安装","指令下发","OTA 升级"],
+  "设备台账及状态":["设备台账","设备连接状态","历史终端档案"],
   "智能运维":["告警消息","告警处理结果","智能运维终端新增","智能运维终端状态变化","智能运维终端信息变更"],
-  "门户与接入节点状态":["门户状态变更","接入节点状态"],"工单":["工单审批结果"],
-  "文件":["级联文件同步"],"初始化同步":["初始化同步"]
+  "门户与接入节点状态":["门户连接状态","接入节点连接状态"],"工单":["工单审批结果"],
+  "文件":["级联文件同步"]
 };
 const TYPE_TO_CATEGORY = Object.fromEntries(Object.entries(CATALOG).flatMap(([category,types])=>types.map(type=>[type,category])));
 const MANUAL_CATALOG = {
-  "平台基础配置":CATALOG["平台基础配置"],
+  "平台基础配置":["组织机构","级联门户信息","接入节点配置","资源空间"],
   "基础数据":CATALOG["基础数据"],
-  "设备状态与关联数据":["终端台账","子设备台账"]
+  "设备台账及状态":["设备台账"]
 };
 const INIT_GROUPS = [
   {name:"平台配置",types:["组织机构","级联门户信息","接入节点配置","资源空间","菜单","数据字典","系统参数"]},
   {name:"基础数据",types:["品类","物模型","产品","项目","厂商","型号","告警类型"]},
   {name:"软件及文件",types:["应用","算法","配置文件","固件","管理组件","整包"]},
-  {name:"当前设备台账",types:["终端台账","子设备台账"]},
-  {name:"视频编码",types:["视频编码同步"]},
-  {name:"历史档案",types:["历史终端档案"]}
+  {name:"设备台账及状态",types:["设备台账","历史终端档案"]}
 ];
 const STATUS = {success:"成功",fail:"失败",partial:"部分成功",running:"同步中",covered:"已覆盖"};
 const COVERED = "已被后续同类型变更覆盖，不需再处理";
 const $ = id=>document.getElementById(id);
 const detail = $("detail-dialog"), segmentDialog = $("segment-dialog"), retryDialog = $("retry-dialog");
 const manualDialog = $("manual-dialog"), initDialog = $("init-dialog"), portalPopover = $("portal-popover");
+const initializationDetailDialog=$("initialization-detail-dialog");
 const objectPageSize = 10;
 const escapeHtml = value=>String(value??"—").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const pad = n=>String(n).padStart(2,"0");
@@ -372,8 +438,7 @@ function route(path,objects,states,failures={}){return {path,objects,states,fail
 function defaultAction(type){
   if(type.startsWith("删除"))return "删除";
   if(type.startsWith("新增")||type.includes("档案")||type.endsWith("新增"))return "新增";
-  if(type==="终端状态"||type==="门户状态变更"||type==="接入节点状态")return "状态变更";
-  if(type==="设备上报数据回传")return "回传";
+  if(type==="设备连接状态"||type==="门户连接状态"||type==="接入节点连接状态")return "状态变更";
   return "修改";
 }
 function seed(type,origin,minutes,definitions,config={}){
@@ -382,7 +447,7 @@ function seed(type,origin,minutes,definitions,config={}){
     id:"CL"+String(seeds.length+1).padStart(5,"0"),category:TYPE_TO_CATEGORY[type],type,origin,at,
     edges:new Map(),routes:[],scope:config.scope??[origin],business:config.business,
     trigger:config.trigger??"自动同步",operator:config.operator,queryId:config.queryId,
-    init:type==="初始化同步",feedback:""
+    init:Boolean(config.initializationId),initializationId:config.initializationId,initializationPhase:config.initializationPhase,feedback:""
   };
   task.routes=definitions.map(definition=>{
     const {path,objects,states,failures}=definition;
@@ -403,44 +468,47 @@ function seed(type,origin,minutes,definitions,config={}){
           action:item.action??(task.trigger==="手动同步"?"补同步":defaultAction(type)),
           lastReason:failure,failureTime:failure?changed:null,
           due:status==="running"?Date.now()+(config.delay??1800):null,
-          failOnce:definition.failApplication&&index===path.length-2&&item.name==="应用"
+          failOnce:definition.failApplication&&index===path.length-2&&i===0
         });
         if(changed)edge.updated=Math.max(edge.updated??0,changed);
       });
       return {edge,keys};
     });
-    return {target:path.at(-1),legs,terminal:legs.at(-1),targetVisible:true};
+    return {target:path.at(-1),legs,terminal:legs.at(-1),targetVisible:true,initializing:task.init};
   });
   seeds.push(task);
   return task;
 }
-function initializationObjects(target){
+function initializationTypes(target){
   return INIT_GROUPS.flatMap((group,phase)=>group.types.map((type,index)=>{
     let description=group.name;
     if(["菜单","数据字典","系统参数"].includes(type))description="定制前的全网通用数据";
     if(type==="应用")description="巡检应用 v1.8.4 版本信息及应用包 app-inspect-1.8.4.zip";
     if(phase===2&&type!=="应用")description="正式版本信息及同版本文件";
-    if(phase===3)description="按 "+portal(target)+" 管辖范围补齐";
-    if(phase===5)description="按档案所属单位匹配 "+portal(target);
+    if(type==="设备台账")description="按 "+portal(target)+" 管辖范围同步终端及子设备台账";
+    if(type==="历史终端档案")description="按档案所属单位匹配 "+portal(target);
     return object("INIT-"+(phase+1)+"-"+(index+1),type,{description,phase,amount:
-      type==="应用"?8:phase===3?147+index*15:phase===5?38:phase*6+index*3+12});
+      type==="应用"?8:type==="设备台账"?309:type==="历史终端档案"?38:phase*6+index*3+12});
   }));
 }
 function createInitialization(origin,target,existing=false){
-  const objects=initializationObjects(target), path=pathBetween(origin,target);
-  const states=path.slice(1).map(()=>objects.map(()=> "pending"));
-  let reasons={};
-  if(existing){
-    const appIndex=objects.findIndex(item=>item.name==="应用");
-    states.forEach((state,index)=>objects.forEach((item,i)=>{
-      state[i]=item.phase<=2?"success":"pending";
-      if(index===states.length-1&&i===appIndex)state[i]="fail";
-    }));
-    reasons[states.length-1]={[appIndex]:"应用包完整性校验失败，版本未生效"};
-  }
-  const setup=route(path,objects,states,reasons);
-  setup.failApplication=!existing;
-  return seed("初始化同步",origin,existing?116:0,[setup],{scope:[target],trigger:"初始化同步"});
+  const path=pathBetween(origin,target),initializationId="INIT-"+target+"-"+seeds.length;
+  const known={型号:models,厂商:vendors,项目:projects};
+  return initializationTypes(target).map(type=>{
+    const records=known[type.name]??Array.from({length:type.amount},(_,index)=>
+      object(type.id+"-"+String(index+1).padStart(3,"0"),
+        (type.name==="设备台账"?(index<147?"采集终端":"网关采集子设备"):type.name)+" "+String(index+1).padStart(3,"0")));
+    const objects=records.map(item=>({...item,dataType:type.name,description:type.description,version:item.version??"v1"}));
+    const states=path.slice(1).map((_,leg)=>objects.map((item,index)=>
+      existing&&type.name==="应用"&&leg===path.length-2&&index===0?"fail":
+      existing&&type.phase<=2?"success":"pending"));
+    const reasons=existing&&type.name==="应用"?{[path.length-2]:{0:"应用包完整性校验失败，版本未生效"}}:{};
+    const setup=route(path,objects,states,reasons);
+    setup.failApplication=!existing&&type.name==="应用";
+    return seed(type.name,origin,existing?116:0,[setup],{
+      scope:[target],trigger:"初始化同步",initializationId,initializationPhase:type.phase
+    });
+  });
 }
 const models=Array.from({length:100},(_,i)=>object("MDL-"+String(i+1).padStart(4,"0"),"配网采集终端型号 "+String(i+1).padStart(3,"0")));
 const failureMap={0:{98:"型号资料写入超时",99:"目标门户暂时无法写入"}};
@@ -470,24 +538,23 @@ seed("固件","net",38,[route(["net","gd","fs"],[object("FW-2.1.0","边缘网关
 const vendors=Array.from({length:100},(_,i)=>object("VDR-"+String(i+1).padStart(4,"0"),"配网终端厂商 "+String(i+1).padStart(3,"0")));
 seed("厂商","net",44,[route(["net","gd","fs"],vendors,["fail","pending"])],{scope:["fs"]});
 seed("工单审批结果","net",52,[route(["net","gd","fs"],[object("WO-20261112-008","终端投运工单")],["success","success"])],{scope:["fs"]});
-seed("终端状态","fs",69,[route(["fs","gd","net"],[object("TERM-027101","采集终端 027101"),object("TERM-027102","采集终端 027102")],["success","fail"],{1:{0:"确认回执超时",1:"确认回执超时"}})],{scope:["fs"],business:"佛山已完成下线，离线状态逐级上报"});
+seed("设备连接状态","fs",69,[route(["fs","gd","net"],[object("TERM-027101","采集终端 027101"),object("TERM-027102","采集终端 027102")],["success","fail"],{1:{0:"确认回执超时",1:"确认回执超时"}})],{scope:["fs"],business:"佛山已完成下线，离线状态逐级上报"});
 seed("修改终端信息","gd",83,[
   route(["gd","net"],[object("TERM-036201","东区配电监测终端")],["fail"]),
   route(["gd","fs"],[object("TERM-036202","西区配电监测终端")],["fail"])
 ],{scope:["fs","dg"],business:"修改成功"});
 seed("级联文件同步","net",97,[route(["net","ehv"],[object("FILE-0062","终端型号安装附件.pdf")],["running"])],{scope:["ehv"]});
 seed("投运终端","gz",120,[route(["gz","net"],[object("TERM-012605","广域通信终端")],["success"])],{scope:["gz"],business:"投运成功"});
-seed("退运历史档案","fs",150,[route(["fs","gd","net"],[object("ARCH-00582","东区采集终端退运档案")],["success","success"])],{scope:["fs"]});
-seed("门户状态变更","gd",182,[route(["gd","net"],[object("PORTAL-GD","广东省门户")],["success"])],{scope:["gd"]});
-seed("视频编码同步","net",226,[route(["net","sz"],[object("VIDEO-03210","城区视频终端编码")],["success"])],{scope:["sz"]});
-seed("接入节点状态","gd",268,[route(["gd","net"],[object("NODE-GD-04","广东接入节点 04")],["success"])],{scope:["gd"]});
+seed("历史终端档案","fs",150,[route(["fs","gd","net"],[object("ARCH-00582","东区采集终端退运档案")],["success","success"])],{scope:["fs"]});
+seed("门户连接状态","gd",182,[route(["gd","net"],[object("PORTAL-GD","广东省门户")],["success"])],{scope:["gd"]});
+seed("接入节点连接状态","gd",268,[route(["gd","net"],[object("NODE-GD-04","广东接入节点 04")],["success"])],{scope:["gd"]});
 seed("资源空间","net",295,[route(["net","gx"],[object("SPACE-005","计量数据资源空间")],["success"])],{scope:["gx"]});
 seed("应用安装","net",345,[route(["net","gd","fs"],[object("APP-008","终端巡检应用")],["success","success"])],{scope:["fs"],business:"安装完成"});
 seed("指令下发","net",380,[route(["net","ehv"],[object("CMD-0012","读取运行参数")],["success"])],{scope:["ehv"],business:"下发成功"});
 seed("软件版本更新","gd",475,[route(["gd","net"],[object("TERM-029207","边缘网关 · 版本 2.1.0")],["success"])],{scope:["gd"],business:"版本已更新"});
 seed("告警处理结果","fs",600,[route(["fs","gd","net"],[object("ALARM-0112","终端通信异常告警")],["success","success"])],{scope:["fs"]});
 seed("组织机构","net",850,[route(["net","gx"],[object("ORG-GX-001","广西电网所属单位")],["success"]),route(["net","yn"],[object("ORG-YN-001","云南电网所属单位")],["success"])],{scope:["gx","yn"]});
-seed("子设备台账","gd",1440,[route(["gd","net"],[object("SUB-0068","采集网关子设备")],["success"])],{scope:["gd"]});
+seed("设备台账","gd",1440,[route(["gd","net"],[object("SUB-0068","采集网关子设备")],["success"])],{scope:["gd"]});
 seed("激活终端","gz",1600,[route(["gz","net"],[object("TERM-0051","图像监控终端")],["success"])],{scope:["gz"],business:"激活成功"});
 seed("告警类型","net",2180,[route(["net","gx"],[object("ATYPE-22","终端连接异常")],["success"]),route(["net","gd","fs"],[object("ATYPE-22","终端连接异常")],["success","success"])],{scope:["gx","fs"]});
 seed("挂接关系","fs",2860,[route(["fs","gd","net"],[object("TERM-10312","采集终端监测对象关系")],["success","success"])],{scope:["fs"],business:"挂接成功"});
@@ -500,12 +567,6 @@ seed("产品","net",28,[
   route(["net","gz"],directProducts,["success"]),
   route(["net","sz"],directProducts,["fail"],{0:{0:"产品写入超时"}})
 ],{scope:["gz","sz"]});
-const reportAttributes=[
-  object("serviceTopo / tgTopoAppStatus","tgTopoAppStatus",{description:"拓扑识别APP状态",device:"TERM-027101",dataType:"属性上报",batch:"第 1 批"}),
-  object("serviceTopo / tgTopoVersion","tgTopoVersion",{description:"拓扑数据版本",device:"TERM-027101",dataType:"属性上报",batch:"第 1 批"}),
-  object("serviceMeter / meterState","meterState",{description:"计量单元工作状态",device:"TERM-027101",dataType:"属性上报",batch:"第 2 批"})
-];
-seed("设备上报数据回传","fs",16,[route(["fs","gd","net"],reportAttributes,["success",["fail","fail","success"]],{1:{0:"查询结果批次接收超时",1:"查询结果批次接收超时"}})],{scope:["fs"],queryId:"QR-20261116-028"});
 seed("退运终端","fs",109,[route(["fs","gd","net"],[object("TERM-00186","佛山配网采集终端")],["success","fail"])],{scope:["fs"],business:"地市及分省审批通过，佛山已完成退运"});
 seed("删除调试终端","fs",140,[route(["fs","gd","net"],[object("TERM-021204","东区调试终端")],["success","success"])],{scope:["fs"],business:"佛山校验无关联数据，已删除"});
 seed("删除准入终端","gd",159,[route(["gd","net"],[object("TERM-018206","北区准入终端")],["success"])],{scope:["gd"],trigger:"后台补发"});
@@ -514,8 +575,10 @@ createInitialization("net","gd",true);
 
 let role=ROLES[0], currentPage=1, pageSize=20, criteria;
 let detailId=null, detailState=null, segmentSelection=null, retrySelection=null;
-let manual=null, initTarget=null, managementPage=1, portalAnchor=null, toastTimer;
+let manual=null, initTarget=null, initializationDetail=null, managementPage=1, portalAnchor=null, toastTimer;
 const PORTAL_PAGE_SIZE=8;
+const portalFilters=Object.fromEntries(["origin","target"].map(key=>[key,{selected:new Set(),available:new Set(),expanded:[],query:"",onlySelected:false}]));
+let openPortalFilter=null, syncMetricDate=null;
 function permitted(id){return role.scope===null||role.scope.includes(id)}
 function view(task){
   if(task.origin===role.portal)return task.scope.every(permitted)?task.routes:[];
@@ -549,13 +612,14 @@ function routeState(route,key){
   const items=routeItems(route,key);
   if(items.some(item=>item.status==="fail"))return "fail";
   if(items.some(item=>item.status==="running"))return "running";
-  return route.targetVisible?summarize(legItems(route.terminal,key)):null;
+  const state=route.targetVisible?summarize(legItems(route.terminal,key)):null;
+  return state==="pending"&&route.initializing?"running":state;
 }
 function taskState(routes,key){
   const states=routes.map(route=>routeState(route,key));
   const items=routes.flatMap(route=>routeItems(route,key));
   if(states.length===1&&states[0]==="fail")return "fail";
-  if(items.some(item=>item.status==="running"))return "running";
+  if(states.includes("running")||items.some(item=>item.status==="running"))return "running";
   if(states.includes("fail")){
     return states.includes("success")?"partial":"fail";
   }
@@ -608,7 +672,7 @@ function failureScope(task,targets=null,edgeKey=null){
 function defaults(){
   const now=new Date(), start=new Date(now);
   start.setDate(start.getDate()-14);
-  return {category:"",type:"",origin:"",target:"",status:"",start:day(start),end:day(now),data:""};
+  return {category:"",type:"",origin:[],target:[],status:"",start:day(start),end:day(now),data:"",recordId:""};
 }
 function updateTypes(category,keep){
   const types=category?(CATALOG[category]??[]):Object.values(CATALOG).flat();
@@ -618,27 +682,138 @@ function updateTypes(category,keep){
 function setFilters(value){
   $("filter-category").value=value.category;
   updateTypes(value.category,value.type);
-  for(const key of ["origin","target","status","start","end","data"])$("filter-"+key).value=value[key];
+  for(const key of ["status","start","end","data","recordId"])$("filter-"+key).value=value[key];
+  for(const key of ["origin","target"])setPortalFilter(key,value[key]);
+  closePortalFilters();
 }
 function filters(){
-  return Object.fromEntries(Object.keys(criteria).map(key=>[key,$("filter-"+key).value]));
+  return Object.fromEntries(Object.keys(criteria).map(key=>[key,
+    key==="origin"||key==="target"?[...portalFilters[key].selected]:$("filter-"+key).value]));
 }
+
+function portalIds(value){
+  return Array.isArray(value)?value:typeof value==="string"&&value?[value]:[];
+}
+function portalTreeIds(key){
+  return new Set([...portalFilters[key].available].flatMap(ancestors));
+}
+function portalFilterChildren(key,parent){
+  const tree=portalTreeIds(key);
+  return PLATFORM.filter(([id,,ancestor])=>ancestor===parent&&tree.has(id)).map(([id])=>id);
+}
+function setPortalFilter(key,value){
+  const state=portalFilters[key];
+  state.selected=new Set(portalIds(value).filter(id=>state.available.has(id)));
+  const ids=[...state.selected],title=key==="origin"?"发起门户":"目标门户";
+  $("filter-"+key).value=ids.join(",");
+  $("cascader-"+key+"-tags").innerHTML=ids.length?
+    `<span class="cascader-tag" title="${escapeHtml(ancestors(ids[0]).map(portal).join(" / "))}"><span>${escapeHtml(portal(ids[0]))}</span><button type="button" data-action="portal-filter-remove" data-key="${key}" data-target="${ids[0]}" aria-label="移除${escapeHtml(portal(ids[0]))}">×</button></span>${ids.length>1?`<button type="button" class="cascader-more" data-action="portal-filter-selected" data-key="${key}" title="查看全部已选门户">+${ids.length-1}</button>`:""}`:"";
+  const trigger=$("cascader-"+key+"-trigger");
+  trigger.innerHTML=`${ids.length?"":`<span class="cascader-placeholder">请选择${title}</span>`}<span class="cascader-caret" aria-hidden="true">⌄</span>`;
+  trigger.setAttribute("aria-label",title+(ids.length?"，已选 "+ids.length+" 个门户":"，请选择"));
+  $("cascader-"+key).querySelector(".cascader-clear").hidden=!ids.length;
+  if(openPortalFilter===key)drawPortalPopup(key);
+}
+function closePortalFilters(restoreFocus=false){
+  if(!openPortalFilter)return;
+  const key=openPortalFilter;
+  $("cascader-"+key+"-popup").hidden=true;
+  $("cascader-"+key).classList.toggle("is-open",false);
+  $("cascader-"+key+"-trigger").setAttribute("aria-expanded","false");
+  openPortalFilter=null;
+  if(restoreFocus)$("cascader-"+key+"-trigger").focus();
+}
+function positionPortalPopup(key){
+  const bounds=$("cascader-"+key).getBoundingClientRect(),popup=$("cascader-"+key+"-popup");
+  const width=popup.offsetWidth,height=popup.offsetHeight;
+  popup.style.left=Math.max(12,Math.min(bounds.left,window.innerWidth-width-12))+"px";
+  popup.style.top=(bounds.bottom+height+8>window.innerHeight&&bounds.top>height+8?
+    bounds.top-height-6:Math.min(bounds.bottom+6,Math.max(8,window.innerHeight-height-8)))+"px";
+}
+function togglePortalFilter(key){
+  const wasOpen=openPortalFilter===key;
+  closePortalFilters();
+  if(wasOpen)return;
+  const state=portalFilters[key];
+  state.query="";
+  state.onlySelected=false;
+  state.expanded=state.selected.size?ancestors([...state.selected][0]).slice(0,-1):["net"];
+  openPortalFilter=key;
+  $("cascader-"+key).classList.toggle("is-open",true);
+  $("cascader-"+key+"-trigger").setAttribute("aria-expanded","true");
+  $("cascader-"+key+"-popup").hidden=false;
+  drawPortalPopup(key);
+}
+function drawPortalPopup(key){
+  const state=portalFilters[key];
+  const focus=document.activeElement;
+  const searched=focus?.dataset?.cascaderSearch===key;
+  $("cascader-"+key+"-popup").innerHTML=`<div class="cascader-toolbar"><input type="search" id="cascader-${key}-search" data-cascader-search="${key}" value="${escapeHtml(state.query)}" placeholder="搜索门户名称" aria-label="搜索${key==="origin"?"发起":"目标"}门户"><button type="button" class="link" data-action="portal-filter-selected" data-key="${key}" aria-pressed="${state.onlySelected}">${state.onlySelected?"全部门户":"仅看已选"}</button><button type="button" class="link" data-action="portal-filter-close" data-key="${key}">完成</button></div><div id="cascader-${key}-options"></div><div class="cascader-footer"><span>已选 ${state.selected.size} 个门户</span><span>各级门户独立选择</span></div>`;
+  drawPortalOptions(key);
+  if(searched)$("cascader-"+key+"-search").focus();
+}
+function drawPortalOptions(key){
+  const state=portalFilters[key],query=normalize(state.query),container=$("cascader-"+key+"-options");
+  const scrolls=new Map([...container.querySelectorAll("[data-column]")].map(node=>[node.dataset.column,node.scrollTop]));
+  const nodeMarkup=(id,search=false)=>{
+    const selectable=state.available.has(id),checked=state.selected.has(id),children=portalFilterChildren(key,id);
+    const title=search?ancestors(id).map(portal).join(" / "):portal(id);
+    const checkbox=`<input type="checkbox" data-cascader-pick="${key}" data-portal-id="${id}" aria-label="${escapeHtml(title)}" ${checked?"checked":""} ${selectable?"":"disabled"}>`;
+    return `<li class="cascader-node${checked?" is-checked":""}${state.expanded.includes(id)?" is-expanded":""}">${!search&&children.length?`${checkbox}<button type="button" data-action="portal-filter-expand" data-key="${key}" data-target="${id}" aria-label="展开${escapeHtml(portal(id))}" aria-expanded="${state.expanded.includes(id)}"><span>${escapeHtml(title)}</span><span class="node-arrow" aria-hidden="true">›</span></button>`:`<label>${checkbox}<span>${escapeHtml(title)}</span></label>`}</li>`;
+  };
+  if(query||state.onlySelected){
+    const matches=PLATFORM.map(([id])=>id).filter(id=>state.available.has(id)&&(!state.onlySelected||state.selected.has(id))&&
+      (!query||normalize(ancestors(id).map(portal).join(" / ")).includes(query)));
+    container.innerHTML=matches.length?`<ul class="cascader-results" aria-label="门户查询结果">${matches.map(id=>nodeMarkup(id,true)).join("")}</ul>`:
+      `<div class="cascader-empty">${state.onlySelected&&!state.selected.size?"尚未选择门户":"未找到匹配的门户"}</div>`;
+  }else{
+    const parents=[null,...state.expanded.filter(id=>portalFilterChildren(key,id).length)];
+    container.innerHTML=`<div class="cascader-menus">${parents.map(parent=>`<ul class="cascader-column" data-column="${parent??"root"}" aria-label="${parent?escapeHtml(portal(parent))+"的下级门户":"门户层级"}">${portalFilterChildren(key,parent).map(id=>nodeMarkup(id)).join("")}</ul>`).join("")}</div>`;
+  }
+  for(const column of container.querySelectorAll("[data-column]"))column.scrollTop=scrolls.get(column.dataset.column)??0;
+  const columns=query||state.onlySelected?2:1+state.expanded.filter(id=>portalFilterChildren(key,id).length).length;
+  $("cascader-"+key+"-popup").style.width=Math.min(Math.max(360,columns*180+2),window.innerWidth-24)+"px";
+  positionPortalPopup(key);
+}
+function expandPortalFilter(key,id){
+  if(!portalTreeIds(key).has(id))return;
+  portalFilters[key].expanded=ancestors(id);
+  portalFilters[key].query="";
+  portalFilters[key].onlySelected=false;
+  drawPortalPopup(key);
+}
+function togglePortalSelection(key,id,checked){
+  const state=portalFilters[key];
+  if(!state.available.has(id))return;
+  if(checked)state.selected.add(id);
+  else state.selected.delete(id);
+  setPortalFilter(key,[...state.selected]);
+  if(openPortalFilter===key){
+    const node=$("cascader-"+key+"-options").querySelector('input[data-portal-id="'+id+'"]');
+    node?.focus();
+  }
+}
+function clearPortalFilter(key){
+  setPortalFilter(key,[]);
+}
+
 function refreshPortals(){
   const visible=seeds.map(task=>[task,view(task)]).filter(([,routes])=>routes.length);
-  const ids=items=>[...new Set(items)].map(id=>[id,portal(id)]);
-  const origin=$("filter-origin").value,target=$("filter-target").value;
-  options($("filter-origin"),ids(visible.map(([task])=>task.origin)),"请选择发起门户");
-  options($("filter-target"),ids(visible.flatMap(([,routes])=>routes.map(route=>route.target))),"请选择目标门户");
-  if([...$("filter-origin").options].some(o=>o.value===origin))$("filter-origin").value=origin;
-  if([...$("filter-target").options].some(o=>o.value===target))$("filter-target").value=target;
+  const origins=new Set([...PLATFORM.filter(([id])=>permitted(id)).map(([id])=>id),...visible.map(([task])=>task.origin)]);
+  const targets=new Set([...PLATFORM.filter(([id])=>permitted(id)).map(([id])=>id),...visible.flatMap(([,routes])=>routes.filter(route=>route.targetVisible).map(route=>route.target))]);
+  for(const [key,available]of [["origin",origins],["target",targets]]){
+    portalFilters[key].available=available;
+    setPortalFilter(key,[...portalFilters[key].selected]);
+  }
 }
 function filtered(){
   const f=criteria;
   return seeds.flatMap(task=>{
+    if(f.recordId&&task.id!==f.recordId)return [];
     const routes=view(task),date=day(task.at);
-    if(!routes.length||(f.category&&task.category!==f.category)||(f.type&&task.type!==f.type)||(f.origin&&task.origin!==f.origin)||
-       (f.target&&!routes.some(route=>route.target===f.target))||(f.start&&date<f.start)||(f.end&&date>f.end))return [];
-    if(normalize(f.data)&&(task.init||!taskItems(routes).some(item=>matchesItem(item,f.data))))return [];
+    if(!routes.length||(f.category&&task.category!==f.category)||(f.type&&task.type!==f.type)||(portalIds(f.origin).length&&!portalIds(f.origin).includes(task.origin))||
+       (portalIds(f.target).length&&!routes.some(route=>route.targetVisible&&portalIds(f.target).includes(route.target)))||(f.start&&date<f.start)||(f.end&&date>f.end))return [];
+    if(normalize(f.data)&&!taskItems(routes).some(item=>matchesItem(item,f.data)))return [];
     const state=taskState(routes);
     return !f.status||f.status===state?[{task,routes,state}]:[];
   }).sort((a,b)=>b.task.at-a.task.at);
@@ -700,7 +875,74 @@ function replaceContent(container,html,preserveInputs=false){
   }
   container.scrollTop=scroll;
 }
+
+function metricDay(value){
+  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(value));
+  const part=type=>parts.find(item=>item.type===type).value;
+  return part("year")+"-"+part("month")+"-"+part("day");
+}
+function syncMetrics(now=Date.now()){
+  const records=seeds.flatMap(task=>{
+    const routes=view(task);
+    return routes.length?[{task,routes,state:taskState(routes)}]:[];
+  });
+  const portals=new Set(),abnormal=new Set(),lower=new Set(lowerTargets(role.portal));
+  const states={success:0,fail:0,partial:0,running:0,covered:0,unavailable:0};
+  const today={success:0,fail:0,partial:0};
+  const date=metricDay(now);
+  for(const {task,routes,state}of records){
+    const normalized=state==="pending"?"running":Object.hasOwn(states,state)?state:"unavailable";
+    states[normalized]++;
+    if(metricDay(task.at)===date&&Object.hasOwn(today,state))today[state]++;
+    for(const route of routes){
+      for(const {edge}of route.legs){
+        for(const id of [edge.from,edge.to])if(permitted(id))portals.add(id);
+      }
+      const hasFailure=routeItems(route).some(item=>item.status==="fail"||(item.status==="running"&&item.failureTime));
+      if(!hasFailure)continue;
+      const downward=ancestors(route.target).includes(task.origin);
+      const id=downward?route.target:task.origin;
+      if(lower.has(id))abnormal.add(id);
+    }
+  }
+  const completed=today.success+today.fail+today.partial;
+  return {
+    portals:portals.size,tasks:records.length,abnormal:abnormal.size,states,today,completed,
+    rate:completed?100*today.success/completed:null
+  };
+}
+function metricCard(key,title,value,unit,caption,explanation,formula){
+  const helpId="metric-help-"+key,tooltipId="metric-tooltip-"+key;
+  return `<article class="sync-metric-card" data-metric="${key}"><h2 class="sync-metric-title">${title}<span class="metric-help"><button type="button" class="metric-help-button" id="${helpId}" aria-label="查看${title}的说明及计算公式" aria-describedby="${tooltipId}">?</button><span class="metric-tooltip" id="${tooltipId}" role="tooltip"><p>${explanation}</p><p class="tooltip-formula">计算公式：${formula}</p></span></span></h2><div class="sync-metric-value" data-metric-value="${key}">${value}${unit?`<span class="sync-metric-unit">${unit}</span>`:""}</div>${caption}</article>`;
+}
+function drawSyncMetrics(){
+  const container=$("sync-metrics");
+  if(!container)return;
+  const data=syncMetrics();
+  syncMetricDate=metricDay(Date.now());
+  const statuses=[["success","成功"],["fail","失败"],["partial","部分成功"],["running","同步中"],["covered","已覆盖"]];
+  if(data.states.unavailable)statuses.push(["unavailable","结果不可见"]);
+  const breakdown=`<div class="sync-metric-statuses" aria-label="按同步结果统计任务数量">${statuses.map(([key,title])=>`<span class="${key}">${title}<b data-task-count="${key}">${data.states[key]}</b></span>`).join("")}</div>`;
+  const html=[
+    metricCard("portals","同步门户总数",data.portals,"个",'<div class="sync-metric-caption">存在同步记录的门户</div>',
+      "统计用户权限内存在同步记录的门户数量，同一门户只统计一次。",
+      "权限内有同步记录的门户数（去重）。"),
+    metricCard("tasks","同步任务数",data.tasks,"条",breakdown,
+      "统计用户权限内的同步记录总数，每条记录计为一个任务，重试不重复计数。",
+      "成功数 + 失败数 + 部分成功数 + 同步中数 + 已覆盖数"+(data.states.unavailable?" + 结果不可见数。":"。")),
+    metricCard("abnormal","同步异常门户数",data.abnormal,"个",'<div class="sync-metric-caption">仍有未恢复的同步失败</div>',
+      "统计当前各同步记录中，同步失败且尚未恢复的门户数量，同一门户只统计一次。",
+      "未恢复的失败门户数量（去重）。"),
+    metricCard("rate","今日同步成功率",data.rate===null?"—":data.rate.toFixed(1),data.rate===null?"":"%",
+      `<div class="sync-metric-caption">成功 ${data.today.success} 条 / 已结束 ${data.completed} 条</div>`,
+      "统计今日发起且已结束的任务中，同步成功的任务占比。无已结束任务时显示“—”。",
+      "成功数 ÷（成功数 + 失败数 + 部分成功数）× 100%。")
+  ].join("");
+  replaceContent(container,html);
+}
+
 function drawTable(){
+  drawSyncMetrics();
   closePortals();
   const list=filtered(), totalPages=Math.max(1,Math.ceil(list.length/pageSize));
   currentPage=Math.min(currentPage,totalPages);
@@ -709,7 +951,7 @@ function drawTable(){
     const targets=routes.map(route=>portal(route.target));
     const target=targets.length===1?escapeHtml(targets[0]):button(targets.length+" 个门户","show-portals",task,null,
       `aria-label="查看 ${targets.length} 个目标门户名称" aria-expanded="false" aria-controls="portal-popover"`);
-    const names=task.init?"":taskItems(routes).filter(item=>matchesItem(item,criteria.data))
+    const names=taskItems(routes).filter(item=>matchesItem(item,criteria.data))
       .map(item=>item.name||item.id).join("、");
     const data=names?button(escapeHtml(names),"sync-data",task,null,`title="${escapeHtml(names)}"`):"—";
     return `<tr data-task="${task.id}">
@@ -763,8 +1005,8 @@ function pagedTable(items,state,key,action,headers,render,empty,size=objectPageS
       <button class="btn" type="button" data-action="${action}" data-step="1" ${state[key]===pages?"disabled":""}>下一页</button>
     </div></nav>`;
 }
-function tabs(items,action,active){
-  return `<nav class="detail-tabs" aria-label="详情分类">${items.map(([key,title])=>
+function tabs(items,action,active,title="详情分类"){
+  return `<nav class="detail-tabs" aria-label="${title}">${items.map(([key,title])=>
     `<button type="button" data-action="${action}" data-tab="${key}" aria-pressed="${key===active}">${title}</button>`).join("")}</nav>`;
 }
 function statusMetrics(title,action,states,keys,active){
@@ -786,12 +1028,14 @@ function message(value){
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>$("toast").textContent="",3000);
 }
-function routeNote(route){
+function routeNote(route,task){
   const targetItems=route.targetVisible?legItems(route.terminal):[];
   const terminalFailed=targetItems.find(item=>item.status==="fail");
   if(terminalFailed)return terminalFailed.lastReason;
   const blocked=route.legs.find(({edge,keys})=>keys.some(key=>edge.items.get(key).status==="fail"));
   if(blocked)return `${portal(blocked.edge.from)} → ${portal(blocked.edge.to)} 处理失败`;
+  const dependency=initializationDependency(task);
+  if(dependency)return `等待【${dependency.type}】初始化完成`;
   if(targetItems.some(item=>item.status==="covered"))return COVERED;
   return "—";
 }
@@ -824,7 +1068,7 @@ function drawPortalChain(task,route,retrySegments=null){
 }
 function drawPortalResults(task,routes){
   const d=detailState;
-  const metrics=statusMetrics("门户状态统计","detail-count",routes.map(route=>routeState(route)),
+  const metrics=statusMetrics("同步门户统计","detail-count",routes.map(route=>routeState(route)),
     ["success","fail","running","covered"],d.portalStatus);
   const failedTargets=new Set(failureScope(task).flatMap(link=>[...link.targets]));
   const filtered=routes.filter(route=>(!d.portalName||normalize(portal(route.target)).includes(normalize(d.portalName)))&&
@@ -832,7 +1076,7 @@ function drawPortalResults(task,routes){
   const filters=`<form class="detail-controls" id="portal-filters">
     ${textField("detail-portal-name","门户名称",d.portalName,"请输入门户名称")}
     ${selectField("detail-portal-level","层级",["网级","分省","地市","直属"].map(level=>[level,level]),d.portalLevel)}
-    ${selectField("detail-portal-status","门户状态",Object.entries(STATUS).filter(([key])=>key!=="partial"),d.portalStatus)}
+    ${selectField("detail-portal-status","同步结果",Object.entries(STATUS).filter(([key])=>key!=="partial"),d.portalStatus)}
     <button class="btn" type="submit">筛选</button>${actionButton("重置","portal-reset")}
   </form>`;
   const checked=[...d.checked].filter(id=>failedTargets.has(id)).length;
@@ -840,13 +1084,13 @@ function drawPortalResults(task,routes){
     ${button("清空选择","portal-unselect",null,null,checked?"":"disabled")}
     ${actionButton("重试所选门户","retry-selected",false,!checked)}</div></div>`:"";
   const table=pagedTable(filtered,d,"portalPage","portal-page",
-    [failedTargets.size?"选择":null,"目标门户","门户状态","同步链路","处理进度","最近处理时间","异常原因","操作"].filter(Boolean),route=>{
+    [failedTargets.size?"选择":null,"目标门户","同步结果","同步链路","处理进度","最近处理时间","异常原因","操作"].filter(Boolean),route=>{
       const state=routeState(route), eligible=failedTargets.has(route.target);
       const select=failedTargets.size?eligible?
         `<input type="checkbox" data-portal-pick="${route.target}" aria-label="选择${escapeHtml(portal(route.target))}"${d.checked.has(route.target)?" checked":""}>`:"—":null;
       return tr([select,`<strong>${escapeHtml(portal(route.target))}</strong><small class="row-secondary">${escapeHtml(portalLevel(route.target))}</small>`,
         label(state),drawPortalChain(task,route),portalProgress(route),stamp(Math.max(0,...route.legs.map(leg=>leg.edge.updated??0))),
-        escapeHtml(routeNote(route)),eligible?button("重试","retry-portal",task,route.target):"—"].filter(cell=>cell!==null),
+        escapeHtml(routeNote(route,task)),eligible?button("重试","retry-portal",task,route.target):"—"].filter(cell=>cell!==null),
         `data-target="${route.target}"`);
     },"暂无符合条件的目标门户",PORTAL_PAGE_SIZE);
   return `${metrics}${filters}${selected}<div class="portal-results">${table}</div>`;
@@ -876,37 +1120,6 @@ function drawData(task,routes){
         `${escapeHtml(item.id)}${refs}`,escapeHtml(item.action),label(state),stamp(time)].filter(cell=>cell!==null));
     },"暂无符合条件的同步数据")}`;
 }
-function initializationHistory(routes){
-  const uniqueLegs=new Map(routes.flatMap(route=>route.legs.map(leg=>[leg.edge.key,leg])));
-  const rows=[...uniqueLegs.values()].flatMap(leg=>visibleHistory(leg.edge,legItems(leg)).map(attempt=>({...attempt,edge:leg.edge})))
-    .sort((a,b)=>b.at-a.at);
-  if(!rows.length)return "";
-  const open=$("init-retry-history")?.open??false;
-  return `<details class="init-history" id="init-retry-history"${open?" open":""}><summary>重试记录（${rows.length}）</summary>
-    <div class="table-wrap">${subtable(["重试时间","操作人","链路","数据类型","处理结果"],rows.map(entry=>tr([
-      stamp(entry.at),escapeHtml(entry.actor),escapeHtml(portal(entry.edge.from))+" → "+escapeHtml(portal(entry.edge.to)),
-      escapeHtml(entry.units.map(unit=>unit.name).join("、")),label(entry.state)
-    ])).join(""))}</div></details>`;
-}
-function drawInitialization(task,routes){
-  const d=detailState,items=taskItems(routes);
-  const matching=items.filter(item=>(!d.initName||normalize(item.name).includes(normalize(d.initName)))&&
-    (!d.initStatus||taskState(routes,item.key)===d.initStatus));
-  const links=failureLinks(routes);
-  const scope=failureScope(task);
-  return `<section aria-label="按数据类型查看初始化结果"><h3 class="section-title">初始化类型结果（${items.length} 种）</h3>
-    <form class="detail-controls" id="detail-init-filters">${textField("detail-init-name","数据类型",d.initName,"请输入数据类型",true)}
-    ${selectField("detail-init-status","状态",Object.entries(STATUS).filter(([key])=>key!=="partial"),d.initStatus)}
-    <button class="btn" type="submit">查询</button>${actionButton("重置","init-detail-reset")}</form>
-    ${pagedTable(matching,d,"initPage","detail-init-page",["数据类型","下发范围","数据量","结果","失败原因","操作"],item=>{
-      const state=taskState(routes,item.key);
-      const failed=links.find(link=>link.items.some(candidate=>candidate.key===item.key));
-      const canRetry=scope.some(link=>link.items.some(candidate=>candidate.key===item.key));
-      const reason=failed?.items.find(candidate=>candidate.key===item.key)?.lastReason;
-      return tr([escapeHtml(item.name),escapeHtml(item.description),item.amount,label(state),escapeHtml(reason||"—"),
-        canRetry?button("重试此类型","retry-init-type",task,item.key):"—"]);
-    },"暂无符合条件的数据类型")}${initializationHistory(routes)}</section>`;
-}
 function drawDetail(preserveInputs=false){
   const task=seeds.find(t=>t.id===detailId);
   if(!task||!detailState)return;
@@ -925,8 +1138,8 @@ function drawDetail(preserveInputs=false){
   if(task.operator)overview.push(["操作人",escapeHtml(task.operator)]);
   if(task.queryId)overview.push(["查询请求号",escapeHtml(task.queryId)]);
   if(task.business)overview.push(["业务结果",escapeHtml(task.business)]);
-  const tabLayout=task.init?"":tabs([["portals","门户结果"],["data","同步数据"]],"detail-tab",d.tab);
-  const body=task.init?drawInitialization(task,routes):d.tab==="data"?drawData(task,routes):drawPortalResults(task,routes);
+  const tabLayout=tabs([["portals","同步门户"],["data","同步数据"]],"detail-tab",d.tab);
+  const body=d.tab==="data"?drawData(task,routes):drawPortalResults(task,routes);
   replaceContent($("detail-body"),`<h3 class="section-title">任务总览</h3>${facts(overview)}${state==="covered"?note(COVERED):""}
     <p class="toast-inline" id="detail-feedback" aria-live="polite">${escapeHtml(task.feedback)}</p>${tabLayout}${body}`,preserveInputs);
 }
@@ -936,7 +1149,7 @@ function openDetails(task,tab){
   closePortals();
   detailId=task.id;
   detailState={tab,keyword:tab==="data"?criteria.data:"",portalName:"",portalLevel:"",portalStatus:"",portalPage:1,
-    dataStatus:"",dataPage:1,initName:"",initStatus:"",initPage:1,checked:new Set()};
+    dataStatus:"",dataPage:1,checked:new Set()};
   drawDetail();
   $("detail-body").scrollTop=0;
   if(!detail.open)detail.showModal();
@@ -1018,7 +1231,7 @@ function drawRetry(preserveInputs=false){
   const list=selectedRetryLinks();
   const items=list.reduce((sum,link)=>sum+link.units.length,0);
   const targets=new Set(list.flatMap(link=>[...link.targets]));
-  $("retry-summary").innerHTML=items?`<strong>${targets.size}</strong> 个目标门户 · <strong>${items}</strong> ${task.init?"个失败类型":task.queryId?"个失败批次":"个失败对象"}`:"";
+  $("retry-summary").innerHTML=items?`<strong>${targets.size}</strong> 个目标门户 · <strong>${items}</strong> ${task.queryId?"个失败批次":"个失败对象"}`:"";
   $("submit-retry").disabled=!items;
   const rows=retryPortalRows(list);
   const viewed=rows.find(row=>row.route.target===d.viewTarget&&row.segments.length)??rows.find(row=>row.segments.length);
@@ -1027,7 +1240,7 @@ function drawRetry(preserveInputs=false){
     Object.assign(d,{viewTarget:viewed.route.target,viewEdge:segment.edge.key,page:1});
   }
   const portals=pagedTable(rows,d,"portalPage","retry-portal-page",
-    ["目标门户","同步链路",task.init?"待重试类型数":task.queryId?"待重试批次数":"待重试对象数","操作"],row=>{
+    ["目标门户","同步链路",task.queryId?"待重试批次数":"待重试对象数","操作"],row=>{
       const {route,segments}=row, active=row===viewed;
       const marks=new Set(segments.map(entry=>entry.edge.key));
       const units=segments.reduce((sum,entry)=>sum+entry.units.length,0);
@@ -1035,12 +1248,12 @@ function drawRetry(preserveInputs=false){
         units?button(active?"当前查看":"查看对象","select-retry-portal",task,null,`data-target="${route.target}" aria-pressed="${active}"`):"—"],
         `data-retry-portal="${route.target}"${active?' class="selected-route"':""}`);
     },"暂无目标门户",6);
-  const fields=task.init?["数据类型","待恢复数据量","最近失败原因"]:task.queryId?["回传批次","批次标识","最近失败原因"]:["对象名称","对象标识","最近失败原因"];
+  const fields=task.queryId?["回传批次","批次标识","最近失败原因"]:["对象名称","对象标识","最近失败原因"];
   const unitRows=pagedTable(segment?.units??[],d,"page","retry-page",fields,unit=>
-    tr([escapeHtml(unit.name),task.init?unit.items[0].amount:escapeHtml(unit.id),escapeHtml(unit.lastReason)]),"暂无待重试对象");
+    tr([escapeHtml(unit.name),escapeHtml(unit.id),escapeHtml(unit.lastReason)]),"暂无待重试对象");
   const context=segment?`<p class="compact-note">${escapeHtml(portal(viewed.route.target))} · ${escapeHtml(portal(segment.edge.from))} → ${escapeHtml(portal(segment.edge.to))}</p>`:"";
   replaceContent($("retry-body"),`<section class="retry-section"><h3 class="retry-section-head">重试门户</h3><div class="retry-links">${portals}</div></section>
-    <section class="retry-section"><h3 class="retry-section-head">${task.init?"待重试类型":task.queryId?"待重试批次":"待重试对象"}</h3>
+    <section class="retry-section"><h3 class="retry-section-head">${task.queryId?"待重试批次":"待重试对象"}</h3>
     ${context}${unitRows}</section>`,preserveInputs);
 }
 function openRetry(task,config={}){
@@ -1078,7 +1291,12 @@ function startRetry(){
   if(segmentDialog.open)drawSegment();
   message("已提交重试，请查看同步状态");
 }
+function initializationDependency(task){
+  return task?.initializationId?seeds.find(other=>other.initializationId===task.initializationId&&
+    other.initializationPhase<task.initializationPhase&&taskState(other.routes)!=="success"):null;
+}
 function releasePending(task,now){
+  if(initializationDependency(task))return false;
   let changed=false;
   for(const route of task.routes){
     route.legs.forEach((leg,index)=>{
@@ -1087,7 +1305,6 @@ function releasePending(task,now){
         if(item.status!=="pending")continue;
         if(previous&&previous.edge.items.get(item.key)?.status!=="success")continue;
         if(!previous&&!task.init)continue;
-        if(task.init&&items.some(candidate=>candidate.phase<item.phase&&candidate.status!=="success"))continue;
         scheduleItem(leg.edge,item,now+(task.init?550:1050));
         changed=true;
       }
@@ -1119,11 +1336,15 @@ function updateJobs(){
     }
     if(active&&releasePending(task,now))changed=true;
   }
-  if(!changed)return;
+  if(!changed){
+    if(syncMetricDate!==metricDay(now))drawSyncMetrics();
+    return;
+  }
   drawTable();
   if(detail.open)drawDetail(true);
   if(segmentDialog.open)drawSegment();
   if(retryDialog.open)drawRetry(true);
+  if(initializationDetailDialog.open)drawInitializationDetails(true);
   if(!$("portal-management").hidden)drawManagement();
 }
 
@@ -1143,18 +1364,16 @@ const BASE_RECORDS={
   "固件":["FW",["边缘网关固件","低压采集终端固件"]],
   "管理组件":["COMP",["终端升级管理组件","通信接入管理组件"]],
   "整包":["PKG",["边缘网关升级整包","配网采集终端升级整包"]],
-  "终端台账":["TERM",["配电监测终端","低压采集终端","边缘通信网关","智能巡检终端"]],
-  "子设备台账":["SUB",["网关采集子设备","低压监测子设备","台区采集子设备","计量关联终端"]]
+  "设备台账":["TERM",["配电监测终端","低压采集终端","边缘通信网关","智能巡检终端","网关采集子设备","低压监测子设备","台区采集子设备","计量关联终端"]]
 };
 function lowerTargets(origin){
   return PLATFORM.filter(([id])=>id!==origin&&ancestors(id).includes(origin)&&permitted(id)).map(row=>row[0]);
 }
 function inventory(type){
   if(!MANUAL_CATALOG[TYPE_TO_CATEGORY[type]]?.includes(type))return [];
-  const origin=role.portal, isLedger=type==="终端台账"||type==="子设备台账";
+  const origin=role.portal, isLedger=type==="设备台账";
   if(!isLedger&&origin!=="net")return [];
   if(isLedger&&!permitted(origin))return [];
-  if(type==="子设备台账"&&origin==="net")return [];
   if(type==="型号")return models;
   if(type==="厂商")return vendors;
   if(type==="项目")return projects;
@@ -1163,9 +1382,7 @@ function inventory(type){
   const [prefix,names,portalScopes=[]]=entry;
   return Array.from({length:isLedger?18:names.length},(_,i)=>{
     let owner=origin,targets=portalScopes[i];
-    if(type==="子设备台账"){
-      targets=ancestors(origin).slice(0,-1).reverse();
-    }else if(type==="终端台账"){
+    if(isLedger){
       if(origin==="net"){
         owner=["gd","gx","gz"][Math.floor(i/6)];
         targets=[owner];
@@ -1177,7 +1394,7 @@ function inventory(type){
       }
     }
     const description=isLedger?"所属门户 "+portal(owner):targets?"适用门户 "+targets.map(portal).join("、"):undefined;
-    return object(prefix+"-"+String(i+1).padStart(4,"0"),names[i%names.length]+(isLedger?" "+String(i+1).padStart(3,"0"):""),
+    return object((isLedger&&i%names.length>=4?"SUB":prefix)+"-"+String(i+1).padStart(4,"0"),names[i%names.length]+(isLedger?" "+String(i+1).padStart(3,"0"):""),
       {version:"v1",dataType:type,description,targets});
   });
 }
@@ -1185,8 +1402,7 @@ function eligibleTargets(type,items){
   if(!items.length)return [];
   const lower=lowerTargets(role.portal), upper=ancestors(role.portal).slice(0,-1).reverse();
   let paths=lower;
-  if(type==="终端台账")paths=role.portal==="net"?lower:[...upper,...lower];
-  if(type==="子设备台账")paths=upper;
+  if(type==="设备台账")paths=role.portal==="net"?lower:[...upper,...lower];
   return paths.filter(id=>items.every(item=>!item.targets||item.targets.includes(id)));
 }
 function activePicks(){
@@ -1205,28 +1421,43 @@ function manualMatches(){
   const {name,code}=manual.criteria;
   return inventory(manual.type).filter(item=>(!name||normalize(item.name).includes(normalize(name)))&&(!code||normalize(item.id)===normalize(code)));
 }
-function manualPicksPanel(groups){
-  if(!manual.sidebar)return "";
-  const sections=groups.map(({type,items})=>
-    `<details${type===manual.type?' open':""}><summary>${escapeHtml(type)}（${items.length} 条）</summary>
-      ${type!==manual.type?button("切回此类型","manual-return-type",null,type):""}
-      ${items.map(item=>`<div class="picked-row"><span>${escapeHtml(item.name)}<small class="row-secondary">${escapeHtml(item.id)}</small></span>
-        ${button("移除","manual-remove",null,item.id,`data-type="${escapeHtml(type)}"`)}</div>`).join("")}</details>`).join("");
-  return `<aside class="sidecar" aria-label="已选数据"><div class="sidecar-head"><h3>已选数据</h3>${button("关闭","manual-picks")}</div>
-    <div class="selected-groups" data-scroll-key="picked-groups">${sections||'<p class="compact-note">暂无已选数据</p>'}</div></aside>`;
+function manualSelectedData(groups,total){
+  const filters=manual.selectedFilters;
+  if(filters.type&&!groups.some(group=>group.type===filters.type))filters.type="";
+  const draft=manual.drafts.selected??filters;
+  const rows=groups.flatMap(({type,items})=>items.map(item=>({type,item}))).filter(({type,item})=>
+    (!filters.type||type===filters.type)&&
+    (!filters.name||normalize(item.name).includes(normalize(filters.name)))&&
+    (!filters.code||normalize(item.id)===normalize(filters.code)));
+  const query=`<form class="manual-filters" id="manual-selected-filters">
+    ${selectField("manual-selected-type","同步类型",groups.map(({type,items})=>[type,`${type}（${items.length} 条）`]),filters.type)}
+    ${textField("manual-selected-name","数据名称",draft.name,"请输入数据名称")}
+    ${textField("manual-selected-code","数据编码",draft.code,"请输入数据编码")}
+    <button type="submit" class="btn">查询</button>${actionButton("重置","manual-selected-reset")}
+  </form>`;
+  const table=pagedTable(rows,manual,"selectedPage","manual-selected-page",
+    ["同步分类","同步类型","数据名称","数据编码","版本","操作"],({type,item})=>
+      tr([escapeHtml(TYPE_TO_CATEGORY[type]),
+        button(escapeHtml(type),"manual-return-type",null,type,`title="返回可选数据并选择${escapeHtml(type)}"`),
+        escapeHtml(item.name),escapeHtml(item.id),escapeHtml(item.version??"v1"),
+        button("移除","manual-remove",null,item.id,`data-type="${escapeHtml(type)}" aria-label="移除${escapeHtml(item.name)}"`)]),
+    total?"暂无符合条件的已选数据":"暂无已选数据，请在「可选数据」中勾选。");
+  return `${query}<div class="selection-bar"><strong>已选 ${total} 条${groups.length>1?`（${groups.length} 种类型）`:""}</strong></div>
+    <div class="manual-data-list">${table}</div>`;
 }
-function manualData(groups,total){
-  const picks=activePicks(), eligible=inventory(manual.type), items=manualMatches(), sidebar=manualPicksPanel(groups);
+function manualAvailableData(groups,total){
+  const picks=activePicks(), eligible=inventory(manual.type), items=manualMatches();
+  const draft=manual.drafts.available??manual.criteria;
   const categories=Object.keys(MANUAL_CATALOG).map(category=>[category,category]);
   const types=(MANUAL_CATALOG[manual.category]??[]).map(type=>[type,type]);
   const disabled=!manual.type;
-  const noData=manual.type==="子设备台账"?"当前门户没有可上报的子设备台账":"当前门户没有此类型的可补同步数据";
+  const noData="当前门户没有此类型的可补同步数据";
   const empty=!manual.category?"请选择同步分类！":disabled?"请选择同步类型！":eligible.length?"暂无符合条件的数据":noData;
   const typeAndFilters=`<form class="manual-filters" id="manual-data-filters">
     ${selectField("manual-category","同步分类",categories,manual.category,"请选择同步分类")}
     ${selectField("manual-type","同步类型",types,manual.type,"请选择同步类型",!manual.category)}
-    ${textField("manual-name","数据名称",manual.criteria.name,"请输入数据名称",false,disabled)}
-    ${textField("manual-code","数据编码",manual.criteria.code,"请输入数据编码",false,disabled)}
+    ${textField("manual-name","数据名称",draft.name,"请输入数据名称",false,disabled)}
+    ${textField("manual-code","数据编码",draft.code,"请输入数据编码",false,disabled)}
     <button type="submit" class="btn"${disabled?" disabled":""}>查询</button>${actionButton("重置","manual-query-reset",false,disabled)}</form>`;
   const table=pagedTable(items,manual,"dataPage","manual-data-page",[
     '<input type="checkbox" id="manual-pick-page" aria-label="选择本页数据">',"数据名称","数据编码","版本"
@@ -1235,9 +1466,28 @@ function manualData(groups,total){
   const selectionBar=`<div class="selection-bar"><strong id="manual-selected-count">已选 ${total} 条${groups.length>1?`（${groups.length} 种类型）`:""}</strong>
     <div class="row-actions">${manual.type&&total>picks.size?`<small class="text-muted">当前类型已选 ${picks.size} 条</small>`:""}
       ${button("选择全部查询结果","manual-pick-matches",null,null,items.length?"":"disabled")}
-      ${button("查看已选","manual-picks",null,null,`aria-expanded="${manual.sidebar}"`)}
+      ${button("查看已选","manual-picks")}
     </div></div>`;
-  return `${typeAndFilters}<div class="manual-layout${sidebar?" with-sidecar":""}"><section>${selectionBar}${table}</section>${sidebar}</div>`;
+  return `${typeAndFilters}${selectionBar}<div class="manual-data-list">${table}</div>`;
+}
+function manualData(groups,total){
+  return tabs([["available","可选数据"],["selected",`已选数据（${total}）`]],"manual-list-tab",manual.listTab,"数据选择")+
+    (manual.listTab==="selected"?manualSelectedData(groups,total):manualAvailableData(groups,total));
+}
+function rememberManualList(){
+  const prefix=manual.listTab==="selected"?"manual-selected":"manual";
+  const name=$(prefix+"-name"),code=$(prefix+"-code");
+  if(name&&code)manual.drafts[manual.listTab]={name:name.value,code:code.value};
+  const scroller=$("manual-body").querySelector(".manual-data-list .paged-table");
+  manual.scrolls[manual.listTab]={top:scroller?.scrollTop??0,left:scroller?.scrollLeft??0};
+}
+function changeManualList(tab){
+  if(!["available","selected"].includes(tab)||tab===manual.listTab)return;
+  rememberManualList();
+  manual.listTab=tab;
+  drawManual();
+  const scroller=$("manual-body").querySelector(".manual-data-list .paged-table"),scroll=manual.scrolls[tab];
+  if(scroller&&scroll)Object.assign(scroller,{scrollTop:scroll.top,scrollLeft:scroll.left});
 }
 function manualScopeValue(total,labels){
   return `<span class="manual-scope-value"><strong>${total}</strong><span class="scope-tags">${labels.map(name=>`<span>${escapeHtml(name)}</span>`).join("")}</span></span>`;
@@ -1262,7 +1512,7 @@ function manualConfirm(groups,dataSummary){
     ["目标门户",manualScopeValue(`${targets.length} 个`,targets.map(portal))]
   ]);
   const records=groups.length>1?`本次将生成 ${groups.length} 条同步记录。`:"";
-  return `<div class="manual-summary">${summary}</div><p class="compact-note">按所选数据及版本补同步，提交无需审批。${records}</p>
+  return `<div class="manual-summary">${summary}</div>${records?`<p class="compact-note">${records}</p>`:""}
     ${manual.feedback?`<p class="notice" role="alert">${escapeHtml(manual.feedback)}</p>`:""}`;
 }
 function manualResult(){
@@ -1297,12 +1547,15 @@ function drawManual(preserveInputs=false){
 function changeManualSource(category,type=""){
   if(category&&!Object.hasOwn(MANUAL_CATALOG,category))return;
   if(type&&!MANUAL_CATALOG[category]?.includes(type))return;
-  Object.assign(manual,{category,type,criteria:{name:"",code:""},dataPage:1});
+  if(manual.listTab==="selected")rememberManualList();
+  Object.assign(manual,{category,type,criteria:{name:"",code:""},dataPage:1,listTab:"available"});
+  delete manual.drafts.available;
   drawManual();
 }
 function openManual(){
   manual={category:"",type:"",step:1,picks:new Map(),criteria:{name:"",code:""},dataPage:1,
-    targets:new Set(),targetPage:1,targetQuery:"",sidebar:false,feedback:""};
+    listTab:"available",selectedFilters:{type:"",name:"",code:""},selectedPage:1,drafts:{},scrolls:{},
+    targets:new Set(),targetPage:1,targetQuery:"",feedback:""};
   drawManual();
   if(!manualDialog.open)manualDialog.showModal();
   $("manual-category").focus();
@@ -1334,9 +1587,105 @@ function submitManual(){
   drawTable();
   drawManual();
 }
-function latestInitialization(target){
-  return [...seeds].reverse().find(task=>task.init&&task.origin===role.portal&&task.routes.some(route=>route.target===target)&&view(task).length);
+function initializationRecords(target){
+  const records=seeds.filter(task=>task.initializationId&&task.origin===role.portal&&
+    task.routes.some(route=>route.target===target)&&view(task).length);
+  const batch=records.at(-1)?.initializationId;
+  return records.filter(task=>task.initializationId===batch);
 }
+
+function initializationRange(type,target){
+  const unit=portal(target).replace(/门户$/,""),local=unit+"及下级单位的";
+  const ranges={
+    "组织机构":local+"组织机构",
+    "级联门户信息":portal(target)+"及下级门户的配置信息（待确定）",
+    "接入节点配置":local+"接入节点配置",
+    "资源空间":local+"资源空间",
+    "菜单":"全网通用菜单",
+    "数据字典":"全网通用数据字典",
+    "系统参数":"全网通用系统参数",
+    "品类":"全网品类数据",
+    "物模型":"全网物模型数据",
+    "产品":"全网产品数据",
+    "项目":"全网项目数据",
+    "厂商":"全网厂商数据",
+    "型号":"全网型号数据",
+    "告警类型":"全网告警类型数据",
+    "应用":"全网应用版本信息及对应应用包",
+    "算法":"全网算法版本信息及对应算法包",
+    "配置文件":"全网配置文件版本信息及对应文件",
+    "固件":"全网固件版本信息及对应固件包",
+    "管理组件":"全网管理组件版本信息及对应安装包",
+    "整包":"全网整包版本信息及对应文件",
+    "设备台账":local+"设备台账",
+    "历史终端档案":local+"历史终端档案"
+  };
+  return ranges[type]??"—";
+}
+function initializationStatus(records){
+  const states=records.map(task=>taskState(view(task)));
+  if(states.some(state=>state==="fail"||state==="partial"))return "fail";
+  if(states.some(state=>state==="running"||state==="pending"))return "running";
+  if(states.length&&states.every(state=>state==="success"))return "success";
+  return states.includes("covered")?"covered":null;
+}
+function initializationDetailRecords(){
+  if(!initializationDetail)return [];
+  return seeds.filter(task=>task.initializationId===initializationDetail.batchId&&view(task).length);
+}
+function openInitializationDetails(target){
+  const records=initializationRecords(target);
+  if(!records.length||!lowerTargets(role.portal).includes(target))return;
+  initializationDetail={target,batchId:records[0].initializationId,category:"",type:"",status:"",page:1};
+  drawInitializationDetails();
+  $("initialization-detail-body").scrollTop=0;
+  initializationDetailDialog.showModal();
+}
+function initializationTypeOptions(records,category){
+  return [...new Set(records.filter(task=>!category||task.category===category).map(task=>task.type))].map(type=>[type,type]);
+}
+function drawInitializationDetails(preserveInputs=false){
+  if(!initializationDetail)return;
+  const state=initializationDetail,records=initializationDetailRecords();
+  if(!records.length){initializationDetailDialog.close();return}
+  const draftCategory=preserveInputs?$("initialization-category")?.value??state.category:state.category;
+  const visible=records.filter(task=>(!state.category||task.category===state.category)&&
+    (!state.type||task.type===state.type)&&(!state.status||taskState(view(task))===state.status));
+  const summary=facts([
+    ["同步类型数",records.length+" 种"],
+    ["发起门户",escapeHtml(portal(records[0].origin))],
+    ["目标门户",escapeHtml(portal(state.target))],
+    ["发起时间",stamp(Math.min(...records.map(task=>task.at)))],
+    ["汇总状态",label(initializationStatus(records))],
+    ["触发方式","初始化同步"]
+  ]);
+  const filters=`<form class="detail-controls" id="initialization-detail-filters">
+    ${selectField("initialization-category","同步分类",[...new Set(records.map(task=>task.category))].map(category=>[category,category]),state.category)}
+    ${selectField("initialization-type","同步类型",initializationTypeOptions(records,draftCategory),state.type)}
+    ${selectField("initialization-status","同步结果",Object.entries(STATUS),state.status)}
+    <button type="submit" class="btn">查询</button>${actionButton("重置","initialization-detail-reset")}</form>`;
+  const rows=pagedTable(visible,state,"page","initialization-detail-page",
+    ["同步分类","同步类型","下发范围","数据量","同步结果","失败原因","操作"],task=>{
+      const routes=view(task);
+      const reasons=[...new Set(routes.flatMap(route=>routeItems(route)).filter(item=>item.status==="fail").map(item=>item.lastReason).filter(Boolean))];
+      return tr([escapeHtml(task.category),escapeHtml(task.type),escapeHtml(initializationRange(task.type,state.target)),
+        taskItems(routes).length,label(taskState(routes)),reasons.length?escapeHtml(reasons.join("；")):"—",
+        button("查看详情","initialization-record-detail",task)],`data-initialization-record="${task.id}"`);
+    },"暂无符合条件的同步类型");
+  replaceContent($("initialization-detail-body"),
+    `<h3 class="section-title">任务总览</h3>${summary}<h3 class="section-title">初始化同步类型结果（${records.length} 种）</h3>${filters}<div class="initialization-type-results">${rows}</div>`,preserveInputs);
+}
+function showSyncRecord(id){
+  const task=seeds.find(task=>task.id===id);
+  if(!task||!view(task).length)return;
+  initializationDetailDialog.close();
+  criteria={...defaults(),recordId:id,start:"",end:""};
+  currentPage=1;
+  setFilters(criteria);
+  showPage(false);
+  drawTable();
+}
+
 function showPage(management){
   $("record-view").hidden=management;
   $("portal-management").hidden=!management;
@@ -1346,6 +1695,7 @@ function showPage(management){
     else $(id).removeAttribute("aria-current");
   }
   closePortals();
+  closePortalFilters();
   if(management)drawManagement();
 }
 function drawManagement(){
@@ -1355,35 +1705,34 @@ function drawManagement(){
   managementPage=Math.min(managementPage,pages);
   const display=targets.slice((managementPage-1)*objectPageSize,managementPage*objectPageSize);
   replaceContent($("management-rows"),display.length?display.map(target=>{
-    const task=latestInitialization(target);
-    const action=task?button("查看初始化记录","details",task):button("初始化同步","init-open",null,target);
+    const records=initializationRecords(target);
+    const action=records.length?button("查看初始化记录","initialization-records",null,target):button("初始化同步","init-open",null,target);
     return tr([escapeHtml(portal(target)),escapeHtml(portalLevel(target)),pathBetween(role.portal,target).map(portal).map(escapeHtml).join(" → "),
-      task?label(taskState(view(task))):"未初始化",action],`data-management-target="${target}"`);
+      records.length?label(initializationStatus(records)):"未初始化",action],`data-management-target="${target}"`);
   }).join(""):'<tr><td colspan="5" class="empty">暂无符合条件的下级门户</td></tr>');
   $("management-total").textContent="共 "+targets.length+" 个门户";
   replaceContent($("management-pager"),`${actionButton("上一页","management-prev",false,managementPage===1)}
     <span>第 ${managementPage} / ${pages} 页</span>${actionButton("下一页","management-next",false,managementPage===pages)}`);
 }
 function openInitialization(target){
-  if(!lowerTargets(role.portal).includes(target)||latestInitialization(target))return;
+  if(!lowerTargets(role.portal).includes(target)||initializationRecords(target).length)return;
   initTarget=target;
-  const typeCount=INIT_GROUPS.reduce((sum,group)=>sum+group.types.length,0);
-  $("init-body").innerHTML=facts([["发起门户",escapeHtml(portal(role.portal))],["目标门户",escapeHtml(portal(target))],["同步范围",`${typeCount} 种数据类型`]])+
-    `<div class="table-wrap">${subtable(["范围","数据类型"],INIT_GROUPS.map(group=>
-      tr([escapeHtml(group.name),escapeHtml(group.types.join("、"))])).join(""))}</div>`+
-    `<p class="compact-note">菜单、数据字典与系统参数使用定制前的全网通用数据。历史终端档案按档案所属单位同步。</p>`;
+  const types=initializationTypes(target);
+  $("init-body").innerHTML=facts([["发起门户",escapeHtml(portal(role.portal))],["目标门户",escapeHtml(portal(target))],["同步类型数",types.length+" 种"]])+
+    `<div class="paged-table initialization-preview">${subtable(["同步分类","同步类型","下发范围"],types.map(type=>
+      tr([escapeHtml(TYPE_TO_CATEGORY[type.name]),escapeHtml(type.name),escapeHtml(initializationRange(type.name,target))])).join(""))}</div>`;
   initDialog.showModal();
 }
 function submitInitialization(){
   const target=initTarget;
-  if(!target||!lowerTargets(role.portal).includes(target)||latestInitialization(target))return;
-  const task=createInitialization(role.portal,target);
-  releasePending(task,Date.now());
+  if(!target||!lowerTargets(role.portal).includes(target)||initializationRecords(target).length)return;
+  const records=createInitialization(role.portal,target);
+  records.forEach(task=>releasePending(task,Date.now()));
   initDialog.close();
   refreshPortals();
   drawTable();
   drawManagement();
-  openDetails(task,"init");
+  openInitializationDetails(target);
 }
 
 
@@ -1412,13 +1761,17 @@ function clearPortalFilters(){
 }
 document.addEventListener("submit",event=>{
   const id=event.target.id;
-  if(!["filters","jump","portal-filters","detail-data-filters","detail-init-filters","manual-data-filters","manual-target-filters"].includes(id))return;
+  if(!["filters","jump","portal-filters","detail-data-filters","manual-data-filters","manual-selected-filters","manual-target-filters","initialization-detail-filters"].includes(id))return;
   event.preventDefault();
   switch(id){
+    case "initialization-detail-filters":
+      Object.assign(initializationDetail,{category:$("initialization-category").value,type:$("initialization-type").value,status:$("initialization-status").value,page:1});
+      drawInitializationDetails();
+      break;
     case "filters":{
       const next=filters();
       if(next.start&&next.end&&next.start>next.end){message("开始日期不能晚于结束日期");return}
-      if(Object.keys(next).some(key=>next[key]!==criteria[key]))currentPage=1;
+      if(Object.keys(next).some(key=>JSON.stringify(next[key])!==JSON.stringify(criteria[key])))currentPage=1;
       criteria=next;
       drawTable();
       break;
@@ -1436,13 +1789,16 @@ document.addEventListener("submit",event=>{
       Object.assign(detailState,{keyword:$("detail-data-keyword").value,dataPage:1});
       drawDetail();
       break;
-    case "detail-init-filters":
-      Object.assign(detailState,{initName:$("detail-init-name").value,initStatus:$("detail-init-status").value,initPage:1});
-      drawDetail();
-      break;
     case "manual-data-filters":
       if(!manual.type)break;
       Object.assign(manual,{criteria:{name:$("manual-name").value,code:$("manual-code").value},dataPage:1});
+      delete manual.drafts.available;
+      drawManual();
+      break;
+    case "manual-selected-filters":
+      Object.assign(manual.selectedFilters,{name:$("manual-selected-name").value,code:$("manual-selected-code").value});
+      manual.selectedPage=1;
+      delete manual.drafts.selected;
       drawManual();
       break;
     case "manual-target-filters":
@@ -1453,12 +1809,25 @@ document.addEventListener("submit",event=>{
 });
 document.addEventListener("change",event=>{
   const node=event.target, key=node.value;
+  if(node.dataset?.cascaderPick){
+    togglePortalSelection(node.dataset.cascaderPick,node.dataset.portalId,node.checked);
+    return;
+  }
   switch(node.id){
+    case "initialization-category":{
+      const previous=$("initialization-type").value;
+      const choices=initializationTypeOptions(initializationDetailRecords(),key);
+      options($("initialization-type"),choices,"全部");
+      if(choices.some(([type])=>type===previous))$("initialization-type").value=previous;
+      return;
+    }
     case "filter-category":
       updateTypes(key,$("filter-type").value);
       return;
     case "role":
       role=ROLES.find(candidate=>candidate.id===key)??ROLES[0];
+      initDialog.close();
+      initializationDetailDialog.close();
       criteria=defaults();
       currentPage=managementPage=1;
       $("management-keyword").value="";
@@ -1477,6 +1846,11 @@ document.addEventListener("change",event=>{
       return;
     case "manual-type":
       changeManualSource(manual.category,key);
+      return;
+    case "manual-selected-type":
+      manual.selectedFilters.type=key;
+      manual.selectedPage=1;
+      drawManual(true);
       return;
     case "manual-pick-page":{
       const first=(manual.dataPage-1)*objectPageSize;
@@ -1503,10 +1877,17 @@ document.addEventListener("change",event=>{
 document.addEventListener("click",event=>{
   const b=event.target.closest("button[data-action]");
   if(b?.dataset.action!=="show-portals"&&!portalPopover.contains(event.target))closePortals();
+  if(openPortalFilter&&!$("cascader-"+openPortalFilter).contains(event.target))closePortalFilters();
   if(!b||b.disabled)return;
   const {action,id,key,step,tab,target,type}=b.dataset;
   const task=seeds.find(task=>task.id===id), current=seeds.find(task=>task.id===detailId);
   switch(action){
+    case "portal-filter-toggle":togglePortalFilter(key);break;
+    case "portal-filter-expand":expandPortalFilter(key,target);break;
+    case "portal-filter-remove":togglePortalSelection(key,target,false);break;
+    case "portal-filter-clear":clearPortalFilter(key);break;
+    case "portal-filter-selected":if(openPortalFilter!==key){togglePortalFilter(key);portalFilters[key].onlySelected=true}else portalFilters[key].onlySelected=!portalFilters[key].onlySelected;drawPortalPopup(key);break;
+    case "portal-filter-close":closePortalFilters(true);break;
     case "page":currentPage=Number(b.dataset.page);drawTable();break;
     case "show-portals":if(task)showPortals(b,task);break;
     case "show-management":showPage(true);break;
@@ -1536,11 +1917,6 @@ document.addEventListener("click",event=>{
       Object.assign(detailState,{keyword:"",dataStatus:"",dataPage:1});
       drawDetail();
       break;
-    case "detail-init-page":changePage(detailState,"initPage",step,()=>drawDetail(true));break;
-    case "init-detail-reset":
-      Object.assign(detailState,{initName:"",initStatus:"",initPage:1});
-      drawDetail();
-      break;
     case "open-segment":openSegment(task,key,target);break;
     case "close-segment":segmentDialog.close();break;
     case "segment-tab":
@@ -1553,7 +1929,6 @@ document.addEventListener("click",event=>{
     case "retry-portal":openRetry(task,{targets:new Set([key])});break;
     case "retry-selected":openRetry(current,{targets:new Set(detailState.checked)});break;
     case "retry-segment":openRetry(task,{edgeKey:key,targets:target?new Set([target]):null});break;
-    case "retry-init-type":openRetry(task,{itemKey:key});break;
     case "select-retry-portal":
     case "select-retry-segment":
       Object.assign(retrySelection,{viewTarget:target,viewEdge:action==="select-retry-segment"?key:null,page:1});
@@ -1569,14 +1944,22 @@ document.addEventListener("click",event=>{
     case "manual-start":openManual();break;
     case "manual-close":manualDialog.close();break;
     case "manual-data-page":changePage(manual,"dataPage",step,()=>drawManual(true));break;
+    case "manual-selected-page":changePage(manual,"selectedPage",step,()=>drawManual(true));break;
+    case "manual-list-tab":changeManualList(tab);break;
     case "manual-target-page":changePage(manual,"targetPage",step,()=>drawManual(true));break;
     case "manual-pick-matches":selectManualItems(manualMatches(),true);break;
     case "manual-query-reset":
       Object.assign(manual,{criteria:{name:"",code:""},dataPage:1});
+      delete manual.drafts.available;
+      drawManual();
+      break;
+    case "manual-selected-reset":
+      Object.assign(manual,{selectedFilters:{type:"",name:"",code:""},selectedPage:1});
+      delete manual.drafts.selected;
       drawManual();
       break;
     case "manual-target-reset":Object.assign(manual,{targetQuery:"",targetPage:1});drawManual();break;
-    case "manual-picks":manual.sidebar=!manual.sidebar;drawManual(true);break;
+    case "manual-picks":changeManualList("selected");break;
     case "manual-return-type":changeManualSource(TYPE_TO_CATEGORY[key],key);break;
     case "manual-remove":
       manual.picks.get(type)?.delete(key);
@@ -1584,6 +1967,7 @@ document.addEventListener("click",event=>{
       break;
     case "manual-next":
       if(manual.step===1){
+        rememberManualList();
         const groups=manualGroups();
         if(!groups.length)break;
         const eligible=manualBatchTargets(groups);
@@ -1603,6 +1987,12 @@ document.addEventListener("click",event=>{
       openDetails(selected,"portals");
       break;
     }
+    case "initialization-records":openInitializationDetails(key);break;
+    case "initialization-detail-close":initializationDetailDialog.close();break;
+    case "initialization-detail-page":changePage(initializationDetail,"page",step,()=>drawInitializationDetails(true));break;
+    case "initialization-detail-reset":
+      Object.assign(initializationDetail,{category:"",type:"",status:"",page:1});drawInitializationDetails();break;
+    case "initialization-record-detail":showSyncRecord(id);break;
     case "init-open":openInitialization(key);break;
     case "init-close":initDialog.close();break;
     case "init-submit":submitInitialization();break;
@@ -1615,9 +2005,23 @@ segmentDialog.addEventListener("close",()=>{if(!segmentDialog.open)segmentSelect
 retryDialog.addEventListener("close",()=>{if(!retryDialog.open)retrySelection=null});
 manualDialog.addEventListener("close",()=>{if(!manualDialog.open)manual=null});
 initDialog.addEventListener("close",()=>{if(!initDialog.open)initTarget=null});
+initializationDetailDialog.addEventListener("close",()=>{if(!initializationDetailDialog.open)initializationDetail=null});
 document.querySelector(".tableframe").addEventListener("scroll",()=>closePortals());
-window.addEventListener("resize",()=>closePortals());
-document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!portalPopover.hidden)closePortals(true)});
+window.addEventListener("resize",()=>{closePortals();closePortalFilters()});
+document.addEventListener("keydown",event=>{
+  if(event.key==="Enter"&&event.target.dataset?.cascaderSearch){event.preventDefault();return}
+  if(event.key==="Escape"&&openPortalFilter){event.preventDefault();closePortalFilters(true);return}
+  if(event.key==="Escape"&&!portalPopover.hidden)closePortals(true);
+});
+document.addEventListener("scroll",event=>{
+  if(openPortalFilter&&!$("cascader-"+openPortalFilter+"-popup").contains(event.target))closePortalFilters();
+},true);
+document.addEventListener("input",event=>{
+  const key=event.target.dataset?.cascaderSearch;
+  if(!key)return;
+  portalFilters[key].query=event.target.value;
+  drawPortalOptions(key);
+});
 
 $("role").replaceChildren(...ROLES.map(role=>new Option(role.label,role.id)));
 options($("filter-category"),Object.keys(CATALOG).map(category=>[category,category]),"请选择同步分类");
